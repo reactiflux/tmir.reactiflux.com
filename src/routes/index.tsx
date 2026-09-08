@@ -59,7 +59,7 @@ function Home() {
           <Outline items={latest.outline} />
         </section>
       )}
-      <section className="archive">
+      <section className="archive" id="archive">
         <h2>Archive</h2>
         <ul>
           {archive.map((e) => (

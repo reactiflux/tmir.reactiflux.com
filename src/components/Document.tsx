@@ -73,7 +73,7 @@ export function Document({
           </a>
           <nav className="site-nav">
             <a href="/">Home</a>
-            <a href="/">Episodes</a>
+            <a href="/#archive">Episodes</a>
             <a href="/links">Links</a>
             <a href="/search">Search</a>
             <a href="/about">About</a>
