@@ -302,6 +302,18 @@ for (const slug of allSlugs) {
 }
 // --- end Adjustments ---
 
+// --- Task 11: Open Graph cards ---
+console.log("\nTask 11: Open Graph cards");
+for (const slug of allSlugs) {
+  check(
+    `og/${slug}.png exists`,
+    existsSync(join(dist, "og", `${slug}.png`)),
+    "run: node scripts/og.ts",
+  );
+}
+check("og/default.png exists", existsSync(join(dist, "og", "default.png")));
+// --- end Task 11 ---
+
 console.log("\nSizes");
 const assetsDir = join(dist, "assets");
 const jsFiles = existsSync(assetsDir)
