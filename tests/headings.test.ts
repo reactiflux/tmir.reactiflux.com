@@ -51,3 +51,14 @@ test("paragraphs without a timestamp are never a target", () => {
     ["no time here", "## Intro", "later [00:02:00]"],
   );
 });
+
+test("an out-of-order outline item doesn't overwrite a heading already placed", () => {
+  assert.deepEqual(
+    insertHeadings(["p0 [00:00:10]", "p1 [00:01:00]", "p2 [00:05:00]"], [
+      { time: "00:04:00", title: "Late" },
+      { time: "00:00:05", title: "Early" },
+      { time: "00:04:30", title: "Late2" },
+    ]),
+    ["## Early", "p0 [00:00:10]", "p1 [00:01:00]", "## Late", "p2 [00:05:00]"],
+  );
+});

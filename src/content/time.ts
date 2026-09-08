@@ -6,10 +6,13 @@ export function toSeconds(
   if (value === undefined) return undefined;
   if (typeof value === "number")
     return Number.isFinite(value) ? value : undefined;
-  const parts = value.split(":").map(Number);
-  if (parts.length === 0 || parts.some((n) => !Number.isFinite(n)))
-    return undefined;
-  return parts.reduce((total, part) => total * 60 + part, 0);
+  // `""` splits to `[""]` and `Number("")` is 0, so an empty or blank field
+  // would otherwise read as a valid 0 seconds. At most h:m:s, too.
+  const parts = value.split(":");
+  if (parts.length > 3) return undefined;
+  const numbers = parts.map((part) => (part.trim() === "" ? NaN : Number(part)));
+  if (numbers.some((n) => !Number.isFinite(n))) return undefined;
+  return numbers.reduce((total, part) => total * 60 + part, 0);
 }
 
 export function hms(seconds: number): string {

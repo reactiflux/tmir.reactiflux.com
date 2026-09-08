@@ -37,3 +37,39 @@ test("toSrt numbers cues, formats times, and prefixes the speaker", () => {
     ].join("\n"),
   );
 });
+
+test("cues never end before, or at, their own start", () => {
+  const raw = `---
+title: t
+date: 2026-05-28
+description: d
+---
+
+# Transcript
+
+**Carl Vitullo:** same second [00:01:00]
+
+**Mark Erikson:** also same second [00:01:00]
+
+**Carl Vitullo:** backwards [00:00:30]
+
+**Mark Erikson:** last [00:02:00]
+`;
+  const srt = toSrt(parseEpisode(raw, "2026-05"));
+  const spans = [...srt.matchAll(/^(\d\d:\d\d:\d\d),000 --> (\d\d:\d\d:\d\d),000$/gm)];
+  assert.equal(spans.length, 4);
+  for (const [, start, end] of spans) assert.ok(end > start, `${start} --> ${end}`);
+});
+
+test("every episode in content/ produces cues with a positive duration", async () => {
+  const { loadEpisodes } = await import("../src/content/load.ts");
+  const bad: string[] = [];
+  for (const episode of await loadEpisodes()) {
+    for (const [, start, end] of toSrt(episode).matchAll(
+      /^(\d\d:\d\d:\d\d),000 --> (\d\d:\d\d:\d\d),000$/gm,
+    )) {
+      if (end <= start) bad.push(`${episode.slug} ${start} --> ${end}`);
+    }
+  }
+  assert.deepEqual(bad, []);
+});

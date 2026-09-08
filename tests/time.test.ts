@@ -23,3 +23,10 @@ test("isoDuration formats seconds as an ISO 8601 duration", () => {
   assert.equal(isoDuration(3600), "PT1H0S");
   assert.equal(isoDuration(0), "PT0S");
 });
+
+test("toSeconds rejects empty and over-long values", () => {
+  assert.equal(toSeconds(""), undefined);
+  assert.equal(toSeconds("   "), undefined);
+  assert.equal(toSeconds("00::30"), undefined);
+  assert.equal(toSeconds("1:2:3:4"), undefined);
+});

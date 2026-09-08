@@ -343,3 +343,22 @@ test("markdown escapes and code spans are undone in titles and segments", () => 
     "the react-concurrent-store ponyfill, snake_case",
   );
 });
+
+test("a body that begins with the transcript marker still parses its sections", () => {
+  const parsed = parseEpisode(
+    withFrontMatter(
+      ["# Transcript", "", "**Carl Vitullo:** hello [00:00:01]", ""].join("\n"),
+    ),
+    "x",
+  );
+  assert.deepEqual(parsed.outline, []);
+  assert.equal(parsed.sections.length, 1);
+  assert.equal(parsed.sections[0].segments[0].text, "hello");
+});
+
+test("a missing or unparseable date fails at parse time, naming the episode", () => {
+  const noDate = "---\ntitle: t\ndescription: d\n---\n\n# Transcript\n";
+  assert.throws(() => parseEpisode(noDate, "2026-05"), /2026-05.*date/);
+  const badDate = "---\ntitle: t\ndate: nonsense\ndescription: d\n---\n\n# Transcript\n";
+  assert.throws(() => parseEpisode(badDate, "2026-05"), /2026-05.*date/);
+});
