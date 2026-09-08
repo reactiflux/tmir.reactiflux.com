@@ -314,6 +314,35 @@ for (const slug of allSlugs) {
 check("og/default.png exists", existsSync(join(dist, "og", "default.png")));
 // --- end Task 11 ---
 
+// --- Task 12: link previews ---
+console.log("\nTask 12: link previews");
+const origin = (
+  process.env.VITE_SITE_URL || "https://thismonthinreact.com"
+).replace(/\/$/, "");
+for (const [path, slug] of [
+  ["index.html", "default"],
+  ["about/index.html", "default"],
+  [`episodes/${allSlugs.at(-1)}/index.html`, allSlugs.at(-1)],
+]) {
+  contains(path, `content="${origin}/og/${slug}.png"`);
+  contains(path, 'content="summary_large_image"');
+  contains(path, `<link rel="canonical"`);
+  contains(path, 'property="og:image:width" content="1200"');
+  contains(path, 'name="theme-color"');
+}
+{
+  const path = `episodes/${allSlugs.at(-1)}/index.html`;
+  contains(path, 'property="og:type" content="article"');
+  contains(path, 'property="article:published_time"');
+  const title = /<title>([^<]*)<\/title>/.exec(file(path) || "")?.[1] || "";
+  check(
+    `${path} title names the site once`,
+    (title.match(/This Month in React/g) || []).length === 1,
+    title,
+  );
+}
+// --- end Task 12 ---
+
 console.log("\nSizes");
 const assetsDir = join(dist, "assets");
 const jsFiles = existsSync(assetsDir)

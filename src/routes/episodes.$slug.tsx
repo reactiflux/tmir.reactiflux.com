@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Document, OgTags, SITE_NAME, SITE_URL } from "../components/Document";
+import {
+  Document,
+  OgTags,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+} from "../components/Document";
 import {
   COMMENTS_SCRIPT,
   EpisodeBody,
@@ -8,6 +14,7 @@ import {
   SEEK_SCRIPT,
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
+import { cardTitle } from "../content/slug.ts";
 
 const ATPROTO_DID = import.meta.env.VITE_ATPROTO_DID;
 
@@ -24,21 +31,29 @@ export const Route = createFileRoute("/episodes/$slug")({
           ? bskyPostToAtUri(episode.bskyPostUrl, ATPROTO_DID)
           : undefined;
 
+        // episode.title already carries the site name or a "TMiR <yyyy-mm>: "
+        // prefix, so strip it before appending the site name.
+        const title = `${cardTitle(episode.title)} — ${SITE_NAME}`;
+        const description = episode.description || SITE_DESCRIPTION;
+        const url = `${SITE_URL}/episodes/${episode.slug}`;
+
         const html = renderToStaticMarkup(
           <Document
             head={
               <>
-                <title>{`${episode.title} — ${SITE_NAME}`}</title>
-                <meta name="description" content={episode.description} />
-                <link
-                  rel="canonical"
-                  href={`${SITE_URL}/episodes/${episode.slug}`}
-                />
+                <title>{title}</title>
+                <meta name="description" content={description} />
+                <link rel="canonical" href={url} />
                 <OgTags
-                  title={`${episode.title} — ${SITE_NAME}`}
-                  description={episode.description}
-                  url={`${SITE_URL}/episodes/${episode.slug}`}
+                  title={title}
+                  description={description}
+                  url={url}
                   type="article"
+                  image={episode.slug}
+                  publishedTime={new Date(
+                    `${episode.date.slice(0, 10)}T00:00:00Z`,
+                  ).toISOString()}
+                  audioUrl={episode.audioUrl}
                 />
                 {episode.atUri && (
                   <link rel="site.standard.document" href={episode.atUri} />

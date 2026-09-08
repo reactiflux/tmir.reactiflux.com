@@ -10,6 +10,9 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { loadEpisodes } from "../src/content/load.ts";
 import type { Episode } from "../src/content/parse.ts";
+import { cardTitle } from "../src/content/slug.ts";
+
+export { cardTitle };
 
 const W = 1200;
 const H = 630;
@@ -22,21 +25,6 @@ const CREAM = "#FAF1E2";
 const MUTED = "#6A7BA0";
 
 const OUT = "dist/client/og";
-
-/**
- * Episode titles carry boilerplate — a "TMiR 2026-07: " prefix on recent ones,
- * a "This Month in React, July 2024: " prefix on older ones, and a trailing
- * "(March 2023)" on the oldest — that wastes card space and duplicates the
- * date printed underneath.
- */
-export function cardTitle(title: string): string {
-  const stripped = title
-    .replace(/^TMiR\s+\d{4}-\d{2}:\s*/, "")
-    .replace(/^This Month in React,[^:]*:\s*/, "")
-    .replace(/\s*\([A-Z][a-z]+ \d{4}\)$/, "")
-    .trim();
-  return stripped || title;
-}
 
 export function runtime(seconds: number | undefined): string {
   if (!seconds) return "";
