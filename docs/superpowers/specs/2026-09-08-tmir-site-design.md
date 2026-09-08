@@ -142,21 +142,25 @@ Plain TypeScript run with Node's native type stripping. No task runner.
 ### `migrate`
 
 One-time. Reads every `tmir-*.md` in the reactiflux.com transcripts
-directory, detects which of the three historical formats it uses, and
-writes a canonical file. The three formats:
+directory and writes a canonical file. The historical files do not fall
+into clean eras; each feature varies independently across the corpus:
+embed and style blocks present or absent, outline present or absent with
+`mm:ss` or `hh:mm:ss` anchors, timestamps leading or trailing a
+paragraph, section headings at level one or two, and speaker labels as
+full names, first names, or raw Descript identifiers. The script detects
+each feature on its own rather than branching on a format version.
 
-1. 2023: `[mm:ss]` prefix on each paragraph, level-one headings for
-   sections, no outline, Anchor embed.
-2. 2024 to mid-2025: `[[mm:ss](#anchor)]` outline, Spotify embed,
-   timestamps at paragraph end.
-3. Mid-2025 onward: `hh:mm:ss` timestamps, Transistor embed, inline
-   `<style>` block, current outline shape.
+The transcript boundary is the first speaker paragraph, not the first
+level-one heading, because one file has a level-one heading inside its
+outline. One file, 2025-06, has an outline with no timestamps because
+that month's recording failed; migrate carries it through with a warning.
 
 The script strips embeds and style blocks, normalizes timestamps to
-`hh:mm:ss`, promotes 2023 level-one section headings to level-two,
-synthesizes an outline from section headings when none exists, and
-writes a report listing every file and any paragraph it could not
-attribute to a speaker or timestamp. Unresolved cases are fixed by hand.
+`hh:mm:ss`, promotes level-one section headings to level-two, re-derives
+anchors from titles, synthesizes an outline from section headings when
+none exists, and writes a report listing every file and any paragraph it
+could not attribute to a speaker or timestamp. Unresolved cases are fixed
+by hand.
 
 ### `ingest`
 
@@ -173,9 +177,14 @@ matching feed item.
    example `1-vcarl` to `Carl Vitullo`.
 3. Replaces everything below `# Transcript` in the episode file.
 4. Generates SRT with speaker prefixes from the parsed transcript and
-   attaches it to the Transistor episode identified by `transistorId`.
+   sends it as the episode's transcript text through the Transistor API,
+   which accepts transcript content as a string and has no separate
+   caption file upload. The episode's numeric API id is resolved by
+   listing the show's episodes and matching the share URL to
+   `transistorId`.
 
-Requires `DESCRIPT_TOKEN` and `TRANSISTOR_API_KEY` in the environment.
+Requires `DESCRIPT_TOKEN`, `TRANSISTOR_API_KEY`, and `TRANSISTOR_SHOW_ID`
+in the environment.
 Steps 3 and 4 can be run independently with flags so a hand-edited
 transcript can still be pushed.
 
