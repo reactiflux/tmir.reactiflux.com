@@ -306,12 +306,12 @@ for (const slug of allSlugs) {
 console.log("\nTask 11: Open Graph cards");
 for (const slug of allSlugs) {
   check(
-    `og/${slug}.png exists`,
-    existsSync(join(dist, "og", `${slug}.png`)),
+    `og/${slug}.jpg exists`,
+    existsSync(join(dist, "og", `${slug}.jpg`)),
     "run: node scripts/og.ts",
   );
 }
-check("og/default.png exists", existsSync(join(dist, "og", "default.png")));
+check("og/default.jpg exists", existsSync(join(dist, "og", "default.jpg")));
 // --- end Task 11 ---
 
 // --- Task 12: link previews ---
@@ -324,7 +324,7 @@ for (const [path, slug] of [
   ["about/index.html", "default"],
   [`episodes/${allSlugs.at(-1)}/index.html`, allSlugs.at(-1)],
 ]) {
-  contains(path, `content="${origin}/og/${slug}.png"`);
+  contains(path, `content="${origin}/og/${slug}.jpg"`);
   contains(path, 'content="summary_large_image"');
   contains(path, `<link rel="canonical"`);
   contains(path, 'property="og:image:width" content="1200"');

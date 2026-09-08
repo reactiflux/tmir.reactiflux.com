@@ -37,7 +37,7 @@ export function ogMeta({
   publishedTime,
   audioUrl,
 }: Og): { property?: string; name?: string; content: string }[] {
-  const imageUrl = `${SITE_URL}/og/${image}.png`;
+  const imageUrl = `${SITE_URL}/og/${image}.jpg`;
   return [
     { property: "og:title", content: title },
     { property: "og:description", content: description },
@@ -47,7 +47,7 @@ export function ogMeta({
     { property: "og:image", content: imageUrl },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
-    { property: "og:image:type", content: "image/png" },
+    { property: "og:image:type", content: "image/jpeg" },
     { property: "og:image:alt", content: imageAlt ?? title },
     ...(publishedTime
       ? [{ property: "article:published_time", content: publishedTime }]

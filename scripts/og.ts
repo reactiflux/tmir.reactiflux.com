@@ -1,6 +1,6 @@
 /**
- * Build-time Open Graph cards: one 1200x630 PNG per episode at
- * dist/client/og/<slug>.png, plus dist/client/og/default.png for every other
+ * Build-time Open Graph cards: one 1200x630 JPEG per episode at
+ * dist/client/og/<slug>.jpg, plus dist/client/og/default.jpg for every other
  * page. Runs offline — fonts and artwork are committed in this repo.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
+import { encode } from "jpeg-js";
 import { loadEpisodes } from "../src/content/load.ts";
 import type { Episode } from "../src/content/parse.ts";
 import { cardTitle } from "../src/content/slug.ts";
@@ -25,6 +26,7 @@ const CREAM = "#FAF1E2";
 const MUTED = "#6A7BA0";
 
 const OUT = "dist/client/og";
+const JPEG_QUALITY = 82;
 
 export function runtime(seconds: number | undefined): string {
   if (!seconds) return "";
@@ -134,10 +136,12 @@ async function main() {
 
   const render = async (name: string, node: Node) => {
     const svg = await satori(node as never, { width: W, height: H, fonts });
-    // ponytail: ~700 KB per card — the artwork's film grain defeats PNG's
-    // filters. Quantize (or emit WebP) if the deploy size starts to matter.
-    const png = new Resvg(svg).render().asPng();
-    await writeFile(join(root, OUT, `${name}.png`), png);
+    // Straight from resvg's RGBA buffer into a JPEG — the artwork's film grain
+    // defeats PNG's filters (~700 KB/card), and skipping asPng() avoids
+    // encoding a PNG we would only throw away.
+    const { pixels, width, height } = new Resvg(svg).render();
+    const jpg = encode({ data: pixels, width, height }, JPEG_QUALITY).data;
+    await writeFile(join(root, OUT, `${name}.jpg`), jpg);
   };
 
   const hosts = (ep: Episode) =>

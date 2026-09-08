@@ -33,6 +33,7 @@
     "@types/react-dom": "19.2.0",
     "@vitejs/plugin-react": "6.1.1",
     "@vitejs/plugin-rsc": "0.5.34",
+    "jpeg-js": "^0.4.4",
     "pagefind": "1.5.2",
     "prettier": "^3.3.0",
     "satori": "^0.33.4",
