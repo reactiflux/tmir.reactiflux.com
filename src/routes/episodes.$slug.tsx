@@ -14,7 +14,9 @@ import {
   SEEK_SCRIPT,
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
+import { jsonLd } from "../content/jsonld.ts";
 import { cardTitle } from "../content/slug.ts";
+import { isoDuration } from "../content/time.ts";
 
 const ATPROTO_DID = import.meta.env.VITE_ATPROTO_DID;
 
@@ -33,9 +35,39 @@ export const Route = createFileRoute("/episodes/$slug")({
 
         // episode.title already carries the site name or a "TMiR <yyyy-mm>: "
         // prefix, so strip it before appending the site name.
-        const title = `${cardTitle(episode.title)} — ${SITE_NAME}`;
+        const name = cardTitle(episode.title);
+        const title = `${name} — ${SITE_NAME}`;
         const description = episode.description || SITE_DESCRIPTION;
         const url = `${SITE_URL}/episodes/${episode.slug}`;
+        const published = new Date(
+          `${episode.date.slice(0, 10)}T00:00:00Z`,
+        ).toISOString();
+
+        const structuredData = jsonLd({
+          "@context": "https://schema.org",
+          "@type": "PodcastEpisode",
+          name,
+          description,
+          url,
+          datePublished: published,
+          image: `${SITE_URL}/og/${episode.slug}.jpg`,
+          partOfSeries: {
+            "@type": "PodcastSeries",
+            name: SITE_NAME,
+            url: `${SITE_URL}/`,
+          },
+          ...(episode.audioUrl
+            ? {
+                associatedMedia: {
+                  "@type": "AudioObject",
+                  contentUrl: episode.audioUrl,
+                  ...(episode.duration !== undefined
+                    ? { duration: isoDuration(episode.duration) }
+                    : {}),
+                },
+              }
+            : {}),
+        });
 
         const html = renderToStaticMarkup(
           <Document
@@ -50,14 +82,16 @@ export const Route = createFileRoute("/episodes/$slug")({
                   url={url}
                   type="article"
                   image={episode.slug}
-                  publishedTime={new Date(
-                    `${episode.date.slice(0, 10)}T00:00:00Z`,
-                  ).toISOString()}
+                  publishedTime={published}
                   audioUrl={episode.audioUrl}
                 />
                 {episode.atUri && (
                   <link rel="site.standard.document" href={episode.atUri} />
                 )}
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{ __html: structuredData }}
+                />
               </>
             }
             bodyClass="episode-page"

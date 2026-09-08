@@ -14,8 +14,12 @@ const slugs = readdirSync("content/episodes")
   .sort();
 
 const pages: { path: string; prerender: { enabled: boolean } }[] = [
-  ...slugs.map((slug) => ({ path: `/episodes/${slug}`, prerender: { enabled: true } })),
+  ...slugs.map((slug) => ({
+    path: `/episodes/${slug}`,
+    prerender: { enabled: true },
+  })),
   { path: "/feed.xml", prerender: { enabled: true } },
+  { path: "/sitemap.xml", prerender: { enabled: true } },
   ...slugs.map((slug) => ({
     path: `/episodes/${slug}/chapters.json`,
     prerender: { enabled: true },

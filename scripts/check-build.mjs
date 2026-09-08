@@ -343,6 +343,49 @@ for (const [path, slug] of [
 }
 // --- end Task 12 ---
 
+// --- Task 13: crawler discovery and structured data ---
+console.log("\nTask 13: robots, sitemap, JSON-LD");
+hasFile("robots.txt");
+contains("robots.txt", "Sitemap:");
+contains("robots.txt", "/sitemap.xml");
+hasFile("sitemap.xml");
+contains("sitemap.xml", "<urlset");
+for (const slug of allSlugs) contains("sitemap.xml", `/episodes/${slug}<`);
+check(
+  "sitemap.xml omits /search",
+  !(file("sitemap.xml") || "").includes("/search"),
+);
+
+/** The first ld+json block in a document, parsed. */
+function ldJson(path) {
+  const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(
+    file(path) || "",
+  );
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+check(
+  "index.html has PodcastSeries JSON-LD",
+  ldJson("index.html")?.["@type"] === "PodcastSeries",
+);
+{
+  const path = `episodes/${allSlugs.at(-1)}/index.html`;
+  const ld = ldJson(path);
+  check(
+    `${path} has PodcastEpisode JSON-LD`,
+    ld?.["@type"] === "PodcastEpisode",
+  );
+  check(
+    `${path} JSON-LD names its series`,
+    ld?.partOfSeries?.["@type"] === "PodcastSeries",
+  );
+}
+// --- end Task 13 ---
+
 console.log("\nSizes");
 const assetsDir = join(dist, "assets");
 const jsFiles = existsSync(assetsDir)
