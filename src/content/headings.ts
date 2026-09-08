@@ -21,9 +21,8 @@ function paragraphSeconds(block: string): number | undefined {
  * it (no content between them), is skipped rather than opening an empty
  * section.
  *
- * Shared by scripts/migrate.ts (legacy sources with a raw Descript body) and
- * scripts/publish-transcript.ts (a fresh Descript export, which also carries
- * no headings of its own).
+ * Used by scripts/publish-transcript.ts, since a Descript export carries no
+ * headings of its own.
  */
 export function insertHeadings(paragraphs: string[], items: TimedItem[]): string[] {
   const times = paragraphs.map(paragraphSeconds);

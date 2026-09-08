@@ -52,8 +52,7 @@ export function descriptToCanonical(markdown: string): string {
 /**
  * A Descript export carries no `## ` headings, so a transcript written from
  * one straight would have no sections at all. Synthesize them from the
- * episode's existing outline, the same way scripts/migrate.ts does for the
- * legacy raw-Descript sources.
+ * episode's existing outline.
  */
 export function addOutlineHeadings(fileText: string, transcriptBody: string): string {
   const { outline } = parseEpisode(fileText, "");
