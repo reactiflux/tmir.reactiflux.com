@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the content model (parse, serialize, slug, SRT) and the three scripts (migrate, ingest, publish-transcript) that turn `content/episodes/<yyyy>-<mm>.md` into the canonical source of truth for This Month in React.
+**Goal:** Build the content model (parse, serialize, slug, SRT) and the four scripts (migrate, ingest, publish-transcript, publish-atproto) that turn `content/episodes/<yyyy>-<mm>.md` into the canonical source of truth for This Month in React.
 
-**Architecture:** One markdown file per episode with YAML front matter, a nested outline list, and a `# Transcript` section. A single parser module (`src/content/parse.ts`) turns a file into an `Episode` object; everything downstream (SRT exporter, and later the site) consumes only that object. Three scripts sit on top: `migrate` converts the historical reactiflux.com transcripts, `ingest` fills feed-owned front matter from the Transistor RSS feed, and `publish-transcript` pulls a Descript export into the file and pushes an SRT to Transistor. No build step, no bundler, no test framework — Node runs the TypeScript directly and `node:test` runs the tests.
+**Architecture:** One markdown file per episode with YAML front matter, a nested outline list, and a `# Transcript` section. A single parser module (`src/content/parse.ts`) turns a file into an `Episode` object; everything downstream (SRT exporter, and later the site) consumes only that object. Four scripts sit on top: `migrate` converts the historical reactiflux.com transcripts, `ingest` fills feed-owned front matter from the Transistor RSS feed, `publish-transcript` pulls a Descript export into the file and pushes an SRT to Transistor, and `publish-atproto` writes the standard.site publication and document records to the show's AT Protocol account and stores each document's AT URI back in front matter. No build step, no bundler, no test framework — Node runs the TypeScript directly and `node:test` runs the tests.
 
-**Tech Stack:** Node v24.15 (native TypeScript type stripping — plain `node file.ts`), `node:test` + `node:assert/strict`, `yaml` (only runtime dependency), `prettier` (only dev dependency).
+**Tech Stack:** Node v24.15 (native TypeScript type stripping — plain `node file.ts`), `node:test` + `node:assert/strict`, `yaml` and `@atproto/api` (the only runtime dependencies), `prettier` (only dev dependency).
 
 **Spec:** `docs/superpowers/specs/2026-09-08-tmir-site-design.md` — this plan covers the "Content model" and "Scripts" sections plus the SRT exporter. The "Site" section is out of scope.
 
@@ -14,7 +14,7 @@
 
 - Node version floor: **22.18** (native type stripping without a flag). The dev machine runs **v24.15.0**, verified with `node --version`. Scripts are run as `node scripts/foo.ts`, never with `--experimental-strip-types`.
 - Type stripping only erases types; it does **not** transform syntax. No `enum`, no `namespace`, no parameter properties (`constructor(private x)`), no `declare` fields. Relative imports must carry the `.ts` extension (`import { slug } from "./slug.ts"`).
-- Dependencies: `yaml` only. Dev dependencies: `prettier` only. **Do not add** vitest, jest, tsx, ts-node, commander, yargs, winston, pino, gray-matter, remark, unified, or a markdown AST library. TypeScript itself is not installed — `tsconfig.json` exists to configure editors, and there is no `typecheck` npm script. Tradeoff: no CI type check; the tests are the check.
+- Dependencies: `yaml`, plus `@atproto/api` added in Task 7. Dev dependencies: `prettier` only. **Do not add** vitest, jest, tsx, ts-node, commander, yargs, winston, pino, gray-matter, remark, unified, or a markdown AST library. TypeScript itself is not installed — `tsconfig.json` exists to configure editors, and there is no `typecheck` npm script. Tradeoff: no CI type check; the tests are the check.
 - `package.json` is `"type": "module"` and `"private": true`.
 - Canonical episode files live at `content/episodes/<yyyy>-<mm>.md`. Slug is `<yyyy>-<mm>`.
 - All timestamps in canonical files and in the parsed structure are `hh:mm:ss` (zero-padded, hours may exceed 2 digits only in theory; format with `padStart(2, "0")`).
@@ -39,6 +39,8 @@
 | `scripts/migrate.ts` | One-time conversion of `reactiflux.com/src/transcripts/tmir-*.md` |
 | `scripts/ingest.ts` | Transistor feed → ingest-owned front matter |
 | `scripts/publish-transcript.ts` | Descript export → file body; SRT → Transistor |
+| `scripts/publish-atproto.ts` | `site.standard.publication` + `site.standard.document` records → the show's PDS; `atUri` → front matter |
+| `.env` (gitignored), `.env.example` | every credential and build variable, loaded by `node --env-file-if-exists=.env` |
 | `tests/*.test.ts` | One test file per module/script |
 | `tests/fixtures/*.md`, `tests/fixtures/feed.xml` | Short real excerpts of each historical format |
 
@@ -308,6 +310,8 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
     time?: string; location?: string;
     transistorId?: string; audioUrl?: string; duration?: number;
     season?: number; episode?: number; people: Person[];
+    bskyPostUrl?: string;   // written by ingest (Task 4)
+    atUri?: string;         // written by publish-atproto (Task 7), never by ingest
     outline: OutlineItem[]; sections: Section[];
   }
   export function splitFile(text: string): { frontMatter: Record<string, unknown>; body: string }
@@ -536,6 +540,11 @@ export interface Episode {
   season?: number;
   episode?: number;
   people: Person[];
+  /** Announcement post on Bluesky, captured by ingest from the feed description. */
+  bskyPostUrl?: string;
+  /** AT URI of this episode's site.standard.document record. Owned by
+   *  scripts/publish-atproto.ts — ingest must never write it. */
+  atUri?: string;
   outline: OutlineItem[];
   sections: Section[];
 }
@@ -679,6 +688,8 @@ export function parseEpisode(text: string, epSlug: string): Episode {
     season: fm.season,
     episode: fm.episode,
     people: Array.isArray(fm.people) ? (fm.people as Person[]) : [],
+    bskyPostUrl: fm.bskyPostUrl,
+    atUri: fm.atUri,
     outline: parseOutline(outlineRegion),
     sections: parseSections(transcriptRegion),
   };
@@ -1303,10 +1314,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: `splitFile` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`.
 - Produces:
-  - `interface FeedItem { slug: string; transistorId: string; audioUrl: string; duration: number; season?: number; episode?: number; people: Person[] }`
+  - `interface FeedItem { slug: string; transistorId: string; audioUrl: string; duration: number; season?: number; episode?: number; people: Person[]; bskyPostUrl?: string }`
   - `parseFeed(xml: string): FeedItem[]`
   - `slugFromTitle(title: string): string | null`
   - `applyFeedItem(fileText: string, item: FeedItem): string`
+
+**Ingest-owned fields:** `transistorId`, `audioUrl`, `duration`, `season`, `episode`, `people`, `bskyPostUrl`. **`atUri` is not one of them** — it is written by `scripts/publish-atproto.ts` (Task 7) and `applyFeedItem` must never read or write it. Since `applyFeedItem` only assigns named keys onto the object returned by `splitFile`, any existing `atUri` survives untouched; the idempotence test below asserts that.
 
 **Feed shape (read from the live feed, saved copy verified):** `https://feeds.transistor.fm/this-month-in-react`. Relevant per-`<item>` tags:
 
@@ -1318,12 +1331,15 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   <link>https://share.transistor.fm/s/dd8e79de</link>
   <enclosure url="https://op3.dev/e/media.transistor.fm/dd8e79de/4c5d3ad7.mp3" length="67205341" type="audio/mpeg"/>
   <itunes:duration>4198</itunes:duration>
+  <description><![CDATA[<p>Show notes …</p><p><a href="https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x" title="Reply on Bluesky">Reply on Bluesky</a></p>]]></description>
   <podcast:person role="Host" href="https://blog.isquaredsoftware.com" img="https://img.transistorcdn.com/...jpg">Mark Erikson</podcast:person>
   <podcast:person role="Producer" href="https://vcarl.com" img="https://img.transistorcdn.com/...jpg">Carl Vitullo</podcast:person>
 </item>
 ```
 
 `transistorId` is the id after `/s/` in `<link>` (`dd8e79de`). The channel also carries `<podcast:person>` elements outside any `<item>`; splitting on `<item>` first avoids picking those up.
+
+`bskyPostUrl` is the `href` of the anchor inside the `<description>` CDATA whose `title` attribute is `Reply on Bluesky`. Match on the `bsky.app/profile/…/post/…` shape rather than on the title text, so a renamed link still resolves; older items have no such link at all and leave the field unset.
 
 Title styles actually present in the feed, and the non-TMiR titles that must be rejected:
 
@@ -1352,6 +1368,7 @@ Create `tests/fixtures/feed.xml` with three items — one current TMiR, one old-
       <link>https://share.transistor.fm/s/dd8e79de</link>
       <enclosure url="https://op3.dev/e/media.transistor.fm/dd8e79de/4c5d3ad7.mp3" length="67205341" type="audio/mpeg"/>
       <itunes:duration>4198</itunes:duration>
+      <description><![CDATA[<p>Join Carl and Mark.</p><p><a href="https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x" title="Reply on Bluesky">Reply on Bluesky</a></p>]]></description>
       <podcast:person role="Host" href="https://blog.isquaredsoftware.com" img="https://img.transistorcdn.com/mark.jpg">Mark Erikson</podcast:person>
       <podcast:person role="Producer" href="https://vcarl.com" img="https://img.transistorcdn.com/carl.jpg">Carl Vitullo</podcast:person>
     </item>
@@ -1422,9 +1439,12 @@ test("parseFeed extracts TMiR items only", () => {
         img: "https://img.transistorcdn.com/carl.jpg",
       },
     ],
+    bskyPostUrl: "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
   });
   assert.equal(items[1].slug, "2023-09");
   assert.equal(items[1].people.length, 1);
+  // The 2023 item has no description and therefore no announcement post.
+  assert.equal(items[1].bskyPostUrl, undefined);
 });
 
 test("applyFeedItem writes only ingest-owned fields and is idempotent", () => {
@@ -1434,6 +1454,7 @@ test("applyFeedItem writes only ingest-owned fields and is idempotent", () => {
     "date: 2026-05-28",
     'description: "A description"',
     "time: 2pm PT / 9pm GMT",
+    "atUri: at://did:plc:example/site.standard.document/2026-05",
     "---",
     "",
     "- [[00:00:55](#some-podcast-meta)] Some podcast meta",
@@ -1454,10 +1475,16 @@ test("applyFeedItem writes only ingest-owned fields and is idempotent", () => {
   assert.equal(ep.season, 3);
   assert.equal(ep.episode, 5);
   assert.equal(ep.people[1].name, "Carl Vitullo");
+  assert.equal(
+    ep.bskyPostUrl,
+    "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
+  );
   // hand-written fields untouched
   assert.equal(ep.time, "2pm PT / 9pm GMT");
   assert.equal(ep.description, "A description");
   assert.equal(ep.sections[0].segments[0].text, "Hello.");
+  // atUri belongs to publish-atproto; ingest must leave it exactly as it found it
+  assert.equal(ep.atUri, "at://did:plc:example/site.standard.document/2026-05");
 });
 ```
 
@@ -1485,6 +1512,7 @@ export interface FeedItem {
   season?: number;
   episode?: number;
   people: Person[];
+  bskyPostUrl?: string;
 }
 
 const MONTHS = [
@@ -1559,6 +1587,11 @@ export function parseFeed(xml: string): FeedItem[] {
 
     const season = Number(tag(item, "podcast:season") ?? NaN);
     const episode = Number(tag(item, "podcast:episode") ?? NaN);
+    // The "Reply on Bluesky" anchor inside the <description> CDATA. Matched on
+    // the URL shape, not the link text, so a renamed link still resolves.
+    const bskyPostUrl = /href="(https:\/\/bsky\.app\/profile\/[^/"]+\/post\/[^"]+)"/.exec(
+      item,
+    )?.[1];
     items.push({
       slug: epSlug,
       transistorId,
@@ -1567,12 +1600,17 @@ export function parseFeed(xml: string): FeedItem[] {
       season: Number.isNaN(season) ? undefined : season,
       episode: Number.isNaN(episode) ? undefined : episode,
       people,
+      bskyPostUrl: bskyPostUrl ? decode(bskyPostUrl) : undefined,
     });
   }
   return items;
 }
 
-/** Rewrite only the ingest-owned front matter fields. */
+/**
+ * Rewrite only the ingest-owned front matter fields. `atUri` is deliberately
+ * absent: it belongs to scripts/publish-atproto.ts and survives untouched
+ * because we only assign named keys onto the parsed object.
+ */
 export function applyFeedItem(fileText: string, item: FeedItem): string {
   const { frontMatter, body } = splitFile(fileText);
   frontMatter.transistorId = item.transistorId;
@@ -1581,6 +1619,7 @@ export function applyFeedItem(fileText: string, item: FeedItem): string {
   if (item.season !== undefined) frontMatter.season = item.season;
   if (item.episode !== undefined) frontMatter.episode = item.episode;
   frontMatter.people = item.people;
+  if (item.bskyPostUrl !== undefined) frontMatter.bskyPostUrl = item.bskyPostUrl;
   return serializeEpisodeFile(frontMatter, body);
 }
 
@@ -1781,9 +1820,9 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `fetchDescriptTranscript(projectId: string, token: string): Promise<string>`
   - `pushSrtToTranscript(transistorId: string, srt: string, apiKey: string, showId: string): Promise<void>`
 
-**CLI:** `node scripts/publish-transcript.ts <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]`. Argument handling is `process.argv.slice(2)` plus two `includes` checks — no CLI framework.
+**CLI:** `npm run publish-transcript -- <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]`. Argument handling is `process.argv.slice(2)` plus two `includes` checks — no CLI framework.
 
-**Environment:** `DESCRIPT_TOKEN`, `TRANSISTOR_API_KEY`, `TRANSISTOR_SHOW_ID`.
+**Environment:** `DESCRIPT_TOKEN`, `TRANSISTOR_API_KEY`, `TRANSISTOR_SHOW_ID`, read from a gitignored `.env` at the repo root. Task 7 adds the npm scripts that pass `--env-file-if-exists=.env`; until that task lands, the exact equivalent is `node --env-file-if-exists=.env scripts/publish-transcript.ts …`, and every run command in this task can be written either way.
 
 **Descript API (fetched from https://docs.descriptapi.com/, 2026-09-08):**
 
@@ -2029,7 +2068,7 @@ async function main() {
 
   if (!epSlug || (!projectId && !skipDescript)) {
     console.error(
-      "usage: node scripts/publish-transcript.ts <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]",
+      "usage: npm run publish-transcript -- <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]",
     );
     process.exit(1);
   }
@@ -2070,14 +2109,14 @@ Expected: PASS, all suites.
 
 - [ ] **Step 5: Verify the local half of the CLI without network access**
 
-Run: `node scripts/publish-transcript.ts 2026-05 dummy --skip-descript --skip-transistor`
+Run: `node --env-file-if-exists=.env scripts/publish-transcript.ts 2026-05 dummy --skip-descript --skip-transistor`
 Expected: exits 0 with no output and no file change (`git diff --stat` is empty).
 
 - [ ] **Step 6: Verify the Descript assumption against a real export**
 
-This is the one step in the plan that needs a credential and cannot be pre-verified. With `DESCRIPT_TOKEN` set and a real project id:
+This is the one step in the plan that needs a credential and cannot be pre-verified. With `DESCRIPT_TOKEN` in `.env` (or the environment) and a real project id:
 
-Run: `node scripts/publish-transcript.ts 2026-05 <realProjectId> --skip-transistor && git diff content/episodes/2026-05.md | head -60`
+Run: `node --env-file-if-exists=.env scripts/publish-transcript.ts 2026-05 <realProjectId> --skip-transistor && git diff content/episodes/2026-05.md | head -60`
 Expected: the transcript body is replaced with `**Carl Vitullo:** … [hh:mm:ss]` paragraphs. If the speakers come through unmapped or the timestamps land in the wrong place, the Descript export shape differs from the assumption — fix `descriptToCanonical` (and only it), add a test with the real shape pasted in, and rerun.
 
 - [ ] **Step 7: Commit**
@@ -2085,6 +2124,414 @@ Expected: the transcript body is replaced with `**Carl Vitullo:** … [hh:mm:ss]
 ```bash
 git add scripts/publish-transcript.ts tests/publish-transcript.test.ts
 git commit -m "feat: add publish-transcript script for Descript and Transistor
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 7: publish-atproto script, and one `.env` for every script
+
+**Files:**
+- Create: `scripts/publish-atproto.ts`
+- Create: `.env.example`
+- Modify: `.gitignore`, `package.json`
+- Test: `tests/publish-atproto.test.ts`
+
+**Interfaces:**
+- Consumes: `Episode`, `OutlineItem`, `Person`, `parseEpisode`, `splitFile` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`.
+- Produces:
+  - `PUBLICATION_NAME: string`, `PUBLICATION_DESCRIPTION: string`
+  - `PUBLICATION_COLLECTION = "site.standard.publication"`, `DOCUMENT_COLLECTION = "site.standard.document"`
+  - `outlineToText(items: OutlineItem[], depth?: number): string`
+  - `bskyUrlToParts(url: string): { actor: string; rkey: string } | null`
+  - `buildDocumentRecord(episode: Episode, opts: { siteUri: string; bskyPostRef?: { uri: string; cid: string } }): Record<string, unknown>`
+
+**CLI:** `npm run publish-atproto` publishes the publication record plus every episode; `npm run publish-atproto -- 2026-05` publishes the publication record plus that one episode.
+
+**Environment:** `ATPROTO_HANDLE`, `ATPROTO_APP_PASSWORD`, `VITE_SITE_URL`. All three come from the gitignored `.env` at the repo root, loaded by Node itself (`--env-file-if-exists=.env`) — there is no `dotenv` dependency and no code that reads a file. `VITE_SITE_URL` is the same variable the site build reads, so the publication `url` and the site's canonical URLs can never drift apart.
+
+**Record schemas, verified 2026-09-08 against https://standard.site/docs/lexicons/publication/ and https://standard.site/docs/lexicons/document/:**
+
+- `site.standard.publication` — required `url` (string, the base URL) and `name` (string, ≤5000 chars); optional `description` (≤30000 chars), `icon` (blob), `basicTheme`, `labels`, `preferences`. Written at rkey `self`. (The docs show an alphanumeric rkey in their example and do not mandate `self`; `self` is this project's choice, per the spec, because there is exactly one publication per account and reruns must overwrite it.)
+- `site.standard.document` — required `site` (a publication `at://` URI or `https://` URL), `title` (≤5000 chars), `publishedAt` (datetime); optional `path`, `description` (≤30000), `textContent` (plaintext of the contents), `tags` (array of strings), `contributors` (array), `bskyPostRef` (strong ref: `{ uri, cid }`), `links`, `labels`, `coverImage`, `content`, `updatedAt`. Written at rkey = the episode slug so reruns overwrite.
+- **`content` is deliberately omitted.** It is an open union of structured content types; the transcript is already carried as `textContent` and lives canonically on the site, and encoding it a second time as a structured document buys nothing at launch.
+- **One known conflict, carried deliberately.** The document lexicon marks `contributors[].did` as **required** (`string`, format `did`), and TMiR's `people` come from the Transistor feed, which carries names and URLs but no DIDs. This plan writes `{ displayName, role }` only, per the spec. If the live `putRecord` in Step 8 rejects the record for a missing `did`, the fix is one of: drop `contributors` entirely, or hardcode the two hosts' DIDs in a map beside `SPEAKERS`. Decide at that step; do not pre-build the map.
+
+**`@atproto/api` usage, verified 2026-09-08 against https://www.npmjs.com/package/@atproto/api (latest published version **0.20.42**, read from `https://registry.npmjs.org/@atproto/api/latest`) and the package README at https://github.com/bluesky-social/atproto/tree/main/packages/api:**
+
+```ts
+const agent = new AtpAgent({ service: "https://bsky.social" })
+await agent.login({ identifier, password })
+const res = await agent.com.atproto.repo.putRecord({ repo, collection, rkey, record })
+// res.data.uri, res.data.cid
+const who = await agent.com.atproto.identity.resolveHandle({ handle })  // who.data.did
+const rec = await agent.com.atproto.repo.getRecord({ repo, collection, rkey }) // rec.data.uri, rec.data.cid
+```
+
+XRPC calls return `{ success, headers, data }`; the `uri`/`cid`/`did` live on `.data`. `agent.session.did` is the logged-in repo's DID after `login`.
+
+- [ ] **Step 1: Add the dependency**
+
+Run: `npm install @atproto/api@^0.20.42`
+Expected: `package.json` gains `"@atproto/api": "^0.20.42"` under `dependencies`; `npm ls @atproto/api` prints a resolved version.
+
+- [ ] **Step 2: Gitignore `.env` and add the npm scripts**
+
+`.gitignore` currently holds exactly:
+
+```
+node_modules/
+.DS_Store
+*.m4a
+*.srt
+```
+
+Append these two lines (keep `.env.example` tracked):
+
+```
+.env
+!.env.example
+```
+
+Then add three scripts to `package.json`, beside the existing `test` and `format`. `--env-file-if-exists` is a Node 22+ flag, so no code reads `.env` — Node does:
+
+```json
+    "ingest": "node --env-file-if-exists=.env scripts/ingest.ts",
+    "publish-transcript": "node --env-file-if-exists=.env scripts/publish-transcript.ts",
+    "publish-atproto": "node --env-file-if-exists=.env scripts/publish-atproto.ts"
+```
+
+`migrate` gets no script — it is a one-time job that needs no credentials.
+
+- [ ] **Step 3: Verify the flag exists on this Node**
+
+Run: `node --version && node --help | grep env-file`
+Expected: `v24.15.0` and two lines, `--env-file=...` and `--env-file-if-exists=...`. If `--env-file-if-exists` is absent, the Node is too old — stop, do not fall back to a `dotenv` dependency.
+
+- [ ] **Step 4: Write `.env.example`**
+
+Committed, and the authoritative list of every variable in the repo. `.env` is a copy of it with real values.
+
+```sh
+# Copy to .env and fill in. .env is gitignored; this file is not.
+
+# --- scripts ---
+# Descript API token, for exporting transcripts (publish-transcript)
+DESCRIPT_TOKEN=
+# Transistor API key, for pushing the SRT (publish-transcript)
+TRANSISTOR_API_KEY=
+# Transistor numeric show id, used to resolve a share id to an episode id
+TRANSISTOR_SHOW_ID=
+# Bluesky/AT Protocol handle that owns the publication (publish-atproto)
+ATPROTO_HANDLE=
+# App password for that account — not the account password (publish-atproto)
+ATPROTO_APP_PASSWORD=
+
+# --- site build (Vite reads these from .env automatically) ---
+# Site name in the header, page titles and the feed
+VITE_SITE_NAME=This Month in React
+# Canonical site URL; also the publication `url` written by publish-atproto
+VITE_SITE_URL=https://thismonthinreact.com
+# Buttondown username; when unset the newsletter form is omitted entirely
+VITE_BUTTONDOWN_USER=
+# AT URI of the site.standard.publication record, for /.well-known
+VITE_ATPROTO_PUBLICATION_URI=
+# DID of the show account, used to build at:// URIs for the comments fetch
+VITE_ATPROTO_DID=
+# Bluesky profile URL, linked from /about
+VITE_BLUESKY_PROFILE_URL=https://bsky.app/profile/thismonthinreact.com
+```
+
+- [ ] **Step 5: Write the failing test**
+
+Only the pure functions are tested; `login`, `putRecord`, `resolveHandle` and `getRecord` are exercised by the live run in Step 8, exactly as Task 6 does for Descript and Transistor. Create `tests/publish-atproto.test.ts`:
+
+```ts
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  outlineToText,
+  bskyUrlToParts,
+  buildDocumentRecord,
+} from "../scripts/publish-atproto.ts";
+import { parseEpisode } from "../src/content/parse.ts";
+
+const raw = readFileSync(
+  new URL("./fixtures/canonical-2026-05.md", import.meta.url),
+  "utf8",
+);
+const episode = parseEpisode(raw, "2026-05");
+
+test("outlineToText flattens the outline to indented 'Title — url' lines", () => {
+  assert.equal(
+    outlineToText(episode.outline),
+    [
+      "Some podcast meta",
+      "New Releases",
+      "  TS v7 beta — https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/",
+      "  Rolldown 1.0 — https://voidzero.dev/posts/announcing-rolldown-1-0",
+      "Outro",
+    ].join("\n"),
+  );
+});
+
+test("bskyUrlToParts splits a post URL and rejects anything else", () => {
+  assert.deepEqual(
+    bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x"),
+    { actor: "thismonthinreact.com", rkey: "3lqz7abcd2k2x" },
+  );
+  assert.deepEqual(
+    bskyUrlToParts("https://bsky.app/profile/did:plc:abc123/post/3lqz7abcd2k2x"),
+    { actor: "did:plc:abc123", rkey: "3lqz7abcd2k2x" },
+  );
+  assert.equal(bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com"), null);
+  assert.equal(bskyUrlToParts("https://example.com/whatever"), null);
+});
+
+test("buildDocumentRecord matches the site.standard.document lexicon", () => {
+  const record = buildDocumentRecord(episode, {
+    siteUri: "at://did:plc:show/site.standard.publication/self",
+    bskyPostRef: {
+      uri: "at://did:plc:show/app.bsky.feed.post/3lqz7abcd2k2x",
+      cid: "bafyreiexamplecid",
+    },
+  });
+
+  assert.equal(record.$type, "site.standard.document");
+  assert.equal(record.site, "at://did:plc:show/site.standard.publication/self");
+  assert.equal(record.title, episode.title);
+  assert.equal(record.publishedAt, "2026-05-28T00:00:00.000Z");
+  assert.equal(record.path, "/episodes/2026-05");
+  assert.equal(record.description, episode.description);
+  assert.ok(String(record.textContent).startsWith("Some podcast meta\n"));
+  assert.deepEqual(record.tags, ["devblogs.microsoft.com", "voidzero.dev"]);
+  assert.deepEqual(record.contributors, [
+    { displayName: "Mark Erikson", role: "Host" },
+    { displayName: "Carl Vitullo", role: "Producer" },
+  ]);
+  assert.deepEqual(record.bskyPostRef, {
+    uri: "at://did:plc:show/app.bsky.feed.post/3lqz7abcd2k2x",
+    cid: "bafyreiexamplecid",
+  });
+  // `content` is deliberately omitted; textContent carries the outline.
+  assert.equal("content" in record, false);
+});
+
+test("buildDocumentRecord omits bskyPostRef when there is no announcement post", () => {
+  const record = buildDocumentRecord(episode, {
+    siteUri: "at://did:plc:show/site.standard.publication/self",
+  });
+  assert.equal("bskyPostRef" in record, false);
+});
+```
+
+- [ ] **Step 6: Run the test to verify it fails**
+
+Run: `npm test`
+Expected: FAIL — `Cannot find module '../scripts/publish-atproto.ts'`.
+
+- [ ] **Step 7: Write `scripts/publish-atproto.ts`**
+
+```ts
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { AtpAgent } from "@atproto/api";
+import type { Episode, OutlineItem } from "../src/content/parse.ts";
+import { parseEpisode, splitFile } from "../src/content/parse.ts";
+import { serializeEpisodeFile } from "../src/content/serialize.ts";
+
+export const PUBLICATION_COLLECTION = "site.standard.publication";
+export const DOCUMENT_COLLECTION = "site.standard.document";
+export const PUBLICATION_RKEY = "self";
+export const PUBLICATION_NAME = "This Month in React";
+export const PUBLICATION_DESCRIPTION =
+  "A monthly news podcast about React and its ecosystem, hosted by Carl Vitullo and Mark Erikson.";
+
+const SERVICE = "https://bsky.social";
+const EPISODE_DIR = resolve("content/episodes");
+
+/** Outline -> indented plain text, one `Title — url` line per item. */
+export function outlineToText(items: OutlineItem[], depth = 0): string {
+  const lines: string[] = [];
+  for (const item of items) {
+    const indent = "  ".repeat(depth);
+    lines.push(`${indent}${item.title}${item.url ? ` — ${item.url}` : ""}`);
+    if (item.children.length > 0) lines.push(outlineToText(item.children, depth + 1));
+  }
+  return lines.join("\n");
+}
+
+/** `https://bsky.app/profile/<handle-or-did>/post/<rkey>` -> its two parts. */
+export function bskyUrlToParts(
+  url: string,
+): { actor: string; rkey: string } | null {
+  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(url.trim());
+  return m ? { actor: m[1], rkey: m[2] } : null;
+}
+
+function hostnames(items: OutlineItem[], into: Set<string>): Set<string> {
+  for (const item of items) {
+    if (item.url) {
+      try {
+        into.add(new URL(item.url).hostname);
+      } catch {
+        // A malformed outline URL is not worth failing a publish over.
+      }
+    }
+    hostnames(item.children, into);
+  }
+  return into;
+}
+
+/** Episode -> a site.standard.document record. `content` is omitted by design. */
+export function buildDocumentRecord(
+  episode: Episode,
+  opts: { siteUri: string; bskyPostRef?: { uri: string; cid: string } },
+): Record<string, unknown> {
+  const record: Record<string, unknown> = {
+    $type: DOCUMENT_COLLECTION,
+    site: opts.siteUri,
+    title: episode.title,
+    publishedAt: new Date(`${episode.date}T00:00:00Z`).toISOString(),
+    path: `/episodes/${episode.slug}`,
+    description: episode.description,
+    textContent: outlineToText(episode.outline),
+    tags: [...hostnames(episode.outline, new Set<string>())],
+    contributors: episode.people.map((person) =>
+      person.role
+        ? { displayName: person.name, role: person.role }
+        : { displayName: person.name },
+    ),
+  };
+  if (opts.bskyPostRef) record.bskyPostRef = opts.bskyPostRef;
+  return record;
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set (see .env.example)`);
+  return value;
+}
+
+/** bsky.app post URL -> the strong ref the document record needs. */
+async function resolvePostRef(
+  agent: AtpAgent,
+  url: string,
+): Promise<{ uri: string; cid: string } | undefined> {
+  const parts = bskyUrlToParts(url);
+  if (!parts) {
+    console.log(`  unrecognized bskyPostUrl, skipping ref: ${url}`);
+    return undefined;
+  }
+  const did = parts.actor.startsWith("did:")
+    ? parts.actor
+    : (await agent.com.atproto.identity.resolveHandle({ handle: parts.actor })).data.did;
+  const res = await agent.com.atproto.repo.getRecord({
+    repo: did,
+    collection: "app.bsky.feed.post",
+    rkey: parts.rkey,
+  });
+  if (!res.data.cid) return undefined;
+  return { uri: res.data.uri, cid: res.data.cid };
+}
+
+async function main() {
+  const only = process.argv.slice(2).find((a) => !a.startsWith("--"));
+
+  const agent = new AtpAgent({ service: SERVICE });
+  await agent.login({
+    identifier: requireEnv("ATPROTO_HANDLE"),
+    password: requireEnv("ATPROTO_APP_PASSWORD"),
+  });
+  const repo = agent.session!.did;
+
+  const publication = await agent.com.atproto.repo.putRecord({
+    repo,
+    collection: PUBLICATION_COLLECTION,
+    rkey: PUBLICATION_RKEY,
+    record: {
+      $type: PUBLICATION_COLLECTION,
+      url: requireEnv("VITE_SITE_URL").replace(/\/$/, ""),
+      name: PUBLICATION_NAME,
+      description: PUBLICATION_DESCRIPTION,
+    },
+  });
+  const siteUri = publication.data.uri;
+  console.log(`publication ${siteUri}`);
+
+  const names = readdirSync(EPISODE_DIR)
+    .filter((n) => n.endsWith(".md"))
+    .filter((n) => !only || n === `${only}.md`)
+    .sort();
+  if (only && names.length === 0) throw new Error(`no episode file for ${only}`);
+
+  for (const name of names) {
+    const path = join(EPISODE_DIR, name);
+    const fileText = readFileSync(path, "utf8");
+    const epSlug = name.slice(0, -3);
+    const episode = parseEpisode(fileText, epSlug);
+
+    const bskyPostRef = episode.bskyPostUrl
+      ? await resolvePostRef(agent, episode.bskyPostUrl)
+      : undefined;
+
+    const res = await agent.com.atproto.repo.putRecord({
+      repo,
+      collection: DOCUMENT_COLLECTION,
+      rkey: epSlug,
+      record: buildDocumentRecord(episode, { siteUri, bskyPostRef }),
+    });
+
+    const { frontMatter, body } = splitFile(fileText);
+    if (frontMatter.atUri !== res.data.uri) {
+      frontMatter.atUri = res.data.uri;
+      writeFileSync(path, serializeEpisodeFile(frontMatter, body));
+      console.log(`${epSlug} -> ${res.data.uri} (atUri written)`);
+    } else {
+      console.log(`${epSlug} -> ${res.data.uri}`);
+    }
+  }
+}
+
+if (import.meta.filename === process.argv[1]) await main();
+```
+
+- [ ] **Step 8: Run the test to verify it passes**
+
+Run: `npm test`
+Expected: PASS, all suites.
+
+- [ ] **Step 9: Publish one episode live**
+
+Needs real credentials in `.env` (`ATPROTO_HANDLE`, `ATPROTO_APP_PASSWORD`, `VITE_SITE_URL`). This is the step that exercises `login`, `putRecord`, `resolveHandle` and `getRecord`.
+
+Run: `npm run publish-atproto -- 2026-05`
+Expected: a `publication at://did:plc:…/site.standard.publication/self` line, then `2026-05 -> at://did:plc:…/site.standard.document/2026-05 (atUri written)`, and `git diff content/episodes/2026-05.md` shows exactly one added `atUri:` line.
+
+If `putRecord` rejects the document, read the error before changing anything: a complaint about `contributors/*/did` is the known lexicon conflict above — drop `contributors` from `buildDocumentRecord` (and its assertion from the test) or add a name→DID map, then rerun. A complaint about any other field means the lexicon moved; re-read https://standard.site/docs/lexicons/document/ and match it exactly.
+
+- [ ] **Step 10: Verify idempotence and then publish the rest**
+
+Run: `npm run publish-atproto -- 2026-05 && git status --short content/episodes/2026-05.md`
+Expected: the same AT URI, no `(atUri written)` suffix, and no change to the file.
+
+Run: `npm run publish-atproto`
+Expected: one line per episode, each with an AT URI.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add package.json package-lock.json .gitignore .env.example scripts/publish-atproto.ts tests/publish-atproto.test.ts
+git commit -m "feat: publish standard.site publication and document records to AT Protocol
+
+Adds a single gitignored .env, loaded by node --env-file-if-exists, for every
+script credential.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add content/episodes
+git commit -m "chore: record document AT URIs in episode front matter
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -2099,7 +2546,11 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 | --- | --- |
 | `content/episodes/<yyyy>-<mm>.md` one file per episode | Task 3 (migrate writes them), format defined in "Canonical Episode File Format" |
 | Hand-written front matter: `title`, `date`, `description`, `time`, `location` | Task 2 (`Episode` fields, parser) |
-| Ingest-owned front matter: `transistorId`, `audioUrl`, `duration`, `season`, `episode`, `people` | Task 4 (`applyFeedItem`) |
+| Ingest-owned front matter: `transistorId`, `audioUrl`, `duration`, `season`, `episode`, `people`, `bskyPostUrl` | Task 4 (`applyFeedItem`) |
+| `atUri` written by `publish-atproto`, never by ingest | Task 7 (writer), Task 4 (asserted untouched) |
+| `site.standard.publication` at rkey `self`: `url`, `name`, `description` | Task 7 |
+| `site.standard.document` per episode keyed by slug: `site`, `title`, `publishedAt`, `path`, `description`, `textContent`, `tags`, `contributors`, `bskyPostRef` | Task 7 (`buildDocumentRecord`) |
+| `ATPROTO_HANDLE` / `ATPROTO_APP_PASSWORD`, `@atproto/api` | Task 7 (Global Constraints dependency note, `.env.example`) |
 | Ingest matches by `yyyy-mm` in the feed title, both title styles | Task 4 (`slugFromTitle`, tested against every real style) |
 | Body: outline then `# Transcript`, `##` sections, `**Speaker:**`, trailing `[hh:mm:ss]` | Task 2 |
 | Parsed structure `Episode`/`OutlineItem`/`Section`/`Segment` | Task 2 (interfaces block) |
@@ -2108,11 +2559,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 | `publish-transcript` steps 1–4 with independent flags, `DESCRIPT_TOKEN` / `TRANSISTOR_API_KEY` | Task 6 |
 | SRT export with speaker prefixes | Task 5 |
 | Testing: parser fixtures per historical format; migrate round-trips through the parser; ingest against a saved feed; SRT cue numbering/format/prefix | Tasks 2–5 |
+| `/.well-known/site.standard.publication`, `<link rel="site.standard.document">`, the comments section | **Site plan**, `docs/superpowers/plans/2026-09-08-site.md` |
 | Site, routes, CSS, Pagefind, Netlify, newsletter, risk gate | **Out of scope**, per the plan header |
 
 Two gaps found and closed while reviewing: `TRANSISTOR_SHOW_ID` is needed to resolve a share id to an episode id and is not in the spec's env list — added to Task 6's environment note. And the spec's "three historical formats" is not accurate to the corpus; Task 3 replaces it with a per-feature detection table derived from reading all 39 files, and calls out the two files (`tmir-2024-04.md`, `tmir-2025-06.md`) that break the naive rules.
 
-**2. Placeholder scan.** No TBD/TODO, no "add error handling", no "similar to Task N". Every code step carries runnable code. The one deliberate uncertainty is the Descript markdown export shape, which is labelled as such, given a concrete assumed shape from a real pasted export, isolated to a single function, and paired with a verification step (Task 6, Step 6).
+**2. Placeholder scan.** No TBD/TODO, no "add error handling", no "similar to Task N". Every code step carries runnable code. The one deliberate uncertainty is the Descript markdown export shape, which is labelled as such, given a concrete assumed shape from a real pasted export, isolated to a single function, and paired with a verification step (Task 6, Step 6). Task 7 carries a second, equally explicit one: the document lexicon marks `contributors[].did` required and the feed gives us no DIDs, so the record is written without it and Step 9 names both fallbacks to take if the PDS rejects it.
 
 **3. Type consistency.** Checked across tasks: `slug`/`flattenLinks`/`normalizeTime`/`secondsToTimestamp`/`timestampToSeconds` (Task 1) are used with the same names in Tasks 2, 3, 5, 6. `splitFile` returns `{ frontMatter, body }` in Task 2 and is destructured that way in Tasks 3 and 4. `serializeEpisodeFile(frontMatter, body)` has the same two-argument signature everywhere. `Person` is defined in `parse.ts` and imported by `ingest.ts` as a type-only import. `TRANSCRIPT_MARKER` is exported from `parse.ts` and consumed in Task 6. `toSrt(episode)` takes the `Episode` from `parseEpisode`. 
 Three problems found and fixed inline while reviewing:

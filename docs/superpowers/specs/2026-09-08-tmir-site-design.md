@@ -34,6 +34,9 @@ demonstrate, not just claim, fluency with the ecosystem the show covers.
    episode's audio URL, duration, season, episode number, and people.
 5. Commit and push. Netlify builds the site, prerenders every page, and
    regenerates the search index, link index, and RSS feed.
+6. Run the AT Protocol publish command. It writes the episode's document
+   record to the show's account so AT Protocol readers and Bluesky link
+   previews pick it up, and links it to the announcement post.
 
 Nothing in that flow requires opening a text editor except step 2, and
 step 2 is the editorial work the hosts already do.
@@ -55,6 +58,10 @@ step 2 is the editorial work the hosts already do.
   listeners see chapters and captions in their app.
 - Everyone can subscribe through Spotify, Apple Podcasts, or RSS from any
   page.
+- A Bluesky user who shares an episode link sees a rich preview naming
+  the publication. Replies to the episode's announcement post appear on
+  the episode page as comments, and a "Reply on Bluesky" link takes them
+  to the thread.
 
 ## Goals
 
@@ -97,6 +104,8 @@ Fields written by the ingest script, never by hand:
 | `season`        | number   | `podcast:season`                          |
 | `episode`       | number   | `podcast:episode`                         |
 | `people`        | list     | `podcast:person`: name, role, href, img   |
+| `bskyPostUrl`   | string   | "Reply on Bluesky" link in the description |
+| `atUri`         | string   | Written by `publish-atproto`, not ingest   |
 
 Ingest matches feed items to files by the `yyyy-mm` in the feed title,
 which every TMiR title carries as `TMiR yyyy-mm:` or as a month name plus
@@ -256,6 +265,45 @@ feature does the sending. Account setup and the Buttondown username are
 outside this repository; the form action reads the username from
 environment at build time.
 
+### AT Protocol and standard.site
+
+The site is a standard.site publication and each episode is a
+standard.site document, so AT Protocol readers and Bluesky previews
+recognize it. Nothing in this section is required for the site to render;
+it is a layer on top.
+
+Records, written to the publishing account's PDS by the
+`publish-atproto` script:
+
+- One `site.standard.publication` record at key `self`: `url`, `name`,
+  `description`.
+- One `site.standard.document` record per episode, keyed by the episode
+  slug so reruns overwrite rather than duplicate: `site` (the publication
+  AT URI), `title`, `publishedAt` from `date`, `path`, `description`,
+  `textContent` (the outline as plain text with URLs), `tags` from link
+  hostnames, `contributors` from `people`, and `bskyPostRef` when the
+  episode has an announcement post.
+
+The script reads `ATPROTO_HANDLE` and `ATPROTO_APP_PASSWORD` from the
+environment, uses `@atproto/api`, and writes each document's AT URI back
+into front matter as `atUri`. Ingest additionally captures the Transistor
+feed's "Reply on Bluesky" link into front matter as `bskyPostUrl`; the
+script converts it to a record reference.
+
+The site emits:
+
+- `/.well-known/site.standard.publication` containing the publication AT
+  URI, read from `VITE_ATPROTO_PUBLICATION_URI` at build time.
+- On each episode page, `<link rel="site.standard.document" href="at://…">`
+  when `atUri` is set.
+- A "Reply on Bluesky" link and a comments section that fetches the
+  announcement post's reply thread from the public Bluesky API with a
+  small inline script. This is the only external request an episode page
+  makes, and the page reads fine without it.
+
+Verification against the standard.site validator is part of the final
+build check.
+
 ### CSS
 
 One hand-written stylesheet organized in cascade layers: reset, tokens,
@@ -306,4 +354,6 @@ TanStack Start 1.168.50, React 19.2.8, Vite 8.2.2:
 - Register the domain and set it in Netlify environment.
 - Create the Buttondown account and point its RSS feature at `/feed.xml`.
 - Generate a Descript API token and a Transistor API key.
+- Decide which Bluesky account owns the publication (assumed: the show
+  account that Transistor posts from) and create an app password for it.
 - After launch, add redirects from reactiflux.com transcript URLs.
