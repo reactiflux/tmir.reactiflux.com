@@ -1,0 +1,124 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  normalizeSpeaker,
+  descriptToCanonical,
+  replaceTranscript,
+  addOutlineHeadings,
+} from "../scripts/publish-transcript.ts";
+import { parseEpisode } from "../src/content/parse.ts";
+
+test("normalizeSpeaker maps Descript ids and passes anything else through", () => {
+  assert.equal(normalizeSpeaker("1-vcarl"), "Carl Vitullo");
+  assert.equal(normalizeSpeaker("vcarl"), "Carl Vitullo");
+  assert.equal(normalizeSpeaker("2-acemarke"), "Mark Erikson");
+  assert.equal(normalizeSpeaker("acemarke"), "Mark Erikson");
+  assert.equal(normalizeSpeaker("Mo Khazali"), "Mo Khazali");
+  assert.equal(normalizeSpeaker("3-guest"), "3-guest");
+});
+
+test("descriptToCanonical moves timestamps to the end and maps speakers", () => {
+  const input = [
+    "[00:00] **1-vcarl:** Hi, Carl here. Just a quick note.",
+    "",
+    "[00:11] Hello everyone. Thank you for joining us.",
+    "",
+    "[01:02:03] **2-acemarke:** And I'm Mark.",
+    "",
+  ].join("\n");
+
+  assert.equal(
+    descriptToCanonical(input),
+    [
+      "**Carl Vitullo:** Hi, Carl here. Just a quick note. [00:00:00]",
+      "",
+      "Hello everyone. Thank you for joining us. [00:00:11]",
+      "",
+      "**Mark Erikson:** And I'm Mark. [01:02:03]",
+    ].join("\n"),
+  );
+});
+
+test("replaceTranscript keeps front matter and outline, replaces the body below the marker", () => {
+  const file = [
+    "---",
+    'title: "TMiR 2026-05: test"',
+    "date: 2026-05-28",
+    'description: "d"',
+    "transistorId: dd8e79de",
+    "---",
+    "",
+    "- [[00:00:55](#some-podcast-meta)] Some podcast meta",
+    "",
+    "# Transcript",
+    "",
+    "**Old Speaker:** stale text [00:00:01]",
+    "",
+  ].join("\n");
+
+  const out = replaceTranscript(
+    file,
+    "## Some podcast meta\n\n**Carl Vitullo:** Fresh text. [00:00:55]",
+  );
+
+  assert.ok(!out.includes("stale text"));
+  assert.ok(out.includes("- [[00:00:55](#some-podcast-meta)] Some podcast meta"));
+  assert.ok(out.includes("transistorId: dd8e79de"));
+
+  const ep = parseEpisode(out, "2026-05");
+  assert.equal(ep.sections.length, 1);
+  assert.equal(ep.sections[0].anchor, "some-podcast-meta");
+  assert.equal(ep.sections[0].segments[0].speaker, "Carl Vitullo");
+  assert.equal(ep.sections[0].segments[0].text, "Fresh text.");
+});
+
+test("addOutlineHeadings gives a Descript body sections from the file's outline", () => {
+  const file = [
+    "---",
+    'title: "TMiR 2026-05: test"',
+    "date: 2026-05-28",
+    'description: "d"',
+    "---",
+    "",
+    "- [[00:00:00](#intro)] Intro",
+    "- [[00:05:00](#main-content)] Main Content",
+    "  - [[00:05:30](#a-sub-point)] A sub point",
+    "- [[09:00:00](#never-reached)] Never reached",
+    "",
+    "# Transcript",
+    "",
+    "**Old Speaker:** stale [00:00:01]",
+    "",
+  ].join("\n");
+
+  const descript = [
+    "[00:00] **1-vcarl:** Hello everyone.",
+    "",
+    "[02:00] **2-acemarke:** I'm Mark.",
+    "",
+    "[06:00] **1-vcarl:** On to the main content.",
+    "",
+  ].join("\n");
+
+  const body = addOutlineHeadings(file, descriptToCanonical(descript));
+  assert.equal(
+    body,
+    [
+      "## Intro",
+      "",
+      "**Carl Vitullo:** Hello everyone. [00:00:00]",
+      "",
+      "**Mark Erikson:** I'm Mark. [00:02:00]",
+      "",
+      "## Main Content",
+      "",
+      "**Carl Vitullo:** On to the main content. [00:06:00]",
+    ].join("\n"),
+  );
+
+  const ep = parseEpisode(replaceTranscript(file, body), "2026-05");
+  assert.deepEqual(
+    ep.sections.map((s) => s.anchor),
+    ["intro", "main-content"],
+  );
+});

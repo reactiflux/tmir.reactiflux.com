@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.m4a
+*.srt
+.env
+.env.*
+!.env.example
+dist
+.netlify
+.tanstack
+.output
+src/routeTree.gen.ts
+public/.well-known/site.standard.publication

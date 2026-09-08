@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  <channel>
+    <title>This Month in React</title>
+    <podcast:person role="Host" href="https://blog.isquaredsoftware.com" img="https://img.transistorcdn.com/channel.jpg">Mark Erikson</podcast:person>
+    <item>
+      <title>TMiR 2026-05: Who even is on the Core team anymore, TanStack got pwn&apos;d bad</title>
+      <podcast:season>3</podcast:season>
+      <podcast:episode>5</podcast:episode>
+      <link>https://share.transistor.fm/s/dd8e79de</link>
+      <enclosure url="https://op3.dev/e/media.transistor.fm/dd8e79de/4c5d3ad7.mp3" length="67205341" type="audio/mpeg"/>
+      <itunes:duration>4198</itunes:duration>
+      <description><![CDATA[<p>Join Carl and Mark.</p><p><a href="https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x" title="Reply on Bluesky">Reply on Bluesky</a></p>]]></description>
+      <podcast:person role="Host" href="https://blog.isquaredsoftware.com" img="https://img.transistorcdn.com/mark.jpg">Mark Erikson</podcast:person>
+      <podcast:person role="Producer" href="https://vcarl.com" img="https://img.transistorcdn.com/carl.jpg">Carl Vitullo</podcast:person>
+    </item>
+    <item>
+      <title>This Month in React &#8211; September 2023</title>
+      <podcast:season>1</podcast:season>
+      <podcast:episode>9</podcast:episode>
+      <link>https://share.transistor.fm/s/aa11bb22</link>
+      <enclosure url="https://media.transistor.fm/aa11bb22/ccdd.mp3" length="50000000" type="audio/mpeg"/>
+      <itunes:duration>3600</itunes:duration>
+      <podcast:person role="Host" href="https://vcarl.com" img="https://img.transistorcdn.com/carl.jpg">Carl Vitullo</podcast:person>
+    </item>
+    <item>
+      <title>Office Hours &#8211; States of Burnout with Jenny Truong</title>
+      <link>https://share.transistor.fm/s/99887766</link>
+      <enclosure url="https://media.transistor.fm/99887766/eeff.mp3" length="40000000" type="audio/mpeg"/>
+      <itunes:duration>3000</itunes:duration>
+    </item>
+  </channel>
+</rss>
