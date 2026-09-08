@@ -203,17 +203,32 @@ transcript can still be pushed.
 | `/feed.xml`           | RSS of episode pages; item body is the rendered outline      |
 | `/episodes/<yyyy-mm>/chapters.json` | Podcasting 2.0 chapters derived from the outline |
 
-### Server and client split
+### Rendering split
 
-Server components read parsed episodes from disk and render all content.
-Client components are limited to:
+Two rendering paths coexist in one TanStack Start build.
 
-- The audio player: native `<audio>` element wrapped so timestamp clicks
-  seek it and the current chapter title is shown.
-- The search input on `/search`, which loads Pagefind's UI.
-- The text filter on `/links`, which filters an already-rendered list.
+**Static documents** for content-heavy pages: `/episodes/<yyyy-mm>` and
+`/links`. A server route handler renders a complete HTML document with
+`renderToStaticMarkup` and the prerender step writes it to a file. The
+content appears once in the HTML, there is no hydration, and the only
+JavaScript is a small inline script: on episode pages it seeks the native
+`<audio>` element when a timestamp is clicked; on the links page it
+filters the already-rendered list by text. These pages sit outside the
+router, so navigating into them is a full document load.
 
-The episode page ships no client JavaScript other than the player.
+**Router pages** for `/`, `/about`, and `/search`. These are ordinary
+TanStack Start routes, prerendered, with the framework runtime and
+hydration. RSC stays enabled in the build so future supporting pages can
+use server components. The player on `/` is a client component.
+
+Both paths share one `Document` component for the head, stylesheet, and
+navigation so the two kinds of page look identical.
+
+**Why not RSC or loaders for transcripts.** Both inline a serialized copy
+of the rendered data into the HTML for hydration, doubling an hour-long
+transcript page from about 100 KB to about 200 KB. The router offers no
+per-route way to keep server-rendered markup while omitting that copy.
+Measured during the risk-gate spike on TanStack Start 1.168.
 
 ### Link index
 
@@ -240,7 +255,8 @@ job:
 
 - Container queries for the episode page layout, so the outline sits
   beside the transcript when space allows and above it otherwise.
-- View transitions on route changes.
+- Cross-document view transitions, so navigation between static
+  documents and router pages animates the same way.
 - Native light and dark color scheme through `light-dark()` with colors
   in oklch.
 - Anchor positioning to pin the player relative to the transcript column.
@@ -250,12 +266,16 @@ No preprocessor, no utility framework, no CSS-in-JS.
 
 ## Risk gate
 
-Before any site code, a throwaway spike on the current TanStack Start
-release: one route rendered through RSC, prerendered to static HTML,
-deployed to a Netlify preview. Success means the design proceeds as
-written. Failure means the site uses TanStack Start without RSC, with
-the same routes, split, and prerender. The spike result is reported
-either way and the spike code is discarded.
+Completed 2026-09-08 as a throwaway spike, discarded. Findings on
+TanStack Start 1.168.50, React 19.2.8, Vite 8.2.2:
+
+- RSC plus prerender plus the Netlify plugin builds and emits static HTML.
+- RSC and plain loader routes both duplicate content in the HTML; a
+  server route handler emitting a static document does not. This drove
+  the rendering split above.
+- The framework runtime on router pages is about 109 KB gzipped.
+- Dynamic routes need explicit prerender page entries or must be reachable
+  by link crawling from `/`.
 
 ## Testing
 
