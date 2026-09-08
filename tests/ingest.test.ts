@@ -95,3 +95,41 @@ test("applyFeedItem writes only ingest-owned fields and is idempotent", () => {
   // atUri belongs to publish-atproto; ingest must leave it exactly as it found it
   assert.equal(ep.atUri, "at://did:plc:example/site.standard.document/2026-05");
 });
+
+test("parseFeed accepts HH:MM:SS and MM:SS itunes:duration", () => {
+  const feed = (duration: string) =>
+    [
+      "<item>",
+      "<title>TMiR 2026-06: Colon durations</title>",
+      '<enclosure url="https://media.transistor.fm/abc12345/hash.mp3" type="audio/mpeg"/>',
+      `<itunes:duration>${duration}</itunes:duration>`,
+      "</item>",
+    ].join("\n");
+
+  assert.equal(parseFeed(feed("1:09:58"))[0]?.duration, 4198);
+  assert.equal(parseFeed(feed("09:58"))[0]?.duration, 598);
+  assert.equal(parseFeed(feed("4198"))[0]?.duration, 4198);
+});
+
+test("applyFeedItem does not clobber curated people with an empty feed list", () => {
+  const file = [
+    "---",
+    'title: "TMiR 2026-05: test"',
+    "date: 2026-05-28",
+    'description: "d"',
+    "people:",
+    "  - name: Carl Vitullo",
+    "    role: Producer",
+    "---",
+    "",
+    "# Transcript",
+    "",
+    "**Carl Vitullo:** Hello. [00:00:55]",
+    "",
+  ].join("\n");
+
+  const item = { ...parseFeed(xml)[0], people: [] };
+  const ep = parseEpisode(applyFeedItem(file, item), "2026-05");
+  assert.equal(ep.people.length, 1);
+  assert.equal(ep.people[0].name, "Carl Vitullo");
+});

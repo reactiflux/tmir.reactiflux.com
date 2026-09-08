@@ -5,6 +5,7 @@ import {
   descriptToCanonical,
   replaceTranscript,
   addOutlineHeadings,
+  fetchDescriptTranscript,
 } from "../scripts/publish-transcript.ts";
 import { parseEpisode } from "../src/content/parse.ts";
 
@@ -121,4 +122,23 @@ test("addOutlineHeadings gives a Descript body sections from the file's outline"
     ep.sections.map((s) => s.anchor),
     ["intro", "main-content"],
   );
+});
+
+test("fetchDescriptTranscript refuses a degenerate 200 body", async () => {
+  const real = globalThis.fetch;
+  const stub = (body: string) => {
+    globalThis.fetch = (async () => new Response(body, { status: 200 })) as typeof fetch;
+  };
+  try {
+    stub("");
+    await assert.rejects(fetchDescriptTranscript("p", "t"), /refusing to overwrite/);
+    stub("   \n\n  ");
+    await assert.rejects(fetchDescriptTranscript("p", "t"), /refusing to overwrite/);
+
+    const real200 = `[00:00] **1-vcarl:** ${"Hello everyone. ".repeat(60)}`;
+    stub(real200);
+    assert.equal(await fetchDescriptTranscript("p", "t"), real200);
+  } finally {
+    globalThis.fetch = real;
+  }
 });

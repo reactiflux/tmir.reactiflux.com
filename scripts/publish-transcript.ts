@@ -92,7 +92,17 @@ export async function fetchDescriptTranscript(
   if (!res.ok) {
     throw new Error(`Descript export failed: ${res.status} ${await res.text()}`);
   }
-  return res.text();
+  const text = await res.text();
+  // A 200 with an empty or stub body would otherwise canonicalize to "" and
+  // wipe the committed transcript. The shortest real episode transcript runs
+  // to tens of kilobytes, so anything under 500 characters is a broken export,
+  // not a short episode.
+  if (text.trim().length < 500) {
+    throw new Error(
+      `Descript export returned only ${text.trim().length} characters; refusing to overwrite the transcript`,
+    );
+  }
+  return text;
 }
 
 async function findTransistorEpisodeId(
