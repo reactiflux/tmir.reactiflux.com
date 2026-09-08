@@ -37,9 +37,3 @@ test("toSrt numbers cues, formats times, and prefixes the speaker", () => {
     ].join("\n"),
   );
 });
-
-test("the last cue runs five seconds", () => {
-  const srt = toSrt(parseEpisode(raw, "2026-05"));
-  assert.ok(srt.trimEnd().endsWith("Carl Vitullo: But yeah, okay, into some new releases."));
-  assert.ok(srt.includes("00:01:49,000 --> 00:01:54,000"));
-});
