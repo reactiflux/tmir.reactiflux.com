@@ -114,6 +114,9 @@ export function Document({
         {head}
       </head>
       <body className={bodyClass}>
+        <a className="skip-link" href="#main" data-pagefind-ignore="">
+          Skip to content
+        </a>
         <header className="site-header" data-pagefind-ignore="">
           <a className="site-name" href="/">
             {SITE_NAME}
@@ -126,7 +129,7 @@ export function Document({
             <a href="/about">About</a>
           </nav>
         </header>
-        <main className={bodyClass ? `${bodyClass}-main` : undefined}>
+        <main id="main" className={bodyClass ? `${bodyClass}-main` : undefined}>
           {children}
         </main>
         <footer className="site-footer" data-pagefind-ignore="">

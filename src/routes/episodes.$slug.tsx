@@ -108,7 +108,7 @@ export const Route = createFileRoute("/episodes/$slug")({
             }
           >
             <header className="episode-header">
-              <h1 title={episode.title}>{episode.title}</h1>
+              <h1>{episode.title}</h1>
               {episode.audioUrl && (
                 <div className="player" data-pagefind-ignore="">
                   <audio controls preload="none" src={episode.audioUrl} />
