@@ -10,7 +10,9 @@ export function toSeconds(
   // would otherwise read as a valid 0 seconds. At most h:m:s, too.
   const parts = value.split(":");
   if (parts.length > 3) return undefined;
-  const numbers = parts.map((part) => (part.trim() === "" ? NaN : Number(part)));
+  const numbers = parts.map((part) =>
+    part.trim() === "" ? NaN : Number(part),
+  );
   if (numbers.some((n) => !Number.isFinite(n))) return undefined;
   return numbers.reduce((total, part) => total * 60 + part, 0);
 }

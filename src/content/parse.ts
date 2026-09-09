@@ -228,7 +228,10 @@ function flattenOutline(items: OutlineItem[]): OutlineItem[] {
  * drifting backward onto an unrelated earlier section (e.g. "Intro" at
  * 00:00:00, which sits within tolerance of 00:01:51 by raw distance alone).
  */
-function reconcileOutlineAnchors(roots: OutlineItem[], sections: Section[]): void {
+function reconcileOutlineAnchors(
+  roots: OutlineItem[],
+  sections: Section[],
+): void {
   const sectionByAnchor = new Map(sections.map((s) => [s.anchor, s]));
   const items = flattenOutline(roots);
   const claimed = new Set<Section>();
@@ -262,7 +265,8 @@ function reconcileOutlineAnchors(roots: OutlineItem[], sections: Section[]): voi
   for (const item of items) {
     const resolved = resolvedFor.get(item);
     if (resolved) {
-      if (resolved.time) floor = Math.max(floor, timestampToSeconds(resolved.time));
+      if (resolved.time)
+        floor = Math.max(floor, timestampToSeconds(resolved.time));
       continue;
     }
     if (!item.time) continue;

@@ -56,9 +56,12 @@ description: d
 **Mark Erikson:** last [00:02:00]
 `;
   const srt = toSrt(parseEpisode(raw, "2026-05"));
-  const spans = [...srt.matchAll(/^(\d\d:\d\d:\d\d),000 --> (\d\d:\d\d:\d\d),000$/gm)];
+  const spans = [
+    ...srt.matchAll(/^(\d\d:\d\d:\d\d),000 --> (\d\d:\d\d:\d\d),000$/gm),
+  ];
   assert.equal(spans.length, 4);
-  for (const [, start, end] of spans) assert.ok(end > start, `${start} --> ${end}`);
+  for (const [, start, end] of spans)
+    assert.ok(end > start, `${start} --> ${end}`);
 });
 
 test("every episode in content/ produces cues with a positive duration", async () => {

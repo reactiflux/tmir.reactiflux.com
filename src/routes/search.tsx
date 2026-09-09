@@ -24,8 +24,8 @@ function Search() {
       <h1>Search transcripts</h1>
       <noscript>
         <p>
-          Search needs JavaScript. Every transcript is on its episode page, and your
-          browser&rsquo;s find-in-page works there.
+          Search needs JavaScript. Every transcript is on its episode page, and
+          your browser&rsquo;s find-in-page works there.
         </p>
       </noscript>
       <PagefindUI />

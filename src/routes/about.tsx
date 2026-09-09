@@ -32,7 +32,10 @@ const getAbout = createServerFn().handler(async () => {
   const byName = new Map<string, AboutPerson>();
   for (const episode of episodes) {
     for (const person of episode.people) {
-      const entry = byName.get(person.name) ?? { name: person.name, role: "Guest" };
+      const entry = byName.get(person.name) ?? {
+        name: person.name,
+        role: "Guest",
+      };
       entry.href ||= person.href;
       entry.img ||= person.img;
       byName.set(person.name, entry);
@@ -74,7 +77,13 @@ function PersonList({ people }: { people: AboutPerson[] }) {
       {people.map((person) => (
         <li key={person.name}>
           {person.img && (
-            <img src={person.img} alt={person.name} width="48" height="48" loading="lazy" />
+            <img
+              src={person.img}
+              alt={person.name}
+              width="48"
+              height="48"
+              loading="lazy"
+            />
           )}
           {person.href ? (
             <a href={person.href} rel="noreferrer">
@@ -122,7 +131,10 @@ function About() {
         <h2>Subscribe</h2>
         <ul>
           <li>
-            <a href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH" rel="noreferrer">
+            <a
+              href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH"
+              rel="noreferrer"
+            >
               Spotify
             </a>
           </li>
@@ -168,7 +180,13 @@ function About() {
             method="post"
           >
             <label htmlFor="bd-email">Email</label>
-            <input id="bd-email" type="email" name="email" required autoComplete="email" />
+            <input
+              id="bd-email"
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+            />
             <button type="submit">Subscribe</button>
           </form>
         </section>

@@ -18,7 +18,9 @@ export function outlineToHtml(items: OutlineItem[]): string {
   if (items.length === 0) return "";
   const lis = items.map((item) => {
     const title = escapeHtml(item.title);
-    const label = item.url ? `<a href="${escapeHtml(item.url)}">${title}</a>` : title;
+    const label = item.url
+      ? `<a href="${escapeHtml(item.url)}">${title}</a>`
+      : title;
     return `<li>${label}${outlineToHtml(item.children)}</li>`;
   });
   return `<ul>${lis.join("")}</ul>`;
@@ -45,7 +47,11 @@ export function outlineToChapters(
   return out.sort((a, b) => a.startTime - b.startTime);
 }
 
-export function renderFeed(episodes: Episode[], siteName: string, siteUrl: string): string {
+export function renderFeed(
+  episodes: Episode[],
+  siteName: string,
+  siteUrl: string,
+): string {
   const items = episodes
     .map((episode) => {
       const url = `${siteUrl}/episodes/${episode.slug}`;

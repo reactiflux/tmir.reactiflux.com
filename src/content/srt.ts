@@ -19,7 +19,9 @@ export function toSrt(episode: Episode): string {
     .filter((segment) => segment.time)
     .map((segment) => ({
       start: timestampToSeconds(segment.time!),
-      text: segment.speaker ? `${segment.speaker}: ${segment.text}` : segment.text,
+      text: segment.speaker
+        ? `${segment.speaker}: ${segment.text}`
+        : segment.text,
     }));
 
   return cues

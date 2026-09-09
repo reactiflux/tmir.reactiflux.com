@@ -21,7 +21,10 @@ export function PagefindUI() {
     script.src = "/pagefind/pagefind-ui.js";
     script.onload = () => {
       if (window.PagefindUI) {
-        new window.PagefindUI({ element: "#pagefind-ui", showSubResults: true });
+        new window.PagefindUI({
+          element: "#pagefind-ui",
+          showSubResults: true,
+        });
       }
     };
     document.head.appendChild(script);

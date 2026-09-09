@@ -63,7 +63,9 @@ test("replaceTranscript keeps front matter and outline, replaces the body below 
   );
 
   assert.ok(!out.includes("stale text"));
-  assert.ok(out.includes("- [[00:00:55](#some-podcast-meta)] Some podcast meta"));
+  assert.ok(
+    out.includes("- [[00:00:55](#some-podcast-meta)] Some podcast meta"),
+  );
   assert.ok(out.includes("transistorId: dd8e79de"));
 
   const ep = parseEpisode(out, "2026-05");
@@ -127,13 +129,20 @@ test("addOutlineHeadings gives a Descript body sections from the file's outline"
 test("fetchDescriptTranscript refuses a degenerate 200 body", async () => {
   const real = globalThis.fetch;
   const stub = (body: string) => {
-    globalThis.fetch = (async () => new Response(body, { status: 200 })) as typeof fetch;
+    globalThis.fetch = (async () =>
+      new Response(body, { status: 200 })) as typeof fetch;
   };
   try {
     stub("");
-    await assert.rejects(fetchDescriptTranscript("p", "t"), /refusing to overwrite/);
+    await assert.rejects(
+      fetchDescriptTranscript("p", "t"),
+      /refusing to overwrite/,
+    );
     stub("   \n\n  ");
-    await assert.rejects(fetchDescriptTranscript("p", "t"), /refusing to overwrite/);
+    await assert.rejects(
+      fetchDescriptTranscript("p", "t"),
+      /refusing to overwrite/,
+    );
 
     const real200 = `[00:00] **1-vcarl:** ${"Hello everyone. ".repeat(60)}`;
     stub(real200);

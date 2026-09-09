@@ -78,10 +78,15 @@ test("splitTitleLink separates a heading's plain text from its first URL", () =>
 
 test("unescapeMarkdown drops backslash escapes and unwraps code spans", () => {
   assert.equal(unescapeMarkdown("Redux \\\\\\+ signals"), "Redux + signals");
-  assert.equal(unescapeMarkdown("React Native \\\\\\<\\\\\\> Imgui"), "React Native <> Imgui");
+  assert.equal(
+    unescapeMarkdown("React Native \\\\\\<\\\\\\> Imgui"),
+    "React Native <> Imgui",
+  );
   assert.equal(unescapeMarkdown("snake\\_case"), "snake_case");
   assert.equal(
-    unescapeMarkdown("Third-party \\\\\\`react-concurrent-store\\\\\\` ponyfill"),
+    unescapeMarkdown(
+      "Third-party \\\\\\`react-concurrent-store\\\\\\` ponyfill",
+    ),
     "Third-party react-concurrent-store ponyfill",
   );
   assert.equal(unescapeMarkdown("plain `code` span"), "plain code span");
@@ -91,10 +96,15 @@ test("unescapeMarkdown drops backslash escapes and unwraps code spans", () => {
 
 test("flattenLinks and slug unescape too", () => {
   assert.equal(
-    flattenLinks("[TS 6.0 may enable \\\\\\`strict\\\\\\` by default](https://x.example)"),
+    flattenLinks(
+      "[TS 6.0 may enable \\\\\\`strict\\\\\\` by default](https://x.example)",
+    ),
     "TS 6.0 may enable strict by default",
   );
-  assert.equal(slug("Mark's React-Redux \\\\\\+ signals draft"), "marks-react-redux-signals-draft");
+  assert.equal(
+    slug("Mark's React-Redux \\\\\\+ signals draft"),
+    "marks-react-redux-signals-draft",
+  );
   assert.deepEqual(
     splitTitleLink("[React Native \\\\\\<\\\\\\> Imgui](https://x.example/1)"),
     { text: "React Native <> Imgui", url: "https://x.example/1" },

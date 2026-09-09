@@ -24,7 +24,10 @@ function paragraphSeconds(block: string): number | undefined {
  * Used by scripts/publish-transcript.ts, since a Descript export carries no
  * headings of its own.
  */
-export function insertHeadings(paragraphs: string[], items: TimedItem[]): string[] {
+export function insertHeadings(
+  paragraphs: string[],
+  items: TimedItem[],
+): string[] {
   const times = paragraphs.map(paragraphSeconds);
   const headingAt = new Map<number, string>();
 

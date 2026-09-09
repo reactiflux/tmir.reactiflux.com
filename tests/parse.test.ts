@@ -75,7 +75,10 @@ test("speaker carries forward across consecutive paragraphs", () => {
   assert.equal(segs[0].speaker, "Carl Vitullo");
   assert.equal(segs[0].time, "00:00:55");
   assert.equal(segs[1].speaker, "Carl Vitullo");
-  assert.equal(segs[1].text, "Stuff has changed. Stuff will continue to change. Just like life.");
+  assert.equal(
+    segs[1].text,
+    "Stuff has changed. Stuff will continue to change. Just like life.",
+  );
   assert.equal(segs[2].speaker, "Mark Erikson");
 });
 
@@ -198,7 +201,11 @@ test("serialize writes a changed field without disturbing the body", () => {
   frontMatter.duration = 5000;
   const out = serializeEpisodeFile(frontMatter, body);
   assert.match(out, /^duration: 5000$/m);
-  assert.ok(out.includes("**Mark Erikson:** Yeah, that sounds all too real. [00:01:44]"));
+  assert.ok(
+    out.includes(
+      "**Mark Erikson:** Yeah, that sounds all too real. [00:01:44]",
+    ),
+  );
 });
 
 const withFrontMatter = (body: string) =>
@@ -317,7 +324,10 @@ test("toSrt tolerates sections with no segments", () => {
     ),
     "x",
   );
-  assert.match(toSrt(parsed), /^1\n00:00:01,000 --> 00:00:06,000\nCarl Vitullo: hi\n$/);
+  assert.match(
+    toSrt(parsed),
+    /^1\n00:00:01,000 --> 00:00:06,000\nCarl Vitullo: hi\n$/,
+  );
 });
 
 test("markdown escapes and code spans are undone in titles and segments", () => {
@@ -359,6 +369,7 @@ test("a body that begins with the transcript marker still parses its sections", 
 test("a missing or unparseable date fails at parse time, naming the episode", () => {
   const noDate = "---\ntitle: t\ndescription: d\n---\n\n# Transcript\n";
   assert.throws(() => parseEpisode(noDate, "2026-05"), /2026-05.*date/);
-  const badDate = "---\ntitle: t\ndate: nonsense\ndescription: d\n---\n\n# Transcript\n";
+  const badDate =
+    "---\ntitle: t\ndate: nonsense\ndescription: d\n---\n\n# Transcript\n";
   assert.throws(() => parseEpisode(badDate, "2026-05"), /2026-05.*date/);
 });

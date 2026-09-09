@@ -2,22 +2,25 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 process.env.TMIR_CONTENT_DIR = "tests/fixtures/episodes";
-const { cdata, outlineToHtml, outlineToChapters, renderFeed } = await import(
-  "../src/content/feed.ts"
-);
+const { cdata, outlineToHtml, outlineToChapters, renderFeed } =
+  await import("../src/content/feed.ts");
 const { loadEpisodes } = await import("../src/content/load.ts");
 
 test("outlineToHtml nests lists and links out", async () => {
   const [episode] = await loadEpisodes();
   const html = outlineToHtml(episode.outline);
   assert.match(html, /^<ul>/);
-  assert.ok(html.includes('<a href="https://react.dev/compiler">React Compiler</a>'));
+  assert.ok(
+    html.includes('<a href="https://react.dev/compiler">React Compiler</a>'),
+  );
   assert.ok(html.includes("<ul><li>"), "nested child list present");
   assert.ok(html.includes("No link here"));
 });
 
 test("outlineToHtml escapes markup in titles", () => {
-  const html = outlineToHtml([{ title: "a & b <script>", anchor: "a", children: [] }]);
+  const html = outlineToHtml([
+    { title: "a & b <script>", anchor: "a", children: [] },
+  ]);
   assert.ok(html.includes("a &amp; b &lt;script&gt;"));
   assert.ok(!html.includes("<script>"));
 });
@@ -48,7 +51,10 @@ test("renderFeed produces one item per episode with the outline as body", async 
 test("enclosure carries no length, duration stays on itunes:duration", async () => {
   const xml = renderFeed(await loadEpisodes(), "TMiR", "https://example.com");
   assert.ok(xml.includes("<enclosure "), "enclosure present");
-  assert.ok(!/<enclosure[^>]*length=/.test(xml), "no length attribute (bytes unknown)");
+  assert.ok(
+    !/<enclosure[^>]*length=/.test(xml),
+    "no length attribute (bytes unknown)",
+  );
   assert.match(xml, /<itunes:duration>\d+<\/itunes:duration>/);
 });
 
