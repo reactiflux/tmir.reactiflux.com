@@ -228,7 +228,10 @@ function flattenOutline(items: OutlineItem[]): OutlineItem[] {
  * drifting backward onto an unrelated earlier section (e.g. "Intro" at
  * 00:00:00, which sits within tolerance of 00:01:51 by raw distance alone).
  */
-function reconcileOutlineAnchors(roots: OutlineItem[], sections: Section[]): void {
+function reconcileOutlineAnchors(
+  roots: OutlineItem[],
+  sections: Section[],
+): void {
   const sectionByAnchor = new Map(sections.map((s) => [s.anchor, s]));
   const items = flattenOutline(roots);
   const claimed = new Set<Section>();
@@ -262,7 +265,8 @@ function reconcileOutlineAnchors(roots: OutlineItem[], sections: Section[]): voi
   for (const item of items) {
     const resolved = resolvedFor.get(item);
     if (resolved) {
-      if (resolved.time) floor = Math.max(floor, timestampToSeconds(resolved.time));
+      if (resolved.time)
+        floor = Math.max(floor, timestampToSeconds(resolved.time));
       continue;
     }
     if (!item.time) continue;
@@ -289,20 +293,36 @@ function reconcileOutlineAnchors(roots: OutlineItem[], sections: Section[]): voi
 
 export function parseEpisode(text: string, epSlug: string): Episode {
   const { frontMatter, body } = splitFile(text);
-  const marker = body.indexOf(`\n${TRANSCRIPT_MARKER}\n`);
+  // The marker starts a line: either at position 0 (a file with no outline,
+  // whose body begins with it) or just after a newline.
+  const afterNewline = body.indexOf(`\n${TRANSCRIPT_MARKER}\n`);
+  const marker = body.startsWith(`${TRANSCRIPT_MARKER}\n`)
+    ? 0
+    : afterNewline === -1
+      ? -1
+      : afterNewline + 1;
   const outlineRegion = marker === -1 ? body : body.slice(0, marker);
   const transcriptRegion =
-    marker === -1 ? "" : body.slice(marker + TRANSCRIPT_MARKER.length + 2);
+    marker === -1 ? "" : body.slice(marker + TRANSCRIPT_MARKER.length + 1);
 
   const outline = parseOutline(outlineRegion);
   const sections = parseSections(transcriptRegion);
   reconcileOutlineAnchors(outline, sections);
 
   const fm = frontMatter as Record<string, any>;
+  // A missing or unparseable date silently becomes `<pubDate>Invalid Date</pubDate>`
+  // in the feed and throws mid-loop in publish-atproto, after records are already
+  // written. Fail here, naming the episode, before any of that runs.
+  const date = String(fm.date ?? "");
+  if (Number.isNaN(Date.parse(date))) {
+    throw new Error(
+      `episode ${epSlug || "(unnamed)"}: missing or unparseable front matter date: ${JSON.stringify(fm.date ?? null)}`,
+    );
+  }
   return {
     slug: epSlug,
     title: String(fm.title ?? ""),
-    date: String(fm.date ?? ""),
+    date,
     description: String(fm.description ?? ""),
     time: fm.time,
     location: fm.location,

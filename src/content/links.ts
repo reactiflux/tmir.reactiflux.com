@@ -20,14 +20,15 @@ function walk(items: OutlineItem[], episode: Episode, out: LinkEntry[]): void {
         // Not an absolute URL (e.g. an in-page anchor like "#section") — no
         // external link to index.
       }
-      if (host) out.push({
-        text: item.title,
-        url: item.url,
-        host,
-        episodeSlug: episode.slug,
-        episodeTitle: episode.title,
-        time: toSeconds(item.time),
-      });
+      if (host)
+        out.push({
+          text: item.title,
+          url: item.url,
+          host,
+          episodeSlug: episode.slug,
+          episodeTitle: episode.title,
+          time: toSeconds(item.time),
+        });
     }
     walk(item.children, episode, out);
   }
@@ -39,7 +40,9 @@ export function buildLinkIndex(episodes: Episode[]): LinkEntry[] {
   return out;
 }
 
-export function groupByHost(entries: LinkEntry[]): { host: string; entries: LinkEntry[] }[] {
+export function groupByHost(
+  entries: LinkEntry[],
+): { host: string; entries: LinkEntry[] }[] {
   const map = new Map<string, LinkEntry[]>();
   for (const entry of entries) {
     const list = map.get(entry.host);
@@ -48,5 +51,8 @@ export function groupByHost(entries: LinkEntry[]): { host: string; entries: Link
   }
   return [...map]
     .map(([host, list]) => ({ host, entries: list }))
-    .sort((a, b) => b.entries.length - a.entries.length || a.host.localeCompare(b.host));
+    .sort(
+      (a, b) =>
+        b.entries.length - a.entries.length || a.host.localeCompare(b.host),
+    );
 }

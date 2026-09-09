@@ -51,3 +51,18 @@ export function secondsToTimestamp(total: number): string {
 export function normalizeTime(raw: string): string {
   return secondsToTimestamp(timestampToSeconds(raw.trim()));
 }
+
+/**
+ * Episode titles carry boilerplate — a "TMiR 2026-07: " prefix on recent ones,
+ * a "This Month in React, July 2024: " prefix on older ones, and a trailing
+ * "(March 2023)" on the oldest — that duplicates the site name and the date
+ * shown alongside.
+ */
+export function cardTitle(title: string): string {
+  const stripped = title
+    .replace(/^TMiR\s+\d{4}-\d{2}:\s*/, "")
+    .replace(/^This Month in React,[^:]*:\s*/, "")
+    .replace(/\s*\([A-Z][a-z]+ \d{4}\)$/, "")
+    .trim();
+  return stripped || title;
+}

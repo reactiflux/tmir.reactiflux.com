@@ -29,14 +29,21 @@ test("outlineToText flattens the outline to indented 'Title — url' lines", () 
 
 test("bskyUrlToParts splits a post URL and rejects anything else", () => {
   assert.deepEqual(
-    bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x"),
+    bskyUrlToParts(
+      "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
+    ),
     { actor: "thismonthinreact.com", rkey: "3lqz7abcd2k2x" },
   );
   assert.deepEqual(
-    bskyUrlToParts("https://bsky.app/profile/did:plc:abc123/post/3lqz7abcd2k2x"),
+    bskyUrlToParts(
+      "https://bsky.app/profile/did:plc:abc123/post/3lqz7abcd2k2x",
+    ),
     { actor: "did:plc:abc123", rkey: "3lqz7abcd2k2x" },
   );
-  assert.equal(bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com"), null);
+  assert.equal(
+    bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com"),
+    null,
+  );
   assert.equal(bskyUrlToParts("https://example.com/whatever"), null);
 });
 

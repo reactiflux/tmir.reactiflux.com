@@ -23,9 +23,8 @@ export const Route = createFileRoute("/links")({
     handlers: {
       GET: async () => {
         const { loadEpisodes } = await import("../content/load.ts");
-        const { buildLinkIndex, groupByHost } = await import(
-          "../content/links.ts"
-        );
+        const { buildLinkIndex, groupByHost } =
+          await import("../content/links.ts");
         const { hms } = await import("../content/time.ts");
         const groups = groupByHost(buildLinkIndex(await loadEpisodes()));
 
@@ -62,7 +61,8 @@ export const Route = createFileRoute("/links")({
             {groups.map((group) => (
               <section className="link-group" key={group.host}>
                 <h2>
-                  {group.host} <span className="count">{group.entries.length}</span>
+                  {group.host}{" "}
+                  <span className="count">{group.entries.length}</span>
                 </h2>
                 <ul>
                   {group.entries.map((entry, i) => (
@@ -74,7 +74,10 @@ export const Route = createFileRoute("/links")({
                       <a href={entry.url} rel="noreferrer">
                         {entry.text}
                       </a>
-                      <a className="from" href={`/episodes/${entry.episodeSlug}`}>
+                      <a
+                        className="from"
+                        href={`/episodes/${entry.episodeSlug}`}
+                      >
                         {entry.episodeTitle}
                         {entry.time !== undefined && (
                           <span className="ts">{hms(entry.time)}</span>

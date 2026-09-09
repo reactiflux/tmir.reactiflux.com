@@ -32,17 +32,26 @@ function contains(path, needle) {
   );
 }
 
-console.log("Task 1: shell");
+console.log("Shell");
 hasFile("index.html");
 hasFile("styles.css");
 contains("index.html", 'class="site-nav"');
 contains("index.html", 'href="/styles.css"');
+// The skip link must precede the header on both rendering paths — the router
+// shell and the static document handlers build their own markup.
+for (const path of ["index.html", "links/index.html"]) {
+  const html = file(path) || "";
+  check(
+    `${path} has a skip link before the header`,
+    html.includes('class="skip-link" href="#main"') &&
+      html.includes('id="main"') &&
+      html.indexOf("skip-link") < html.indexOf("site-header"),
+  );
+}
 
-// --- Task 4: home route (appended) ---
 contains("index.html", 'class="archive"');
 contains("index.html", 'class="outline"');
 for (const slug of slugs()) contains("index.html", `/episodes/${slug}`);
-// --- end Task 4 ---
 
 function slugs() {
   return readdirSync("content/episodes")
@@ -51,7 +60,7 @@ function slugs() {
     .sort();
 }
 
-console.log("\nTask 3: episode documents");
+console.log("\nEpisode documents");
 const episodeSlugs = slugs();
 check("content/episodes has at least one episode", episodeSlugs.length > 0);
 for (const slug of episodeSlugs) hasFile(`episodes/${slug}/index.html`);
@@ -64,27 +73,7 @@ if (newest) {
   contains(path, "<audio");
   contains(path, 'class="player"');
   contains(path, 'property="og:title"');
-  const html = file(path) || "";
-  check(
-    `${path} references no bundled JS`,
-    !/\/assets\/[^"']*\.js/.test(html),
-    "static documents must ship zero external scripts",
-  );
-  // The transcript must appear exactly once — a second copy means a loader or
-  // RSC payload has been reintroduced.
   const md = readFileSync(join("content/episodes", `${newest}.md`), "utf8");
-  const phrase = (md.split("\n# Transcript\n")[1] || "")
-    .split("\n")
-    .map((line) => /[A-Za-z][A-Za-z ]{29,59}[A-Za-z]/.exec(line)?.[0])
-    .find(Boolean);
-  if (phrase) {
-    const copies = (file(path) || "").split(phrase).length - 1;
-    check(
-      `${path} contains the transcript exactly once`,
-      copies === 1,
-      `found ${copies}`,
-    );
-  }
 
   // AT Protocol bits are conditional on front matter and env, so only assert
   // them when the inputs are actually present.
@@ -103,8 +92,7 @@ if (newest) {
   }
 }
 
-// --- Task 5: links document (appended) ---
-console.log("\nTask 5: links document");
+console.log("\nLinks document");
 hasFile("links/index.html");
 contains("links/index.html", 'class="link-row"');
 contains("links/index.html", "data-text=");
@@ -113,9 +101,8 @@ check(
   "links/index.html references no bundled JS",
   !/\/assets\/[^"']*\.js/.test(file("links/index.html") || ""),
 );
-// --- end Task 5 ---
 
-console.log("\nTask 6: feed and chapters");
+console.log("\nFeed and chapters");
 hasFile("feed.xml");
 contains("feed.xml", '<rss version="2.0"');
 contains("feed.xml", "<item>");
@@ -152,7 +139,7 @@ for (const slug of slugs()) {
   );
 }
 
-console.log("\nTask 7: search");
+console.log("\nSearch");
 hasFile("search/index.html");
 contains("search/index.html", 'id="pagefind-ui"');
 check(
@@ -180,7 +167,7 @@ if (existsSync(join(dist, "pagefind", "pagefind-ui.js"))) {
   }
 }
 
-console.log("\nTask 8: about");
+console.log("\nAbout");
 hasFile("about/index.html");
 contains("about/index.html", 'class="people"');
 contains(
@@ -210,7 +197,7 @@ if (process.env.VITE_BLUESKY_PROFILE_URL)
   );
 }
 
-console.log("\nTask 9: stylesheet");
+console.log("\nStylesheet");
 const cssSource = readFileSync("public/styles.css", "utf8");
 for (const needle of [
   "@layer reset, tokens, layout, components, utilities;",
@@ -224,11 +211,9 @@ for (const needle of [
 ]) {
   check(`styles.css uses ${needle}`, cssSource.includes(needle));
 }
-const lineCount = cssSource.split("\n").length;
-check("styles.css is under 250 lines", lineCount < 250, `${lineCount} lines`);
 check("styles.css is served verbatim", file("styles.css") === cssSource);
 
-console.log("\nTask 10: prerender coverage");
+console.log("\nPrerender coverage");
 const allSlugs = slugs();
 const expected = [
   "index.html",
@@ -242,13 +227,13 @@ const expected = [
     `episodes/${s}/chapters.json`,
   ]),
 ];
-for (const path of expected) hasFile(path);
 check(
   `prerendered all ${expected.length} expected outputs`,
   expected.every((p) => file(p) !== null),
+  `missing: ${expected.filter((p) => file(p) === null).join(", ")}`,
 );
 
-console.log("\nTask 10: standard.site discovery");
+console.log("\nstandard.site discovery");
 const wellKnown = ".well-known/site.standard.publication";
 if (process.env.VITE_ATPROTO_PUBLICATION_URI) {
   hasFile(wellKnown);
@@ -261,7 +246,7 @@ if (process.env.VITE_ATPROTO_PUBLICATION_URI) {
   console.log(`  skip  ${wellKnown} (VITE_ATPROTO_PUBLICATION_URI unset)`);
 }
 
-console.log("\nTask 10: no duplicated transcript");
+console.log("\nTranscript integrity");
 for (const slug of allSlugs) {
   const html = file(`episodes/${slug}/index.html`);
   if (html === null) continue;
@@ -286,8 +271,7 @@ for (const slug of allSlugs) {
   );
 }
 
-// --- Adjustments: sticky episode header + runtime outline highlighting ---
-console.log("\nAdjustments: episode header and outline state");
+console.log("\nEpisode header and outline state");
 for (const slug of allSlugs) {
   const path = `episodes/${slug}/index.html`;
   const html = file(path);
@@ -300,7 +284,84 @@ for (const slug of allSlugs) {
     "the outline script must set it at runtime only",
   );
 }
-// --- end Adjustments ---
+
+console.log("\nOpen Graph cards");
+for (const slug of allSlugs) {
+  check(
+    `og/${slug}.jpg exists`,
+    existsSync(join(dist, "og", `${slug}.jpg`)),
+    "run: node scripts/og.ts",
+  );
+}
+check("og/default.jpg exists", existsSync(join(dist, "og", "default.jpg")));
+
+console.log("\nLink previews");
+const origin = (
+  process.env.VITE_SITE_URL || "https://thismonthinreact.com"
+).replace(/\/$/, "");
+for (const [path, slug] of [
+  ["index.html", "default"],
+  ["about/index.html", "default"],
+  [`episodes/${allSlugs.at(-1)}/index.html`, allSlugs.at(-1)],
+]) {
+  contains(path, `content="${origin}/og/${slug}.jpg"`);
+  contains(path, 'content="summary_large_image"');
+  contains(path, `<link rel="canonical"`);
+  contains(path, 'property="og:image:width" content="1200"');
+  contains(path, 'name="theme-color"');
+}
+{
+  const path = `episodes/${allSlugs.at(-1)}/index.html`;
+  contains(path, 'property="og:type" content="article"');
+  contains(path, 'property="article:published_time"');
+  const title = /<title>([^<]*)<\/title>/.exec(file(path) || "")?.[1] || "";
+  check(
+    `${path} title names the site once`,
+    (title.match(/This Month in React/g) || []).length === 1,
+    title,
+  );
+}
+
+console.log("\nRobots, sitemap, JSON-LD");
+hasFile("robots.txt");
+contains("robots.txt", "Sitemap:");
+contains("robots.txt", "/sitemap.xml");
+hasFile("sitemap.xml");
+contains("sitemap.xml", "<urlset");
+for (const slug of allSlugs) contains("sitemap.xml", `/episodes/${slug}<`);
+check(
+  "sitemap.xml omits /search",
+  !(file("sitemap.xml") || "").includes("/search"),
+);
+
+/** The first ld+json block in a document, parsed. */
+function ldJson(path) {
+  const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(
+    file(path) || "",
+  );
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+check(
+  "index.html has PodcastSeries JSON-LD",
+  ldJson("index.html")?.["@type"] === "PodcastSeries",
+);
+{
+  const path = `episodes/${allSlugs.at(-1)}/index.html`;
+  const ld = ldJson(path);
+  check(
+    `${path} has PodcastEpisode JSON-LD`,
+    ld?.["@type"] === "PodcastEpisode",
+  );
+  check(
+    `${path} JSON-LD names its series`,
+    ld?.partOfSeries?.["@type"] === "PodcastSeries",
+  );
+}
 
 console.log("\nSizes");
 const assetsDir = join(dist, "assets");

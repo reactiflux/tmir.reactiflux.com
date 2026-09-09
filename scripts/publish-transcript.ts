@@ -54,7 +54,10 @@ export function descriptToCanonical(markdown: string): string {
  * one straight would have no sections at all. Synthesize them from the
  * episode's existing outline.
  */
-export function addOutlineHeadings(fileText: string, transcriptBody: string): string {
+export function addOutlineHeadings(
+  fileText: string,
+  transcriptBody: string,
+): string {
   const { outline } = parseEpisode(fileText, "");
   const items = outline
     .filter((item) => item.time)
@@ -64,9 +67,13 @@ export function addOutlineHeadings(fileText: string, transcriptBody: string): st
 }
 
 /** Swap everything below `# Transcript`, leaving front matter and outline alone. */
-export function replaceTranscript(fileText: string, transcriptBody: string): string {
+export function replaceTranscript(
+  fileText: string,
+  transcriptBody: string,
+): string {
   const marker = fileText.indexOf(`\n${TRANSCRIPT_MARKER}\n`);
-  if (marker === -1) throw new Error(`file has no "${TRANSCRIPT_MARKER}" heading`);
+  if (marker === -1)
+    throw new Error(`file has no "${TRANSCRIPT_MARKER}" heading`);
   const head = fileText.slice(0, marker + TRANSCRIPT_MARKER.length + 1);
   return `${head}\n${transcriptBody.trimEnd()}\n`;
 }
@@ -90,9 +97,21 @@ export async function fetchDescriptTranscript(
     }),
   });
   if (!res.ok) {
-    throw new Error(`Descript export failed: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `Descript export failed: ${res.status} ${await res.text()}`,
+    );
   }
-  return res.text();
+  const text = await res.text();
+  // A 200 with an empty or stub body would otherwise canonicalize to "" and
+  // wipe the committed transcript. The shortest real episode transcript runs
+  // to tens of kilobytes, so anything under 500 characters is a broken export,
+  // not a short episode.
+  if (text.trim().length < 500) {
+    throw new Error(
+      `Descript export returned only ${text.trim().length} characters; refusing to overwrite the transcript`,
+    );
+  }
+  return text;
 }
 
 async function findTransistorEpisodeId(
@@ -103,7 +122,10 @@ async function findTransistorEpisodeId(
   for (let page = 1; page <= 20; page += 1) {
     const url = `${TRANSISTOR_BASE}/v1/episodes?show_id=${encodeURIComponent(showId)}&pagination[page]=${page}&pagination[per]=50`;
     const res = await fetch(url, { headers: { "x-api-key": apiKey } });
-    if (!res.ok) throw new Error(`Transistor list failed: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(
+        `Transistor list failed: ${res.status} ${await res.text()}`,
+      );
     const body = (await res.json()) as {
       data: { id: string; attributes: { share_url?: string } }[];
     };
@@ -129,7 +151,9 @@ export async function pushSrtToTranscript(
     body: JSON.stringify({ episode: { transcript_text: srt } }),
   });
   if (!res.ok) {
-    throw new Error(`Transistor update failed: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `Transistor update failed: ${res.status} ${await res.text()}`,
+    );
   }
 }
 
@@ -156,7 +180,10 @@ async function main() {
   let fileText = readFileSync(path, "utf8");
 
   if (!skipDescript) {
-    const markdown = await fetchDescriptTranscript(projectId, requireEnv("DESCRIPT_TOKEN"));
+    const markdown = await fetchDescriptTranscript(
+      projectId,
+      requireEnv("DESCRIPT_TOKEN"),
+    );
     const body = addOutlineHeadings(fileText, descriptToCanonical(markdown));
     fileText = replaceTranscript(fileText, body);
     writeFileSync(path, fileText);
@@ -175,7 +202,9 @@ async function main() {
       requireEnv("TRANSISTOR_API_KEY"),
       requireEnv("TRANSISTOR_SHOW_ID"),
     );
-    console.log(`pushed ${srt.split("\n\n").length} SRT cues to Transistor episode ${episode.transistorId}`);
+    console.log(
+      `pushed ${srt.split("\n\n").length} SRT cues to Transistor episode ${episode.transistorId}`,
+    );
   }
 }
 

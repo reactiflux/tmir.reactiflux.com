@@ -86,26 +86,26 @@ file per episode at `content/episodes/<yyyy>-<mm>.md`.
 
 Hand-written fields:
 
-| Field         | Type   | Notes                                                   |
-| ------------- | ------ | ------------------------------------------------------- |
-| `title`       | string | Episode title as published                              |
-| `date`        | date   | Recording date, ISO                                     |
-| `description` | string | One paragraph, used for meta tags and the archive list  |
-| `time`        | string | Live show time, e.g. `2pm PT / 9pm GMT`, optional       |
-| `location`    | string | Live show location, optional                            |
+| Field         | Type   | Notes                                                  |
+| ------------- | ------ | ------------------------------------------------------ |
+| `title`       | string | Episode title as published                             |
+| `date`        | date   | Recording date, ISO                                    |
+| `description` | string | One paragraph, used for meta tags and the archive list |
+| `time`        | string | Live show time, e.g. `2pm PT / 9pm GMT`, optional      |
+| `location`    | string | Live show location, optional                           |
 
 Fields written by the ingest script, never by hand:
 
-| Field           | Type     | Source                                    |
-| --------------- | -------- | ----------------------------------------- |
-| `transistorId`  | string   | Share ID from the episode `link`          |
-| `audioUrl`      | string   | Enclosure URL                             |
-| `duration`      | number   | Seconds, from `itunes:duration`           |
-| `season`        | number   | `podcast:season`                          |
-| `episode`       | number   | `podcast:episode`                         |
-| `people`        | list     | `podcast:person`: name, role, href, img   |
-| `bskyPostUrl`   | string   | "Reply on Bluesky" link in the description |
-| `atUri`         | string   | Written by `publish-atproto`, not ingest   |
+| Field          | Type   | Source                                     |
+| -------------- | ------ | ------------------------------------------ |
+| `transistorId` | string | Share ID from the episode `link`           |
+| `audioUrl`     | string | Enclosure URL                              |
+| `duration`     | number | Seconds, from `itunes:duration`            |
+| `season`       | number | `podcast:season`                           |
+| `episode`      | number | `podcast:episode`                          |
+| `people`       | list   | `podcast:person`: name, role, href, img    |
+| `bskyPostUrl`  | string | "Reply on Bluesky" link in the description |
+| `atUri`        | string | Written by `publish-atproto`, not ingest   |
 
 Ingest matches feed items to files by the `yyyy-mm` in the feed title,
 which every TMiR title carries as `TMiR yyyy-mm:` or as a month name plus
@@ -211,15 +211,15 @@ transcript can still be pushed.
 
 ### Routes
 
-| Route                 | Purpose                                                      |
-| --------------------- | ------------------------------------------------------------ |
-| `/`                   | Latest episode with player and outline, then the archive     |
-| `/episodes/<yyyy-mm>` | Player, outline as table of contents, transcript             |
-| `/links`              | Every outline link across all episodes, grouped and filterable |
-| `/search`             | Pagefind UI                                                  |
-| `/about`              | Hosts, guests, subscribe links, live schedule, newsletter form |
-| `/feed.xml`           | RSS of episode pages; item body is the rendered outline      |
-| `/episodes/<yyyy-mm>/chapters.json` | Podcasting 2.0 chapters derived from the outline |
+| Route                               | Purpose                                                        |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `/`                                 | Latest episode with player and outline, then the archive       |
+| `/episodes/<yyyy-mm>`               | Player, outline as table of contents, transcript               |
+| `/links`                            | Every outline link across all episodes, grouped and filterable |
+| `/search`                           | Pagefind UI                                                    |
+| `/about`                            | Hosts, guests, subscribe links, live schedule, newsletter form |
+| `/feed.xml`                         | RSS of episode pages; item body is the rendered outline        |
+| `/episodes/<yyyy-mm>/chapters.json` | Podcasting 2.0 chapters derived from the outline               |
 
 ### Rendering split
 

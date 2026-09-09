@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { Outline } from "../components/EpisodeBody";
 import { Player } from "../components/Player";
 import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { jsonLd } from "../content/jsonld.ts";
 import type { OutlineItem } from "../content/parse.ts";
 
 const HOME_DESCRIPTION = `Every episode of ${SITE_NAME}, with transcripts and links.`;
@@ -50,6 +51,20 @@ function Home() {
   const { latest, archive } = Route.useLoaderData();
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd({
+            "@context": "https://schema.org",
+            "@type": "PodcastSeries",
+            name: SITE_NAME,
+            description: HOME_DESCRIPTION,
+            url: `${SITE_URL}/`,
+            image: `${SITE_URL}/artwork.jpg`,
+            webFeed: `${SITE_URL}/feed.xml`,
+          }),
+        }}
+      />
       {latest && (
         <section className="latest">
           <h1>
@@ -59,7 +74,7 @@ function Home() {
           <Outline items={latest.outline} />
         </section>
       )}
-      <section className="archive">
+      <section className="archive" id="archive">
         <h2>Archive</h2>
         <ul>
           {archive.map((e) => (

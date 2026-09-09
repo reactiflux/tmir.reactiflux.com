@@ -27,22 +27,22 @@
 
 ## File Structure
 
-| Path | Responsibility |
-| --- | --- |
-| `package.json` | `type: module`, `private`, `test` script, deps |
-| `tsconfig.json` | Editor config only (`noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`) |
-| `.gitignore` | `node_modules`, `.DS_Store`, `*.m4a` |
-| `src/content/slug.ts` | `slug()`, `normalizeTime()`, `flattenLinks()` — the shared text rules |
-| `src/content/parse.ts` | Types (`Episode`, `OutlineItem`, `Section`, `Segment`), `splitFile()`, `parseEpisode()` |
-| `src/content/serialize.ts` | `serializeEpisodeFile()` — front matter + untouched body back to a string |
-| `src/content/srt.ts` | `toSrt(episode)` |
-| `scripts/migrate.ts` | One-time conversion of `reactiflux.com/src/transcripts/tmir-*.md` |
-| `scripts/ingest.ts` | Transistor feed → ingest-owned front matter |
-| `scripts/publish-transcript.ts` | Descript export → file body; SRT → Transistor |
-| `scripts/publish-atproto.ts` | `site.standard.publication` + `site.standard.document` records → the show's PDS; `atUri` → front matter |
-| `.env` (gitignored), `.env.example` | every credential and build variable, loaded by `node --env-file-if-exists=.env` |
-| `tests/*.test.ts` | One test file per module/script |
-| `tests/fixtures/*.md`, `tests/fixtures/feed.xml` | Short real excerpts of each historical format |
+| Path                                             | Responsibility                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `package.json`                                   | `type: module`, `private`, `test` script, deps                                                          |
+| `tsconfig.json`                                  | Editor config only (`noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`)                       |
+| `.gitignore`                                     | `node_modules`, `.DS_Store`, `*.m4a`                                                                    |
+| `src/content/slug.ts`                            | `slug()`, `normalizeTime()`, `flattenLinks()` — the shared text rules                                   |
+| `src/content/parse.ts`                           | Types (`Episode`, `OutlineItem`, `Section`, `Segment`), `splitFile()`, `parseEpisode()`                 |
+| `src/content/serialize.ts`                       | `serializeEpisodeFile()` — front matter + untouched body back to a string                               |
+| `src/content/srt.ts`                             | `toSrt(episode)`                                                                                        |
+| `scripts/migrate.ts`                             | One-time conversion of `reactiflux.com/src/transcripts/tmir-*.md`                                       |
+| `scripts/ingest.ts`                              | Transistor feed → ingest-owned front matter                                                             |
+| `scripts/publish-transcript.ts`                  | Descript export → file body; SRT → Transistor                                                           |
+| `scripts/publish-atproto.ts`                     | `site.standard.publication` + `site.standard.document` records → the show's PDS; `atUri` → front matter |
+| `.env` (gitignored), `.env.example`              | every credential and build variable, loaded by `node --env-file-if-exists=.env`                         |
+| `tests/*.test.ts`                                | One test file per module/script                                                                         |
+| `tests/fixtures/*.md`, `tests/fixtures/feed.xml` | Short real excerpts of each historical format                                                           |
 
 ## Canonical Episode File Format
 
@@ -99,6 +99,7 @@ Rules:
 ### Task 1: Repo bootstrap and the shared text rules
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `.gitignore`
@@ -106,6 +107,7 @@ Rules:
 - Test: `tests/slug.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces:
   - `slug(title: string): string`
@@ -205,7 +207,10 @@ test("slug matches anchors published in existing transcripts", () => {
 });
 
 test("slug keeps underscores and digits, drops everything else non-word", () => {
-  assert.equal(slug("React Strict DOM, Why is it so Great?"), "react-strict-dom-why-is-it-so-great");
+  assert.equal(
+    slug("React Strict DOM, Why is it so Great?"),
+    "react-strict-dom-why-is-it-so-great",
+  );
   assert.equal(slug("Node.js v22"), "nodejs-v22");
 });
 
@@ -292,32 +297,70 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 2: Episode parser and serializer
 
 **Files:**
+
 - Create: `src/content/parse.ts`
 - Create: `src/content/serialize.ts`
 - Create: `tests/fixtures/canonical-2026-05.md`
 - Test: `tests/parse.test.ts`
 
 **Interfaces:**
+
 - Consumes: `slug`, `flattenLinks`, `normalizeTime` from `src/content/slug.ts`.
 - Produces:
+
   ```ts
-  export interface Person { name: string; role?: string; href?: string; img?: string }
-  export interface OutlineItem { title: string; url?: string; time?: string; anchor: string; children: OutlineItem[] }
-  export interface Segment { speaker: string; time?: string; text: string }
-  export interface Section { title: string; anchor: string; time?: string; segments: Segment[] }
-  export interface Episode {
-    slug: string; title: string; date: string; description: string;
-    time?: string; location?: string;
-    transistorId?: string; audioUrl?: string; duration?: number;
-    season?: number; episode?: number; people: Person[];
-    bskyPostUrl?: string;   // written by ingest (Task 4)
-    atUri?: string;         // written by publish-atproto (Task 7), never by ingest
-    outline: OutlineItem[]; sections: Section[];
+  export interface Person {
+    name: string;
+    role?: string;
+    href?: string;
+    img?: string;
   }
-  export function splitFile(text: string): { frontMatter: Record<string, unknown>; body: string }
-  export function parseOutline(region: string): OutlineItem[]
-  export function parseEpisode(text: string, epSlug: string): Episode
-  export function serializeEpisodeFile(frontMatter: Record<string, unknown>, body: string): string  // from serialize.ts
+  export interface OutlineItem {
+    title: string;
+    url?: string;
+    time?: string;
+    anchor: string;
+    children: OutlineItem[];
+  }
+  export interface Segment {
+    speaker: string;
+    time?: string;
+    text: string;
+  }
+  export interface Section {
+    title: string;
+    anchor: string;
+    time?: string;
+    segments: Segment[];
+  }
+  export interface Episode {
+    slug: string;
+    title: string;
+    date: string;
+    description: string;
+    time?: string;
+    location?: string;
+    transistorId?: string;
+    audioUrl?: string;
+    duration?: number;
+    season?: number;
+    episode?: number;
+    people: Person[];
+    bskyPostUrl?: string; // written by ingest (Task 4)
+    atUri?: string; // written by publish-atproto (Task 7), never by ingest
+    outline: OutlineItem[];
+    sections: Section[];
+  }
+  export function splitFile(text: string): {
+    frontMatter: Record<string, unknown>;
+    body: string;
+  };
+  export function parseOutline(region: string): OutlineItem[];
+  export function parseEpisode(text: string, epSlug: string): Episode;
+  export function serializeEpisodeFile(
+    frontMatter: Record<string, unknown>,
+    body: string,
+  ): string; // from serialize.ts
   ```
 
 - [ ] **Step 1: Create the canonical fixture**
@@ -451,7 +494,10 @@ test("speaker carries forward across consecutive paragraphs", () => {
   assert.equal(segs[0].speaker, "Carl Vitullo");
   assert.equal(segs[0].time, "00:00:55");
   assert.equal(segs[1].speaker, "Carl Vitullo");
-  assert.equal(segs[1].text, "Stuff has changed. Stuff will continue to change. Just like life.");
+  assert.equal(
+    segs[1].text,
+    "Stuff has changed. Stuff will continue to change. Just like life.",
+  );
   assert.equal(segs[2].speaker, "Mark Erikson");
 });
 
@@ -465,7 +511,11 @@ test("serialize writes a changed field without disturbing the body", () => {
   frontMatter.duration = 5000;
   const out = serializeEpisodeFile(frontMatter, body);
   assert.match(out, /^duration: 5000$/m);
-  assert.ok(out.includes("**Mark Erikson:** Yeah, that sounds all too real. [00:01:44]"));
+  assert.ok(
+    out.includes(
+      "**Mark Erikson:** Yeah, that sounds all too real. [00:01:44]",
+    ),
+  );
 });
 ```
 
@@ -715,6 +765,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 3: Migrate historical transcripts
 
 **Files:**
+
 - Create: `scripts/migrate.ts`
 - Create: `tests/fixtures/legacy-2023-march.md`
 - Create: `tests/fixtures/legacy-2024-03.md`
@@ -723,9 +774,10 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `tests/fixtures/legacy-2026-05.md`
 - Test: `tests/migrate.test.ts`
 
-**Where the transcript starts.** The boundary is the first *speaker paragraph* — a block matching `^(\[\d…\]\s*)?\*\*[^*]+:\*\*`. But a `##` section heading can sit directly above that paragraph (as in `tmir-2024-03.md`, whose transcript opens with `## Layoffs (seems better!)` before the first `**Carl Vitullo:**` block in some months), so after finding the first speaker paragraph, walk *backwards* over any contiguous `##` heading blocks and include them in the transcript. Walk back over `##` only, never `#`: a lone `#` heading immediately above the transcript is the old transcript-start marker (`# Interview`, `# This Month in React: June, 2025`, `# This Month in React 2023 April`) and is dropped silently, while an `#` heading anywhere else in the outline region (`# Main Content` in `tmir-2024-04.md`) is dropped with a warning.
+**Where the transcript starts.** The boundary is the first _speaker paragraph_ — a block matching `^(\[\d…\]\s*)?\*\*[^*]+:\*\*`. But a `##` section heading can sit directly above that paragraph (as in `tmir-2024-03.md`, whose transcript opens with `## Layoffs (seems better!)` before the first `**Carl Vitullo:**` block in some months), so after finding the first speaker paragraph, walk _backwards_ over any contiguous `##` heading blocks and include them in the transcript. Walk back over `##` only, never `#`: a lone `#` heading immediately above the transcript is the old transcript-start marker (`# Interview`, `# This Month in React: June, 2025`, `# This Month in React 2023 April`) and is dropped silently, while an `#` heading anywhere else in the outline region (`# Main Content` in `tmir-2024-04.md`) is dropped with a warning.
 
 **Interfaces:**
+
 - Consumes: `normalizeTime`, `slug`, `flattenLinks` from `src/content/slug.ts`; `parseEpisode` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`.
 - Produces:
   - `slugFromFilename(name: string): string | null` — `"tmir-march-2023.md"` → `"2023-03"`, `"tmir-2024-03.md"` → `"2024-03"`
@@ -735,15 +787,15 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 There is no clean three-era split — the markers vary per file. Detect each feature independently rather than branching on an era:
 
-| Feature | Variants observed |
-| --- | --- |
-| Header block | `<iframe …>` (36 files); `<style>…</style>` before it from 2025-01 on; three files have no iframe at all (`tmir-2025-09.md`, `tmir-dec-2023.md`, `tmir-nov-2023.md`) |
-| Pre-outline link list | `- [Spotify](…)` / `- [Apple Podcasts](…)` / `- [RSS](…)` bullets before the iframe (2023–2024) |
-| Outline | absent (all of 2023 except dec/nov, plus `tmir-2025-06.md`); `- [[mm:ss](#anchor)] …`; `- [[hh:mm:ss](#anchor)] …` (2026) |
-| Transcript start | no marker at all; or an h1 like `# This Month in React: June, 2025` / `# Interview` / `# This Month in React 2023 April` |
-| Section headings | `## Title` (most); `# Title` (`tmir-june-2023.md`, five of them); `## [00:52] title` (`tmir-2025-06.md`) |
-| Paragraph timestamp | trailing `… [00:16]`; leading `[01:23] **Carl Vitullo:** …` |
-| Speaker labels | `**Carl Vitullo:**`, `**Carl:**`, raw Descript ids `**1-vcarl:**` (`tmir-2025-06.md`) |
+| Feature               | Variants observed                                                                                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Header block          | `<iframe …>` (36 files); `<style>…</style>` before it from 2025-01 on; three files have no iframe at all (`tmir-2025-09.md`, `tmir-dec-2023.md`, `tmir-nov-2023.md`) |
+| Pre-outline link list | `- [Spotify](…)` / `- [Apple Podcasts](…)` / `- [RSS](…)` bullets before the iframe (2023–2024)                                                                      |
+| Outline               | absent (all of 2023 except dec/nov, plus `tmir-2025-06.md`); `- [[mm:ss](#anchor)] …`; `- [[hh:mm:ss](#anchor)] …` (2026)                                            |
+| Transcript start      | no marker at all; or an h1 like `# This Month in React: June, 2025` / `# Interview` / `# This Month in React 2023 April`                                             |
+| Section headings      | `## Title` (most); `# Title` (`tmir-june-2023.md`, five of them); `## [00:52] title` (`tmir-2025-06.md`)                                                             |
+| Paragraph timestamp   | trailing `… [00:16]`; leading `[01:23] **Carl Vitullo:** …`                                                                                                          |
+| Speaker labels        | `**Carl Vitullo:**`, `**Carl:**`, raw Descript ids `**1-vcarl:**` (`tmir-2025-06.md`)                                                                                |
 
 Two traps confirmed by reading the files:
 
@@ -984,7 +1036,9 @@ test("2023 format: iframe stripped, outline synthesized from headings", () => {
   );
   assert.ok(text.includes("\n# Transcript\n"));
   assert.ok(
-    text.includes("**Carl Vitullo:** Thanks everyone for joining us for this month in React. [00:00:16]"),
+    text.includes(
+      "**Carl Vitullo:** Thanks everyone for joining us for this month in React. [00:00:16]",
+    ),
   );
   assert.deepEqual(warnings, []);
 
@@ -1000,13 +1054,19 @@ test("2024 format: link list dropped, leading timestamps moved to the end", () =
   assert.ok(!text.includes("[Spotify]("));
   assert.ok(!text.includes("<iframe"));
   assert.ok(
-    text.includes("- Quick Hits\n  - [[00:00:39](#layoffsfyi)] [Layoffs.fyi](https://layoffs.fyi/)\n"),
+    text.includes(
+      "- Quick Hits\n  - [[00:00:39](#layoffsfyi)] [Layoffs.fyi](https://layoffs.fyi/)\n",
+    ),
     text,
   );
   assert.ok(
-    text.includes("**Carl Vitullo:** I'm going to start off with some layoffs news. [00:00:39]"),
+    text.includes(
+      "**Carl Vitullo:** I'm going to start off with some layoffs news. [00:00:39]",
+    ),
   );
-  assert.ok(text.includes("This month has about 7, 200 laid off so far. [00:00:58]"));
+  assert.ok(
+    text.includes("This month has about 7, 200 laid off so far. [00:00:58]"),
+  );
 
   const ep = parseEpisode(text, "2024-03");
   assert.equal(ep.sections.length, 3); // Intro, Layoffs, New releases
@@ -1097,8 +1157,18 @@ import { splitFile } from "../src/content/parse.ts";
 import { serializeEpisodeFile } from "../src/content/serialize.ts";
 
 const MONTHS = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ];
 
 /** "tmir-2024-03.md" | "tmir-march-2023.md" | "tmir-dec-2023.md" -> "yyyy-mm" */
@@ -1131,7 +1201,10 @@ export function convert(raw: string): { text: string; warnings: string[] } {
   const warnings: string[] = [];
   const { frontMatter, body } = splitFile(raw);
   const clean = stripEmbeds(body);
-  const blocks = clean.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  const blocks = clean
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean);
 
   // The transcript starts at the first speaker paragraph, plus any `##`
   // section headings sitting directly above it. Walk back over `##` only:
@@ -1140,7 +1213,9 @@ export function convert(raw: string): { text: string; warnings: string[] } {
   // `# Main Content`).
   let start = blocks.findIndex((b) => SPEAKER_PARA.test(b));
   if (start === -1) {
-    warnings.push("no speaker paragraphs found; body left in the outline region");
+    warnings.push(
+      "no speaker paragraphs found; body left in the outline region",
+    );
   }
   while (start > 0 && blocks[start - 1].startsWith("## ")) start -= 1;
 
@@ -1153,7 +1228,10 @@ export function convert(raw: string): { text: string; warnings: string[] } {
     if (!OUTLINE_LINE.test(block.split("\n")[0])) {
       const isMarker = i === head.length - 1 && /^#\s/.test(block);
       if (isMarker) continue; // old transcript-start marker; drop silently
-      if (block.startsWith("#")) warnings.push(`dropped heading before outline: ${block.split("\n")[0]}`);
+      if (block.startsWith("#"))
+        warnings.push(
+          `dropped heading before outline: ${block.split("\n")[0]}`,
+        );
       else warnings.push(`dropped prose before outline: ${block.slice(0, 60)}`);
       continue;
     }
@@ -1162,7 +1240,10 @@ export function convert(raw: string): { text: string; warnings: string[] } {
       if (!m) continue;
       let rest = m[2].trim();
       // Drop the pre-iframe subscribe link list.
-      if (/^\[(Spotify|Apple Podcasts|RSS|or anywhere you prefer)\]\(/.test(rest)) continue;
+      if (
+        /^\[(Spotify|Apple Podcasts|RSS|or anywhere you prefer)\]\(/.test(rest)
+      )
+        continue;
 
       let time: string | undefined;
       const t = OUTLINE_TIME.exec(rest);
@@ -1200,7 +1281,8 @@ export function convert(raw: string): { text: string; warnings: string[] } {
       // 2023 used h1 for sections; promote to h2.
       pendingHeadingAnchor = slug(title);
       out.push(`## ${title}`);
-      if (level > 2) warnings.push(`heading deeper than h2 flattened: ${title}`);
+      if (level > 2)
+        warnings.push(`heading deeper than h2 flattened: ${title}`);
       continue;
     }
 
@@ -1218,11 +1300,16 @@ export function convert(raw: string): { text: string; warnings: string[] } {
         text = text.slice(0, trail.index);
       }
     }
-    if (!time) warnings.push(`paragraph without timestamp: ${text.slice(0, 60)}`);
+    if (!time)
+      warnings.push(`paragraph without timestamp: ${text.slice(0, 60)}`);
     if (!/^\*\*[^*]+:\*\*/.test(text) && out.length === 0) {
       warnings.push(`paragraph without speaker: ${text.slice(0, 60)}`);
     }
-    if (pendingHeadingAnchor && time && !sectionTimes.has(pendingHeadingAnchor)) {
+    if (
+      pendingHeadingAnchor &&
+      time &&
+      !sectionTimes.has(pendingHeadingAnchor)
+    ) {
       sectionTimes.set(pendingHeadingAnchor, time);
       pendingHeadingAnchor = null;
     }
@@ -1236,7 +1323,9 @@ export function convert(raw: string): { text: string; warnings: string[] } {
       const title = line.slice(3).trim();
       const anchor = slug(title);
       const time = sectionTimes.get(anchor);
-      outlineLines.push(time ? `- [[${time}](#${anchor})] ${title}` : `- ${title}`);
+      outlineLines.push(
+        time ? `- [[${time}](#${anchor})] ${title}` : `- ${title}`,
+      );
     }
   }
 
@@ -1257,10 +1346,14 @@ function main() {
   for (const name of readdirSync(SOURCE_DIR).sort()) {
     const epSlug = slugFromFilename(name);
     if (!epSlug) continue;
-    const { text, warnings } = convert(readFileSync(join(SOURCE_DIR, name), "utf8"));
+    const { text, warnings } = convert(
+      readFileSync(join(SOURCE_DIR, name), "utf8"),
+    );
     writeFileSync(join(OUT_DIR, `${epSlug}.md`), text);
     files += 1;
-    console.log(`${name} -> content/episodes/${epSlug}.md  (${warnings.length} warnings)`);
+    console.log(
+      `${name} -> content/episodes/${epSlug}.md  (${warnings.length} warnings)`,
+    );
     for (const w of warnings) {
       console.log(`    ${w}`);
       warned += 1;
@@ -1307,11 +1400,13 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 4: Ingest Transistor feed metadata
 
 **Files:**
+
 - Create: `scripts/ingest.ts`
 - Create: `tests/fixtures/feed.xml`
 - Test: `tests/ingest.test.ts`
 
 **Interfaces:**
+
 - Consumes: `splitFile` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`.
 - Produces:
   - `interface FeedItem { slug: string; transistorId: string; audioUrl: string; duration: number; season?: number; episode?: number; people: Person[]; bskyPostUrl?: string }`
@@ -1402,17 +1497,35 @@ import { readFileSync } from "node:fs";
 import { parseFeed, slugFromTitle, applyFeedItem } from "../scripts/ingest.ts";
 import { parseEpisode } from "../src/content/parse.ts";
 
-const xml = readFileSync(new URL("./fixtures/feed.xml", import.meta.url), "utf8");
+const xml = readFileSync(
+  new URL("./fixtures/feed.xml", import.meta.url),
+  "utf8",
+);
 
 test("slugFromTitle handles every TMiR title style and rejects the rest", () => {
-  assert.equal(slugFromTitle("TMiR 2026-05: Who even is on the Core team anymore"), "2026-05");
-  assert.equal(slugFromTitle("TMiR 2023-10: React Forget, Canary Releases"), "2023-10");
-  assert.equal(slugFromTitle("This Month in React – September 2023"), "2023-09");
+  assert.equal(
+    slugFromTitle("TMiR 2026-05: Who even is on the Core team anymore"),
+    "2026-05",
+  );
+  assert.equal(
+    slugFromTitle("TMiR 2023-10: React Forget, Canary Releases"),
+    "2023-10",
+  );
+  assert.equal(
+    slugFromTitle("This Month in React – September 2023"),
+    "2023-09",
+  );
   assert.equal(slugFromTitle("This Month In React – March 2023"), "2023-03");
   assert.equal(slugFromTitle("This Month in React (April 2023)"), "2023-04");
-  assert.equal(slugFromTitle("Office Hours – States of Burnout with Jenny Truong"), null);
+  assert.equal(
+    slugFromTitle("Office Hours – States of Burnout with Jenny Truong"),
+    null,
+  );
   assert.equal(slugFromTitle("Behind the React Documentary"), null);
-  assert.equal(slugFromTitle("Mark & Carl talk with Swizec Teller about using AI at work"), null);
+  assert.equal(
+    slugFromTitle("Mark & Carl talk with Swizec Teller about using AI at work"),
+    null,
+  );
 });
 
 test("parseFeed extracts TMiR items only", () => {
@@ -1439,7 +1552,8 @@ test("parseFeed extracts TMiR items only", () => {
         img: "https://img.transistorcdn.com/carl.jpg",
       },
     ],
-    bskyPostUrl: "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
+    bskyPostUrl:
+      "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
   });
   assert.equal(items[1].slug, "2023-09");
   assert.equal(items[1].people.length, 1);
@@ -1516,14 +1630,26 @@ export interface FeedItem {
 }
 
 const MONTHS = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ];
 
 function decode(s: string): string {
   return s
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) =>
+      String.fromCodePoint(parseInt(n, 16)),
+    )
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
@@ -1589,9 +1715,10 @@ export function parseFeed(xml: string): FeedItem[] {
     const episode = Number(tag(item, "podcast:episode") ?? NaN);
     // The "Reply on Bluesky" anchor inside the <description> CDATA. Matched on
     // the URL shape, not the link text, so a renamed link still resolves.
-    const bskyPostUrl = /href="(https:\/\/bsky\.app\/profile\/[^/"]+\/post\/[^"]+)"/.exec(
-      item,
-    )?.[1];
+    const bskyPostUrl =
+      /href="(https:\/\/bsky\.app\/profile\/[^/"]+\/post\/[^"]+)"/.exec(
+        item,
+      )?.[1];
     items.push({
       slug: epSlug,
       transistorId,
@@ -1619,7 +1746,8 @@ export function applyFeedItem(fileText: string, item: FeedItem): string {
   if (item.season !== undefined) frontMatter.season = item.season;
   if (item.episode !== undefined) frontMatter.episode = item.episode;
   frontMatter.people = item.people;
-  if (item.bskyPostUrl !== undefined) frontMatter.bskyPostUrl = item.bskyPostUrl;
+  if (item.bskyPostUrl !== undefined)
+    frontMatter.bskyPostUrl = item.bskyPostUrl;
   return serializeEpisodeFile(frontMatter, body);
 }
 
@@ -1691,10 +1819,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 5: SRT exporter
 
 **Files:**
+
 - Create: `src/content/srt.ts`
 - Test: `tests/srt.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Episode` from `src/content/parse.ts`; `timestampToSeconds`, `secondsToTimestamp` from `src/content/slug.ts`.
 - Produces: `toSrt(episode: Episode): string`
 
@@ -1747,7 +1877,11 @@ test("toSrt numbers cues, formats times, and prefixes the speaker", () => {
 
 test("the last cue runs five seconds", () => {
   const srt = toSrt(parseEpisode(raw, "2026-05"));
-  assert.ok(srt.trimEnd().endsWith("Carl Vitullo: But yeah, okay, into some new releases."));
+  assert.ok(
+    srt
+      .trimEnd()
+      .endsWith("Carl Vitullo: But yeah, okay, into some new releases."),
+  );
   assert.ok(srt.includes("00:01:49,000 --> 00:01:54,000"));
 });
 ```
@@ -1776,7 +1910,9 @@ export function toSrt(episode: Episode): string {
     .filter((segment) => segment.time)
     .map((segment) => ({
       start: timestampToSeconds(segment.time!),
-      text: segment.speaker ? `${segment.speaker}: ${segment.text}` : segment.text,
+      text: segment.speaker
+        ? `${segment.speaker}: ${segment.text}`
+        : segment.text,
     }));
 
   return cues
@@ -1807,10 +1943,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 6: publish-transcript script
 
 **Files:**
+
 - Create: `scripts/publish-transcript.ts`
 - Test: `tests/publish-transcript.test.ts`
 
 **Interfaces:**
+
 - Consumes: `normalizeTime` from `src/content/slug.ts`; `splitFile`, `parseEpisode`, `TRANSCRIPT_MARKER` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`; `toSrt` from `src/content/srt.ts`.
 - Produces:
   - `SPEAKERS: Record<string, string>`
@@ -1915,7 +2053,9 @@ test("replaceTranscript keeps front matter and outline, replaces the body below 
   );
 
   assert.ok(!out.includes("stale text"));
-  assert.ok(out.includes("- [[00:00:55](#some-podcast-meta)] Some podcast meta"));
+  assert.ok(
+    out.includes("- [[00:00:55](#some-podcast-meta)] Some podcast meta"),
+  );
   assert.ok(out.includes("transistorId: dd8e79de"));
 
   const ep = parseEpisode(out, "2026-05");
@@ -1985,9 +2125,13 @@ export function descriptToCanonical(markdown: string): string {
 }
 
 /** Swap everything below `# Transcript`, leaving front matter and outline alone. */
-export function replaceTranscript(fileText: string, transcriptBody: string): string {
+export function replaceTranscript(
+  fileText: string,
+  transcriptBody: string,
+): string {
   const marker = fileText.indexOf(`\n${TRANSCRIPT_MARKER}\n`);
-  if (marker === -1) throw new Error(`file has no "${TRANSCRIPT_MARKER}" heading`);
+  if (marker === -1)
+    throw new Error(`file has no "${TRANSCRIPT_MARKER}" heading`);
   const head = fileText.slice(0, marker + TRANSCRIPT_MARKER.length + 1);
   return `${head}\n${transcriptBody.trimEnd()}\n`;
 }
@@ -2011,7 +2155,9 @@ export async function fetchDescriptTranscript(
     }),
   });
   if (!res.ok) {
-    throw new Error(`Descript export failed: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `Descript export failed: ${res.status} ${await res.text()}`,
+    );
   }
   return res.text();
 }
@@ -2024,7 +2170,10 @@ async function findTransistorEpisodeId(
   for (let page = 1; page <= 20; page += 1) {
     const url = `${TRANSISTOR_BASE}/v1/episodes?show_id=${encodeURIComponent(showId)}&pagination[page]=${page}&pagination[per]=50`;
     const res = await fetch(url, { headers: { "x-api-key": apiKey } });
-    if (!res.ok) throw new Error(`Transistor list failed: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(
+        `Transistor list failed: ${res.status} ${await res.text()}`,
+      );
     const body = (await res.json()) as {
       data: { id: string; attributes: { share_url?: string } }[];
     };
@@ -2050,7 +2199,9 @@ export async function pushSrtToTranscript(
     body: JSON.stringify({ episode: { transcript_text: srt } }),
   });
   if (!res.ok) {
-    throw new Error(`Transistor update failed: ${res.status} ${await res.text()}`);
+    throw new Error(
+      `Transistor update failed: ${res.status} ${await res.text()}`,
+    );
   }
 }
 
@@ -2077,7 +2228,10 @@ async function main() {
   let fileText = readFileSync(path, "utf8");
 
   if (!skipDescript) {
-    const markdown = await fetchDescriptTranscript(projectId, requireEnv("DESCRIPT_TOKEN"));
+    const markdown = await fetchDescriptTranscript(
+      projectId,
+      requireEnv("DESCRIPT_TOKEN"),
+    );
     fileText = replaceTranscript(fileText, descriptToCanonical(markdown));
     writeFileSync(path, fileText);
     console.log(`wrote transcript into ${path}`);
@@ -2095,7 +2249,9 @@ async function main() {
       requireEnv("TRANSISTOR_API_KEY"),
       requireEnv("TRANSISTOR_SHOW_ID"),
     );
-    console.log(`pushed ${srt.split("\n\n").length} SRT cues to Transistor episode ${episode.transistorId}`);
+    console.log(
+      `pushed ${srt.split("\n\n").length} SRT cues to Transistor episode ${episode.transistorId}`,
+    );
   }
 }
 
@@ -2133,12 +2289,14 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 7: publish-atproto script, and one `.env` for every script
 
 **Files:**
+
 - Create: `scripts/publish-atproto.ts`
 - Create: `.env.example`
 - Modify: `.gitignore`, `package.json`
 - Test: `tests/publish-atproto.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Episode`, `OutlineItem`, `Person`, `parseEpisode`, `splitFile` from `src/content/parse.ts`; `serializeEpisodeFile` from `src/content/serialize.ts`.
 - Produces:
   - `PUBLICATION_NAME: string`, `PUBLICATION_DESCRIPTION: string`
@@ -2161,12 +2319,17 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **`@atproto/api` usage, verified 2026-09-08 against https://www.npmjs.com/package/@atproto/api (latest published version **0.20.42**, read from `https://registry.npmjs.org/@atproto/api/latest`) and the package README at https://github.com/bluesky-social/atproto/tree/main/packages/api:**
 
 ```ts
-const agent = new AtpAgent({ service: "https://bsky.social" })
-await agent.login({ identifier, password })
-const res = await agent.com.atproto.repo.putRecord({ repo, collection, rkey, record })
+const agent = new AtpAgent({ service: "https://bsky.social" });
+await agent.login({ identifier, password });
+const res = await agent.com.atproto.repo.putRecord({
+  repo,
+  collection,
+  rkey,
+  record,
+});
 // res.data.uri, res.data.cid
-const who = await agent.com.atproto.identity.resolveHandle({ handle })  // who.data.did
-const rec = await agent.com.atproto.repo.getRecord({ repo, collection, rkey }) // rec.data.uri, rec.data.cid
+const who = await agent.com.atproto.identity.resolveHandle({ handle }); // who.data.did
+const rec = await agent.com.atproto.repo.getRecord({ repo, collection, rkey }); // rec.data.uri, rec.data.cid
 ```
 
 XRPC calls return `{ success, headers, data }`; the `uri`/`cid`/`did` live on `.data`. `agent.session.did` is the logged-in repo's DID after `login`.
@@ -2279,14 +2442,21 @@ test("outlineToText flattens the outline to indented 'Title — url' lines", () 
 
 test("bskyUrlToParts splits a post URL and rejects anything else", () => {
   assert.deepEqual(
-    bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x"),
+    bskyUrlToParts(
+      "https://bsky.app/profile/thismonthinreact.com/post/3lqz7abcd2k2x",
+    ),
     { actor: "thismonthinreact.com", rkey: "3lqz7abcd2k2x" },
   );
   assert.deepEqual(
-    bskyUrlToParts("https://bsky.app/profile/did:plc:abc123/post/3lqz7abcd2k2x"),
+    bskyUrlToParts(
+      "https://bsky.app/profile/did:plc:abc123/post/3lqz7abcd2k2x",
+    ),
     { actor: "did:plc:abc123", rkey: "3lqz7abcd2k2x" },
   );
-  assert.equal(bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com"), null);
+  assert.equal(
+    bskyUrlToParts("https://bsky.app/profile/thismonthinreact.com"),
+    null,
+  );
   assert.equal(bskyUrlToParts("https://example.com/whatever"), null);
 });
 
@@ -2358,7 +2528,8 @@ export function outlineToText(items: OutlineItem[], depth = 0): string {
   for (const item of items) {
     const indent = "  ".repeat(depth);
     lines.push(`${indent}${item.title}${item.url ? ` — ${item.url}` : ""}`);
-    if (item.children.length > 0) lines.push(outlineToText(item.children, depth + 1));
+    if (item.children.length > 0)
+      lines.push(outlineToText(item.children, depth + 1));
   }
   return lines.join("\n");
 }
@@ -2367,7 +2538,9 @@ export function outlineToText(items: OutlineItem[], depth = 0): string {
 export function bskyUrlToParts(
   url: string,
 ): { actor: string; rkey: string } | null {
-  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(url.trim());
+  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(
+    url.trim(),
+  );
   return m ? { actor: m[1], rkey: m[2] } : null;
 }
 
@@ -2427,7 +2600,8 @@ async function resolvePostRef(
   }
   const did = parts.actor.startsWith("did:")
     ? parts.actor
-    : (await agent.com.atproto.identity.resolveHandle({ handle: parts.actor })).data.did;
+    : (await agent.com.atproto.identity.resolveHandle({ handle: parts.actor }))
+        .data.did;
   const res = await agent.com.atproto.repo.getRecord({
     repo: did,
     collection: "app.bsky.feed.post",
@@ -2465,7 +2639,8 @@ async function main() {
     .filter((n) => n.endsWith(".md"))
     .filter((n) => !only || n === `${only}.md`)
     .sort();
-  if (only && names.length === 0) throw new Error(`no episode file for ${only}`);
+  if (only && names.length === 0)
+    throw new Error(`no episode file for ${only}`);
 
   for (const name of names) {
     const path = join(EPISODE_DIR, name);
@@ -2542,31 +2717,31 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 **1. Spec coverage.**
 
-| Spec requirement | Task |
-| --- | --- |
-| `content/episodes/<yyyy>-<mm>.md` one file per episode | Task 3 (migrate writes them), format defined in "Canonical Episode File Format" |
-| Hand-written front matter: `title`, `date`, `description`, `time`, `location` | Task 2 (`Episode` fields, parser) |
-| Ingest-owned front matter: `transistorId`, `audioUrl`, `duration`, `season`, `episode`, `people`, `bskyPostUrl` | Task 4 (`applyFeedItem`) |
-| `atUri` written by `publish-atproto`, never by ingest | Task 7 (writer), Task 4 (asserted untouched) |
-| `site.standard.publication` at rkey `self`: `url`, `name`, `description` | Task 7 |
-| `site.standard.document` per episode keyed by slug: `site`, `title`, `publishedAt`, `path`, `description`, `textContent`, `tags`, `contributors`, `bskyPostRef` | Task 7 (`buildDocumentRecord`) |
-| `ATPROTO_HANDLE` / `ATPROTO_APP_PASSWORD`, `@atproto/api` | Task 7 (Global Constraints dependency note, `.env.example`) |
-| Ingest matches by `yyyy-mm` in the feed title, both title styles | Task 4 (`slugFromTitle`, tested against every real style) |
-| Body: outline then `# Transcript`, `##` sections, `**Speaker:**`, trailing `[hh:mm:ss]` | Task 2 |
-| Parsed structure `Episode`/`OutlineItem`/`Section`/`Segment` | Task 2 (interfaces block) |
-| `migrate` detects formats, strips embeds and style blocks, normalizes timestamps, promotes h1 sections to h2, synthesizes an outline, writes a report | Task 3 |
-| `ingest` idempotent, reports both directions of mismatch | Task 4 (idempotence test + Step 7, `no file for` / `no feed item for` lines) |
-| `publish-transcript` steps 1–4 with independent flags, `DESCRIPT_TOKEN` / `TRANSISTOR_API_KEY` | Task 6 |
-| SRT export with speaker prefixes | Task 5 |
-| Testing: parser fixtures per historical format; migrate round-trips through the parser; ingest against a saved feed; SRT cue numbering/format/prefix | Tasks 2–5 |
-| `/.well-known/site.standard.publication`, `<link rel="site.standard.document">`, the comments section | **Site plan**, `docs/superpowers/plans/2026-09-08-site.md` |
-| Site, routes, CSS, Pagefind, Netlify, newsletter, risk gate | **Out of scope**, per the plan header |
+| Spec requirement                                                                                                                                                | Task                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `content/episodes/<yyyy>-<mm>.md` one file per episode                                                                                                          | Task 3 (migrate writes them), format defined in "Canonical Episode File Format" |
+| Hand-written front matter: `title`, `date`, `description`, `time`, `location`                                                                                   | Task 2 (`Episode` fields, parser)                                               |
+| Ingest-owned front matter: `transistorId`, `audioUrl`, `duration`, `season`, `episode`, `people`, `bskyPostUrl`                                                 | Task 4 (`applyFeedItem`)                                                        |
+| `atUri` written by `publish-atproto`, never by ingest                                                                                                           | Task 7 (writer), Task 4 (asserted untouched)                                    |
+| `site.standard.publication` at rkey `self`: `url`, `name`, `description`                                                                                        | Task 7                                                                          |
+| `site.standard.document` per episode keyed by slug: `site`, `title`, `publishedAt`, `path`, `description`, `textContent`, `tags`, `contributors`, `bskyPostRef` | Task 7 (`buildDocumentRecord`)                                                  |
+| `ATPROTO_HANDLE` / `ATPROTO_APP_PASSWORD`, `@atproto/api`                                                                                                       | Task 7 (Global Constraints dependency note, `.env.example`)                     |
+| Ingest matches by `yyyy-mm` in the feed title, both title styles                                                                                                | Task 4 (`slugFromTitle`, tested against every real style)                       |
+| Body: outline then `# Transcript`, `##` sections, `**Speaker:**`, trailing `[hh:mm:ss]`                                                                         | Task 2                                                                          |
+| Parsed structure `Episode`/`OutlineItem`/`Section`/`Segment`                                                                                                    | Task 2 (interfaces block)                                                       |
+| `migrate` detects formats, strips embeds and style blocks, normalizes timestamps, promotes h1 sections to h2, synthesizes an outline, writes a report           | Task 3                                                                          |
+| `ingest` idempotent, reports both directions of mismatch                                                                                                        | Task 4 (idempotence test + Step 7, `no file for` / `no feed item for` lines)    |
+| `publish-transcript` steps 1–4 with independent flags, `DESCRIPT_TOKEN` / `TRANSISTOR_API_KEY`                                                                  | Task 6                                                                          |
+| SRT export with speaker prefixes                                                                                                                                | Task 5                                                                          |
+| Testing: parser fixtures per historical format; migrate round-trips through the parser; ingest against a saved feed; SRT cue numbering/format/prefix            | Tasks 2–5                                                                       |
+| `/.well-known/site.standard.publication`, `<link rel="site.standard.document">`, the comments section                                                           | **Site plan**, `docs/superpowers/plans/2026-09-08-site.md`                      |
+| Site, routes, CSS, Pagefind, Netlify, newsletter, risk gate                                                                                                     | **Out of scope**, per the plan header                                           |
 
 Two gaps found and closed while reviewing: `TRANSISTOR_SHOW_ID` is needed to resolve a share id to an episode id and is not in the spec's env list — added to Task 6's environment note. And the spec's "three historical formats" is not accurate to the corpus; Task 3 replaces it with a per-feature detection table derived from reading all 39 files, and calls out the two files (`tmir-2024-04.md`, `tmir-2025-06.md`) that break the naive rules.
 
 **2. Placeholder scan.** No TBD/TODO, no "add error handling", no "similar to Task N". Every code step carries runnable code. The one deliberate uncertainty is the Descript markdown export shape, which is labelled as such, given a concrete assumed shape from a real pasted export, isolated to a single function, and paired with a verification step (Task 6, Step 6). Task 7 carries a second, equally explicit one: the document lexicon marks `contributors[].did` required and the feed gives us no DIDs, so the record is written without it and Step 9 names both fallbacks to take if the PDS rejects it.
 
-**3. Type consistency.** Checked across tasks: `slug`/`flattenLinks`/`normalizeTime`/`secondsToTimestamp`/`timestampToSeconds` (Task 1) are used with the same names in Tasks 2, 3, 5, 6. `splitFile` returns `{ frontMatter, body }` in Task 2 and is destructured that way in Tasks 3 and 4. `serializeEpisodeFile(frontMatter, body)` has the same two-argument signature everywhere. `Person` is defined in `parse.ts` and imported by `ingest.ts` as a type-only import. `TRANSCRIPT_MARKER` is exported from `parse.ts` and consumed in Task 6. `toSrt(episode)` takes the `Episode` from `parseEpisode`. 
+**3. Type consistency.** Checked across tasks: `slug`/`flattenLinks`/`normalizeTime`/`secondsToTimestamp`/`timestampToSeconds` (Task 1) are used with the same names in Tasks 2, 3, 5, 6. `splitFile` returns `{ frontMatter, body }` in Task 2 and is destructured that way in Tasks 3 and 4. `serializeEpisodeFile(frontMatter, body)` has the same two-argument signature everywhere. `Person` is defined in `parse.ts` and imported by `ingest.ts` as a type-only import. `TRANSCRIPT_MARKER` is exported from `parse.ts` and consumed in Task 6. `toSrt(episode)` takes the `Episode` from `parseEpisode`.
 Three problems found and fixed inline while reviewing:
 
 1. Task 6 imported `splitFile` without using it — removed from the import list.

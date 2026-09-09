@@ -21,7 +21,8 @@ export function outlineToText(items: OutlineItem[], depth = 0): string {
   for (const item of items) {
     const indent = "  ".repeat(depth);
     lines.push(`${indent}${item.title}${item.url ? ` — ${item.url}` : ""}`);
-    if (item.children.length > 0) lines.push(outlineToText(item.children, depth + 1));
+    if (item.children.length > 0)
+      lines.push(outlineToText(item.children, depth + 1));
   }
   return lines.join("\n");
 }
@@ -30,7 +31,9 @@ export function outlineToText(items: OutlineItem[], depth = 0): string {
 export function bskyUrlToParts(
   url: string,
 ): { actor: string; rkey: string } | null {
-  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(url.trim());
+  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(
+    url.trim(),
+  );
   return m ? { actor: m[1], rkey: m[2] } : null;
 }
 
@@ -87,7 +90,8 @@ async function resolvePostRef(
   }
   const did = parts.actor.startsWith("did:")
     ? parts.actor
-    : (await agent.com.atproto.identity.resolveHandle({ handle: parts.actor })).data.did;
+    : (await agent.com.atproto.identity.resolveHandle({ handle: parts.actor }))
+        .data.did;
   const res = await agent.com.atproto.repo.getRecord({
     repo: did,
     collection: "app.bsky.feed.post",
@@ -129,7 +133,8 @@ async function main() {
     .filter((n) => n.endsWith(".md"))
     .filter((n) => !only || n === `${only}.md`)
     .sort();
-  if (only && names.length === 0) throw new Error(`no episode file for ${only}`);
+  if (only && names.length === 0)
+    throw new Error(`no episode file for ${only}`);
 
   for (const name of names) {
     const path = join(EPISODE_DIR, name);

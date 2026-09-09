@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import type { Person } from "../src/content/parse.ts";
 import { splitFile } from "../src/content/parse.ts";
 import { serializeEpisodeFile } from "../src/content/serialize.ts";
+import { toSeconds } from "../src/content/time.ts";
 
 export const FEED_URL = "https://feeds.transistor.fm/this-month-in-react";
 
@@ -18,14 +19,26 @@ export interface FeedItem {
 }
 
 const MONTHS = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ];
 
 function decode(s: string): string {
   return s
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) =>
+      String.fromCodePoint(parseInt(n, 16)),
+    )
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
@@ -89,8 +102,15 @@ export function parseFeed(xml: string): FeedItem[] {
     const transistorId = audioUrl
       ? /media\.transistor\.fm\/([^/?#]+)/.exec(audioUrl)?.[1]
       : undefined;
-    const duration = Number(tag(item, "itunes:duration") ?? NaN);
-    if (!transistorId || !audioUrl || Number.isNaN(duration)) continue;
+    // <itunes:duration> is legally either raw seconds or HH:MM:SS / MM:SS;
+    // toSeconds handles both.
+    const duration = toSeconds(tag(item, "itunes:duration"));
+    if (!transistorId || !audioUrl || duration === undefined) {
+      console.warn(
+        `skipping feed item ${epSlug}: missing audio url or duration`,
+      );
+      continue;
+    }
 
     const people: Person[] = [];
     for (const m of item.matchAll(
@@ -108,9 +128,10 @@ export function parseFeed(xml: string): FeedItem[] {
     const episode = Number(tag(item, "podcast:episode") ?? NaN);
     // The "Reply on Bluesky" anchor inside the <description> CDATA. Matched on
     // the URL shape, not the link text, so a renamed link still resolves.
-    const bskyPostUrl = /href="(https:\/\/bsky\.app\/profile\/[^/"]+\/post\/[^"]+)"/.exec(
-      item,
-    )?.[1];
+    const bskyPostUrl =
+      /href="(https:\/\/bsky\.app\/profile\/[^/"]+\/post\/[^"]+)"/.exec(
+        item,
+      )?.[1];
     items.push({
       slug: epSlug,
       transistorId,
@@ -137,8 +158,11 @@ export function applyFeedItem(fileText: string, item: FeedItem): string {
   frontMatter.duration = item.duration;
   if (item.season !== undefined) frontMatter.season = item.season;
   if (item.episode !== undefined) frontMatter.episode = item.episode;
-  frontMatter.people = item.people;
-  if (item.bskyPostUrl !== undefined) frontMatter.bskyPostUrl = item.bskyPostUrl;
+  // An empty list means the feed item carried no <podcast:person> tags, not
+  // that the episode has no people: never clobber hand-curated front matter.
+  if (item.people.length > 0) frontMatter.people = item.people;
+  if (item.bskyPostUrl !== undefined)
+    frontMatter.bskyPostUrl = item.bskyPostUrl;
   return serializeEpisodeFile(frontMatter, body);
 }
 
