@@ -13,17 +13,17 @@ export const Route = createFileRoute("/specimen")({
 });
 
 const COLORS = [
-  ["bg", "Page"],
+  ["bg", "Background"],
   ["surface", "Surface"],
   ["text", "Primary text"],
-  ["muted", "Secondary text"],
-  ["accent", "Links and actions"],
-  ["rule", "Dividing rules"],
-  ["control-border", "Control borders"],
-  ["feature-bg", "Episode feature"],
-  ["feature-text", "Feature text"],
-  ["warm-bg", "Subscribe"],
-  ["cool-bg", "Community"],
+  ["muted", "Muted text"],
+  ["accent", "Primary / CTA"],
+  ["rule", "Subtle border"],
+  ["control-border", "Control border"],
+  ["feature-bg", "Primary surface"],
+  ["feature-text", "On-primary text"],
+  ["warm-bg", "Secondary surface"],
+  ["cool-bg", "Tertiary surface"],
 ];
 
 // Only the specimen's presentation lives here. Examples use the production

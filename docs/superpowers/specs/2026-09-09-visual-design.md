@@ -41,17 +41,17 @@ interactive blue changes with the theme.
 
 | Role / token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| Page / `--bg` | `#FAF7F0` | `#141C26` | Warm paper / blue charcoal canvas |
+| Background / `--bg` | `#FAF7F0` | `#141C26` | Warm paper / blue charcoal canvas |
 | Surface / `--surface` | `#F0EADF` | `#1E2A38` | Panels, inputs, player surroundings |
-| Text / `--text` | `#202A35` | `#F3EEE5` | Headings and body |
-| Secondary / `--muted` | `#59616B` | `#B0BAC6` | Dates, durations, supporting labels |
-| Accent / `--accent` | `#123F8C` | `#9DBFFF` | Links, primary buttons, selection |
-| Rule / `--rule` | `#D8D1C5` | `#394757` | Decorative dividers |
-| Control / `--control-border` | `#7A8086` | `#7F91A6` | Essential control boundaries |
-| Feature / `--feature-bg` | `#123F8C` | `#203F70` | Latest episode |
-| Feature text / `--feature-text` | `#F3EEE5` | `#F3EEE5` | Text and links on blue |
-| Warm field / `--warm-bg` | `#F4D8C8` | `#3B2D2B` | Subscribe / participation |
-| Cool field / `--cool-bg` | `#D9E9E4` | `#203936` | Community emphasis |
+| Primary text / `--text` | `#202A35` | `#F3EEE5` | Headings and body |
+| Muted text / `--muted` | `#59616B` | `#B0BAC6` | Dates, durations, supporting labels |
+| Primary / CTA / `--accent` | `#123F8C` | `#9DBFFF` | Links, primary buttons, selection |
+| Subtle border / `--rule` | `#D8D1C5` | `#394757` | Decorative dividers |
+| Control border / `--control-border` | `#7A8086` | `#7F91A6` | Essential control boundaries |
+| Primary surface / `--feature-bg` | `#123F8C` | `#203F70` | Latest episode |
+| On-primary text / `--feature-text` | `#F3EEE5` | `#F3EEE5` | Text and links on blue |
+| Secondary surface / `--warm-bg` | `#F4D8C8` | `#3B2D2B` | Subscribe / participation |
+| Tertiary surface / `--cool-bg` | `#D9E9E4` | `#203936` | Community emphasis |
 
 ### Light mode
 
