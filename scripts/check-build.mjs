@@ -37,6 +37,17 @@ hasFile("index.html");
 hasFile("styles.css");
 contains("index.html", 'class="site-nav"');
 contains("index.html", 'href="/styles.css"');
+// The skip link must precede the header on both rendering paths — the router
+// shell and the static document handlers build their own markup.
+for (const path of ["index.html", "links/index.html"]) {
+  const html = file(path) || "";
+  check(
+    `${path} has a skip link before the header`,
+    html.includes('class="skip-link" href="#main"') &&
+      html.includes('id="main"') &&
+      html.indexOf("skip-link") < html.indexOf("site-header"),
+  );
+}
 
 contains("index.html", 'class="archive"');
 contains("index.html", 'class="outline"');
