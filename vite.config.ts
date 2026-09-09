@@ -20,6 +20,7 @@ const pages: { path: string; prerender: { enabled: boolean } }[] = [
   })),
   { path: "/feed.xml", prerender: { enabled: true } },
   { path: "/sitemap.xml", prerender: { enabled: true } },
+  { path: "/specimen", prerender: { enabled: true } },
   ...slugs.map((slug) => ({
     path: `/episodes/${slug}/chapters.json`,
     prerender: { enabled: true },

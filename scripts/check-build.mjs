@@ -202,6 +202,32 @@ if (process.env.VITE_BLUESKY_PROFILE_URL)
   );
 }
 
+console.log("\nDesign specimen");
+hasFile("specimen/index.html");
+{
+  const html = file("specimen/index.html") || "";
+  check(
+    "specimen/index.html has a Design specimen heading",
+    /<h1\b[^>]*>Design specimen<\/h1>/.test(html),
+  );
+  check(
+    "specimen/index.html is noindex",
+    /<meta\b(?=[^>]*\bname="robots")(?=[^>]*\bcontent="[^"]*\bnoindex\b)[^>]*>/i.test(
+      html,
+    ),
+  );
+}
+for (const path of ["index.html", "about/index.html"]) {
+  check(
+    `${path} has no link to /specimen`,
+    !/\bhref=["']\/specimen(?:[\/#?][^"']*)?["']/.test(file(path) || ""),
+  );
+}
+check(
+  "sitemap.xml omits /specimen",
+  !(file("sitemap.xml") || "").includes("/specimen"),
+);
+
 console.log("\nStylesheet");
 const cssSource = readFileSync("public/styles.css", "utf8");
 for (const needle of [
@@ -225,6 +251,7 @@ const expected = [
   "links/index.html",
   "search/index.html",
   "about/index.html",
+  "specimen/index.html",
   "feed.xml",
   ...allSlugs.flatMap((s) => [
     `episodes/${s}/index.html`,
