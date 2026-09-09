@@ -32,17 +32,15 @@ function contains(path, needle) {
   );
 }
 
-console.log("Task 1: shell");
+console.log("Shell");
 hasFile("index.html");
 hasFile("styles.css");
 contains("index.html", 'class="site-nav"');
 contains("index.html", 'href="/styles.css"');
 
-// --- Task 4: home route (appended) ---
 contains("index.html", 'class="archive"');
 contains("index.html", 'class="outline"');
 for (const slug of slugs()) contains("index.html", `/episodes/${slug}`);
-// --- end Task 4 ---
 
 function slugs() {
   return readdirSync("content/episodes")
@@ -51,7 +49,7 @@ function slugs() {
     .sort();
 }
 
-console.log("\nTask 3: episode documents");
+console.log("\nEpisode documents");
 const episodeSlugs = slugs();
 check("content/episodes has at least one episode", episodeSlugs.length > 0);
 for (const slug of episodeSlugs) hasFile(`episodes/${slug}/index.html`);
@@ -64,27 +62,7 @@ if (newest) {
   contains(path, "<audio");
   contains(path, 'class="player"');
   contains(path, 'property="og:title"');
-  const html = file(path) || "";
-  check(
-    `${path} references no bundled JS`,
-    !/\/assets\/[^"']*\.js/.test(html),
-    "static documents must ship zero external scripts",
-  );
-  // The transcript must appear exactly once — a second copy means a loader or
-  // RSC payload has been reintroduced.
   const md = readFileSync(join("content/episodes", `${newest}.md`), "utf8");
-  const phrase = (md.split("\n# Transcript\n")[1] || "")
-    .split("\n")
-    .map((line) => /[A-Za-z][A-Za-z ]{29,59}[A-Za-z]/.exec(line)?.[0])
-    .find(Boolean);
-  if (phrase) {
-    const copies = (file(path) || "").split(phrase).length - 1;
-    check(
-      `${path} contains the transcript exactly once`,
-      copies === 1,
-      `found ${copies}`,
-    );
-  }
 
   // AT Protocol bits are conditional on front matter and env, so only assert
   // them when the inputs are actually present.
@@ -103,8 +81,7 @@ if (newest) {
   }
 }
 
-// --- Task 5: links document (appended) ---
-console.log("\nTask 5: links document");
+console.log("\nLinks document");
 hasFile("links/index.html");
 contains("links/index.html", 'class="link-row"');
 contains("links/index.html", "data-text=");
@@ -113,9 +90,8 @@ check(
   "links/index.html references no bundled JS",
   !/\/assets\/[^"']*\.js/.test(file("links/index.html") || ""),
 );
-// --- end Task 5 ---
 
-console.log("\nTask 6: feed and chapters");
+console.log("\nFeed and chapters");
 hasFile("feed.xml");
 contains("feed.xml", '<rss version="2.0"');
 contains("feed.xml", "<item>");
@@ -152,7 +128,7 @@ for (const slug of slugs()) {
   );
 }
 
-console.log("\nTask 7: search");
+console.log("\nSearch");
 hasFile("search/index.html");
 contains("search/index.html", 'id="pagefind-ui"');
 check(
@@ -180,7 +156,7 @@ if (existsSync(join(dist, "pagefind", "pagefind-ui.js"))) {
   }
 }
 
-console.log("\nTask 8: about");
+console.log("\nAbout");
 hasFile("about/index.html");
 contains("about/index.html", 'class="people"');
 contains(
@@ -210,7 +186,7 @@ if (process.env.VITE_BLUESKY_PROFILE_URL)
   );
 }
 
-console.log("\nTask 9: stylesheet");
+console.log("\nStylesheet");
 const cssSource = readFileSync("public/styles.css", "utf8");
 for (const needle of [
   "@layer reset, tokens, layout, components, utilities;",
@@ -228,7 +204,7 @@ const lineCount = cssSource.split("\n").length;
 check("styles.css is under 250 lines", lineCount < 250, `${lineCount} lines`);
 check("styles.css is served verbatim", file("styles.css") === cssSource);
 
-console.log("\nTask 10: prerender coverage");
+console.log("\nPrerender coverage");
 const allSlugs = slugs();
 const expected = [
   "index.html",
@@ -242,13 +218,13 @@ const expected = [
     `episodes/${s}/chapters.json`,
   ]),
 ];
-for (const path of expected) hasFile(path);
 check(
   `prerendered all ${expected.length} expected outputs`,
   expected.every((p) => file(p) !== null),
+  `missing: ${expected.filter((p) => file(p) === null).join(", ")}`,
 );
 
-console.log("\nTask 10: standard.site discovery");
+console.log("\nstandard.site discovery");
 const wellKnown = ".well-known/site.standard.publication";
 if (process.env.VITE_ATPROTO_PUBLICATION_URI) {
   hasFile(wellKnown);
@@ -261,7 +237,7 @@ if (process.env.VITE_ATPROTO_PUBLICATION_URI) {
   console.log(`  skip  ${wellKnown} (VITE_ATPROTO_PUBLICATION_URI unset)`);
 }
 
-console.log("\nTask 10: no duplicated transcript");
+console.log("\nTranscript integrity");
 for (const slug of allSlugs) {
   const html = file(`episodes/${slug}/index.html`);
   if (html === null) continue;
@@ -286,8 +262,7 @@ for (const slug of allSlugs) {
   );
 }
 
-// --- Adjustments: sticky episode header + runtime outline highlighting ---
-console.log("\nAdjustments: episode header and outline state");
+console.log("\nEpisode header and outline state");
 for (const slug of allSlugs) {
   const path = `episodes/${slug}/index.html`;
   const html = file(path);
@@ -300,10 +275,8 @@ for (const slug of allSlugs) {
     "the outline script must set it at runtime only",
   );
 }
-// --- end Adjustments ---
 
-// --- Task 11: Open Graph cards ---
-console.log("\nTask 11: Open Graph cards");
+console.log("\nOpen Graph cards");
 for (const slug of allSlugs) {
   check(
     `og/${slug}.jpg exists`,
@@ -312,10 +285,8 @@ for (const slug of allSlugs) {
   );
 }
 check("og/default.jpg exists", existsSync(join(dist, "og", "default.jpg")));
-// --- end Task 11 ---
 
-// --- Task 12: link previews ---
-console.log("\nTask 12: link previews");
+console.log("\nLink previews");
 const origin = (
   process.env.VITE_SITE_URL || "https://thismonthinreact.com"
 ).replace(/\/$/, "");
@@ -341,10 +312,8 @@ for (const [path, slug] of [
     title,
   );
 }
-// --- end Task 12 ---
 
-// --- Task 13: crawler discovery and structured data ---
-console.log("\nTask 13: robots, sitemap, JSON-LD");
+console.log("\nRobots, sitemap, JSON-LD");
 hasFile("robots.txt");
 contains("robots.txt", "Sitemap:");
 contains("robots.txt", "/sitemap.xml");
@@ -384,7 +353,6 @@ check(
     ld?.partOfSeries?.["@type"] === "PodcastSeries",
   );
 }
-// --- end Task 13 ---
 
 console.log("\nSizes");
 const assetsDir = join(dist, "assets");
