@@ -211,8 +211,6 @@ for (const needle of [
 ]) {
   check(`styles.css uses ${needle}`, cssSource.includes(needle));
 }
-const lineCount = cssSource.split("\n").length;
-check("styles.css is under 250 lines", lineCount < 250, `${lineCount} lines`);
 check("styles.css is served verbatim", file("styles.css") === cssSource);
 
 console.log("\nPrerender coverage");

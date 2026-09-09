@@ -1,0 +1,14 @@
+# Build output and tool caches
+dist
+.netlify
+.tanstack
+.output
+src/routeTree.gen.ts
+
+# Golden files: tests compare these byte for byte
+tests/fixtures
+
+# Vendored font binaries and their licence
+assets/fonts
+
+package-lock.json
