@@ -16,14 +16,22 @@ interface AboutPerson {
 // Transistor's per-episode people data labels Carl "Producer" and lists guests
 // sparsely, so who is a host is stated here rather than derived from it.
 const HOSTS = [
-  { name: "Carl Vitullo", role: "Host" },
-  { name: "Mark Erikson", role: "Host" },
-  { name: "Mo Javad", role: "Former co-host" },
+  {
+    name: "Carl Vitullo",
+    role: "Product developer · Reactiflux community leader",
+    bio: "Carl builds products and runs community programs at Reactiflux. He brings the perspective of a working developer and community organizer to questions about the tools we use and the people building them.",
+  },
+  {
+    name: "Mark Erikson",
+    role: "Redux maintainer · Software engineer",
+    bio: "Mark maintains Redux and works on debugging and React analysis tools. He brings experience with library internals, performance, and the long-term work of maintaining software that other developers depend on.",
+  },
 ];
+const FORMER_HOSTS = [{ name: "Mo Javad", role: "Former co-host" }];
 // The episode data uses first names for some hosts ("Mo"), so match on that.
 const firstName = (name: string) => name.split(" ")[0];
 
-const ABOUT_DESCRIPTION = `Who makes ${SITE_NAME}, and how to subscribe.`;
+const ABOUT_DESCRIPTION = `Meet Carl Vitullo and Mark Erikson, the hosts of ${SITE_NAME}: a monthly conversation about React, the web, and the work of building software.`;
 
 const getAbout = createServerFn().handler(async () => {
   const { loadEpisodes } = await import("../content/load.ts");
@@ -42,16 +50,21 @@ const getAbout = createServerFn().handler(async () => {
     }
   }
 
-  const hostKeys = new Set(HOSTS.map((h) => firstName(h.name)));
+  const hostKeys = new Set(
+    [...HOSTS, ...FORMER_HOSTS].map((h) => firstName(h.name)),
+  );
   const people = [...byName.values()];
   const hosts = HOSTS.map((host) => {
     const data = people.find((p) => firstName(p.name) === firstName(host.name));
     return { ...host, href: data?.href, img: data?.img };
   });
+  const formerHosts = FORMER_HOSTS.map((host) => {
+    const data = people.find((p) => firstName(p.name) === firstName(host.name));
+    return { ...host, href: data?.href, img: data?.img };
+  });
   const guests = people.filter((p) => !hostKeys.has(firstName(p.name)));
 
-  const latest = episodes[0];
-  return { hosts, guests, time: latest?.time, location: latest?.location };
+  return { hosts, formerHosts, guests };
 });
 
 export const Route = createFileRoute("/about")({
@@ -73,7 +86,7 @@ export const Route = createFileRoute("/about")({
 
 function PersonList({ people }: { people: AboutPerson[] }) {
   return (
-    <ul>
+    <ul className="contributor-list">
       {people.map((person) => (
         <li key={person.name}>
           {person.img && (
@@ -85,14 +98,16 @@ function PersonList({ people }: { people: AboutPerson[] }) {
               loading="lazy"
             />
           )}
-          {person.href ? (
-            <a href={person.href} rel="noreferrer">
-              {person.name}
-            </a>
-          ) : (
-            person.name
-          )}
-          <span className="role">{person.role}</span>
+          <div>
+            {person.href ? (
+              <a href={person.href} rel="noreferrer">
+                {person.name}
+              </a>
+            ) : (
+              person.name
+            )}
+            <span className="role">{person.role}</span>
+          </div>
         </li>
       ))}
     </ul>
@@ -100,75 +115,125 @@ function PersonList({ people }: { people: AboutPerson[] }) {
 }
 
 function About() {
-  const { hosts, guests, time, location } = Route.useLoaderData();
+  const { hosts, formerHosts, guests } = Route.useLoaderData();
   return (
     <div className="about-page">
-      <h1>About {SITE_NAME}</h1>
-      <p>A monthly news podcast about React and its ecosystem.</p>
+      <header className="about-intro">
+        <p className="eyebrow">About the show</p>
+        <h1>A conversation worth keeping up with.</h1>
+        <p className="lead">
+          React and the web keep changing. {SITE_NAME} is a place to work
+          through those changes together.
+        </p>
+        <p>
+          Each month, Carl Vitullo and Mark Erikson bring the releases,
+          projects, posts, and debates they’ve been following into a
+          conversation recorded live in Reactiflux. We connect new developments
+          to the history behind them and the practical questions they raise—with
+          room for disagreement and things we haven’t figured out yet.
+        </p>
+        <p>
+          Bring your own experience and judgment. Chapters, transcripts, and
+          source links let you follow a thread further and draw your own
+          conclusions.
+        </p>
+      </header>
 
-      {time && (
-        <section className="schedule">
-          <h2>Live</h2>
-          <p>
-            Recorded live at {time}
-            {location ? ` in ${location}` : ""}.
-          </p>
-        </section>
-      )}
+      <section className="hosts-section" aria-labelledby="hosts-heading">
+        <div className="section-heading">
+          <h2 id="hosts-heading">Your hosts</h2>
+        </div>
+        <div className="host-grid">
+          {hosts.map((host) => (
+            <article className="host-profile" key={host.name}>
+              {host.img && (
+                <img
+                  src={host.img}
+                  alt={host.name}
+                  width="320"
+                  height="320"
+                  loading="lazy"
+                />
+              )}
+              <div className="host-bio">
+                <h3>{host.name}</h3>
+                <p className="role">{host.role}</p>
+                <p>{host.bio}</p>
+                {host.href && (
+                  <a href={host.href}>More from {firstName(host.name)} ↗</a>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      <section className="people">
-        <h2>Hosts</h2>
-        <PersonList people={hosts} />
+      <section
+        className="community-panel"
+        id="live"
+        aria-labelledby="live-heading"
+      >
+        <p className="eyebrow">Recorded in Reactiflux</p>
+        <h2 id="live-heading">Be part of the conversation.</h2>
+        <p>
+          We record live in the Reactiflux Discord community. Join us there for
+          upcoming recording announcements and conversations with other
+          developers working in React.
+        </p>
+        <a href="https://www.reactiflux.com/">Join Reactiflux ↗</a>
+        <p>
+          Have a topic, a useful link, or feedback? Write to{" "}
+          <a href="mailto:hello@reactiflux.com">hello@reactiflux.com</a>.
+        </p>
+      </section>
+
+      <section className="contributors" aria-labelledby="contributors-heading">
+        <h2 id="contributors-heading">More voices from the show</h2>
+        <h3>Former hosts</h3>
+        <PersonList people={formerHosts} />
         {guests.length > 0 && (
           <>
-            <h2>Guests</h2>
+            <h3>Guests</h3>
             <PersonList people={guests} />
           </>
         )}
       </section>
 
-      <section className="subscribe">
-        <h2>Subscribe</h2>
-        <ul>
-          <li>
-            <a
-              href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH"
-              rel="noreferrer"
-            >
-              Spotify
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526"
-              rel="noreferrer"
-            >
-              Apple Podcasts
-            </a>
-          </li>
-          <li>
-            <a href={TRANSISTOR_FEED} rel="noreferrer">
-              RSS
-            </a>
-          </li>
-          <li>
-            <a href="/feed.xml">Show notes by email/RSS</a>
-          </li>
-          {BLUESKY_PROFILE_URL && (
-            <li>
-              <a href={BLUESKY_PROFILE_URL} rel="noreferrer">
-                Follow on Bluesky
-              </a>
-            </li>
-          )}
-        </ul>
+      <section
+        className="subscribe-panel"
+        id="subscribe"
+        aria-labelledby="subscribe-heading"
+      >
+        <h2 id="subscribe-heading">See you next month.</h2>
         <p>
-          This site is an AT Protocol publication (
-          <a href="https://standard.site/" rel="noreferrer">
-            standard.site
-          </a>
-          ), so every episode is also a record on the open network.
+          Listen wherever you get podcasts, or follow the show notes for every
+          episode’s outline and links.
         </p>
+        <div className="action-row">
+          <a
+            className="button"
+            href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH"
+          >
+            Spotify
+          </a>
+          <a
+            className="button button-secondary"
+            href="https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526"
+          >
+            Apple Podcasts
+          </a>
+          <a className="button button-secondary" href={TRANSISTOR_FEED}>
+            Podcast RSS
+          </a>
+          <a className="button button-secondary" href="/feed.xml">
+            Show notes RSS
+          </a>
+          {BLUESKY_PROFILE_URL && (
+            <a className="button button-secondary" href={BLUESKY_PROFILE_URL}>
+              Follow on Bluesky
+            </a>
+          )}
+        </div>
       </section>
 
       {BUTTONDOWN_USER && (

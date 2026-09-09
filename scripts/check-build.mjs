@@ -50,7 +50,10 @@ for (const path of ["index.html", "links/index.html"]) {
 }
 
 contains("index.html", 'class="archive"');
-contains("index.html", 'class="outline"');
+contains("index.html", 'id="latest"');
+contains("index.html", 'id="archive"');
+contains("index.html", "Carl Vitullo");
+contains("index.html", "Mark Erikson");
 for (const slug of slugs()) contains("index.html", `/episodes/${slug}`);
 
 function slugs() {
@@ -169,7 +172,9 @@ if (existsSync(join(dist, "pagefind", "pagefind-ui.js"))) {
 
 console.log("\nAbout");
 hasFile("about/index.html");
-contains("about/index.html", 'class="people"');
+contains("about/index.html", 'id="hosts-heading"');
+contains("about/index.html", 'id="live"');
+contains("about/index.html", 'id="subscribe"');
 contains(
   "about/index.html",
   "https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH",
@@ -179,7 +184,7 @@ contains(
   "https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526",
 );
 contains("about/index.html", "https://feeds.transistor.fm/this-month-in-react");
-contains("about/index.html", "AT Protocol publication");
+contains("about/index.html", "mailto:hello@reactiflux.com");
 if (process.env.VITE_BLUESKY_PROFILE_URL)
   contains("about/index.html", "Follow on Bluesky");
 {
@@ -203,7 +208,6 @@ for (const needle of [
   "@layer reset, tokens, layout, components, utilities;",
   "@view-transition",
   "light-dark(",
-  "oklch(",
   "@container",
   "anchor-name:",
   "text-wrap: balance",
