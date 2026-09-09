@@ -4,7 +4,8 @@ export const SITE_URL = (
   import.meta.env.VITE_SITE_URL || "https://thismonthinreact.com"
 ).replace(/\/$/, "");
 
-export const SITE_DESCRIPTION = "Monthly React news, with full transcripts.";
+export const SITE_DESCRIPTION =
+  "Monthly conversations about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson.";
 
 /** The navy of the wordmark and of the generated OG cards. */
 export const THEME_COLOR = "#123F8C";
@@ -119,21 +120,37 @@ export function Document({
         </a>
         <header className="site-header" data-pagefind-ignore="">
           <a className="site-name" href="/">
-            {SITE_NAME}
+            <span className="masthead-mark" aria-hidden="true">
+              TMiR
+            </span>
+            <span className="masthead-title">{SITE_NAME}</span>
           </a>
-          <nav className="site-nav">
+          <nav className="site-nav" aria-label="Main navigation">
             <a href="/">Home</a>
             <a href="/#archive">Episodes</a>
             <a href="/links">Links</a>
             <a href="/search">Search</a>
             <a href="/about">About</a>
+            <a className="nav-subscribe" href="/about#subscribe">
+              Subscribe
+            </a>
           </nav>
         </header>
         <main id="main" className={bodyClass ? `${bodyClass}-main` : undefined}>
           {children}
         </main>
         <footer className="site-footer" data-pagefind-ignore="">
-          <a href="/feed.xml">RSS</a>
+          <div className="footer-brand">
+            <strong>{SITE_NAME}</strong>
+            <p>React, the web, and the work of building software.</p>
+          </div>
+          <div className="footer-links">
+            <a href="/about#live">Recorded in Reactiflux</a>
+            <a href="https://feeds.transistor.fm/this-month-in-react">
+              Podcast RSS
+            </a>
+            <a href="/feed.xml">Show notes RSS</a>
+          </div>
         </footer>
         {scripts}
       </body>
