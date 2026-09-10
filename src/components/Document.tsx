@@ -47,8 +47,9 @@ export function Document({
   footerDiscussion?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  // FOOTER_SCRIPT sets --footer-block-size on <html> before hydration.
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
