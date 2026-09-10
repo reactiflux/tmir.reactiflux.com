@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   outlineToText,
-  bskyUrlToParts,
   buildDocumentRecord,
 } from "../scripts/publish-atproto.ts";
+import { bskyUrlToParts } from "../src/content/atproto.ts";
 import { parseEpisode } from "../src/content/parse.ts";
 
 const raw = readFileSync(

@@ -4,38 +4,39 @@ import { splitTitleLink } from "../content/slug.ts";
 import { hms, isoDuration, toSeconds } from "../content/time.ts";
 
 /** Progressive enhancement: native audio controls remain available without JS. */
-export const PLAYER_SCRIPT = `(function(){
-var a=document.querySelector(".episode-header audio"),ui=document.querySelector(".episode-controls");
+export const PLAYER_SCRIPT = `(()=>{
+const a=document.querySelector(".episode-header audio"),ui=document.querySelector(".episode-controls");
 if(!a||!ui)return;
-var play=ui.querySelector(".episode-play"),seek=ui.querySelector("input"),speed=ui.querySelector(".episode-speed");
-var status=document.querySelector(".playback-status"),dragging=false;
-function time(n){n=Math.max(0,Math.floor(n||0));var h=Math.floor(n/3600),m=Math.floor(n/60)%60,s=n%60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0")}
-function state(){play.textContent=a.paused?"▶":"Ⅱ";play.setAttribute("aria-label",a.paused?"Play episode":"Pause episode")}
-function update(){
- var d=a.duration;if(isFinite(d)&&d>0){seek.max=d;ui.querySelector("[data-duration]").textContent=time(d)}
+const play=ui.querySelector(".episode-play"),seek=ui.querySelector("input"),speed=ui.querySelector(".episode-speed");
+const status=document.querySelector(".playback-status");let dragging=false;
+const time=v=>{const n=Math.max(0,Math.floor(v||0)),h=Math.floor(n/3600),m=Math.floor(n/60)%60,s=n%60;
+ return\`\${h?\`\${h}:\${String(m).padStart(2,"0")}\`:m}:\${String(s).padStart(2,"0")}\`};
+const state=()=>{play.textContent=a.paused?"▶":"Ⅱ";play.setAttribute("aria-label",a.paused?"Play episode":"Pause episode")};
+const update=()=>{
+ const d=a.duration;if(Number.isFinite(d)&&d>0){seek.max=d;ui.querySelector("[data-duration]").textContent=time(d)}
  if(!dragging)seek.value=a.currentTime;
  seek.setAttribute("aria-valuetext",time(Number(seek.value)));
  ui.querySelector("[data-elapsed]").textContent=time(a.currentTime);
-}
-function fail(){status.hidden=false;status.textContent="Audio could not play. Try again or open the audio link.";state()}
-play.addEventListener("click",function(){if(!a.paused){a.pause();return}status.hidden=true;var p=a.play();if(p&&p.catch)p.catch(fail)});
-seek.addEventListener("input",function(){dragging=true;seek.setAttribute("aria-valuetext",time(Number(seek.value)))});
-seek.addEventListener("change",function(){a.currentTime=Number(seek.value);dragging=false;update()});
-speed.addEventListener("click",function(){var rates=[1,1.25,1.5,1.75,2,.75];a.playbackRate=rates[(rates.indexOf(a.playbackRate)+1)%rates.length]});
-a.addEventListener("ratechange",function(){speed.textContent=a.playbackRate+"×";speed.setAttribute("aria-label","Playback speed: "+a.playbackRate+" times")});
-["play","pause","ended"].forEach(function(e){a.addEventListener(e,state)});
-["timeupdate","loadedmetadata","durationchange"].forEach(function(e){a.addEventListener(e,update)});
+};
+const fail=()=>{status.hidden=false;status.textContent="Audio could not play. Try again or open the audio link.";state()};
+play.addEventListener("click",async()=>{if(!a.paused){a.pause();return}status.hidden=true;try{await a.play()}catch{fail()}});
+seek.addEventListener("input",()=>{dragging=true;seek.setAttribute("aria-valuetext",time(Number(seek.value)))});
+seek.addEventListener("change",()=>{a.currentTime=Number(seek.value);dragging=false;update()});
+speed.addEventListener("click",()=>{const rates=[1,1.25,1.5,1.75,2,.75];a.playbackRate=rates[(rates.indexOf(a.playbackRate)+1)%rates.length]});
+a.addEventListener("ratechange",()=>{speed.textContent=\`\${a.playbackRate}×\`;speed.setAttribute("aria-label",\`Playback speed: \${a.playbackRate} times\`)});
+for(const e of["play","pause","ended"])a.addEventListener(e,state);
+for(const e of["timeupdate","loadedmetadata","durationchange"])a.addEventListener(e,update);
 a.addEventListener("error",fail);
 a.controls=false;a.hidden=true;ui.hidden=false;update();state();
 })();`;
 
 /** One delegated listener seeks the page's single <audio> from any [data-seconds]. */
-export const SEEK_SCRIPT = `document.addEventListener("click",function(e){
-var t=e.target.closest("[data-seconds]");if(!t)return;
-var a=document.querySelector("audio");if(!a)return;
-var s=Number(t.dataset.seconds);if(!isFinite(s))return;
+export const SEEK_SCRIPT = `document.addEventListener("click",async e=>{
+const t=e.target.closest("[data-seconds]");if(!t)return;
+const a=document.querySelector("audio");if(!a)return;
+const s=Number(t.dataset.seconds);if(!Number.isFinite(s))return;
 e.preventDefault();a.currentTime=s;
-var p=a.play();if(p&&p.catch)p.catch(function(){})});`;
+try{await a.play()}catch{}});`;
 
 /**
  * Marks the outline entries for the transcript sections currently on screen with
@@ -43,43 +44,43 @@ var p=a.play();if(p&&p.catch)p.catch(function(){})});`;
  * (unless the reader is pointing at or focused inside it). Also publishes the
  * sticky player's height as --header-block-size so scroll anchoring clears it.
  */
-export const OUTLINE_SCRIPT = `(function(){
-var toc=document.querySelector(".toc");
-var head=document.querySelector(".episode-header");
-if(head&&window.ResizeObserver)new ResizeObserver(function(e){
-  document.documentElement.style.setProperty("--header-block-size",e[0].target.offsetHeight+"px")}).observe(head);
-var disclosure=document.querySelector(".chapter-disclosure");
-if(disclosure){var narrow=window.matchMedia("(max-width: 56rem)");
-function size(){disclosure.open=!narrow.matches}size();narrow.addEventListener("change",size);
-toc.addEventListener("click",function(e){if(narrow.matches&&e.target.closest('a[href^="#"]'))disclosure.open=false});}
-if(!toc||!window.IntersectionObserver)return;
-var heads=[].slice.call(document.querySelectorAll(".transcript h2[id]"));
+export const OUTLINE_SCRIPT = `(()=>{
+const toc=document.querySelector(".toc");
+const head=document.querySelector(".episode-header");
+if(head)new ResizeObserver(([e])=>{
+  document.documentElement.style.setProperty("--header-block-size",\`\${e.target.offsetHeight}px\`)}).observe(head);
+const disclosure=document.querySelector(".chapter-disclosure");
+if(disclosure){const narrow=matchMedia("(max-width: 56rem)");
+const size=()=>{disclosure.open=!narrow.matches};size();narrow.addEventListener("change",size);
+toc.addEventListener("click",e=>{if(narrow.matches&&e.target.closest('a[href^="#"]'))disclosure.open=false});}
+if(!toc)return;
+const heads=[...document.querySelectorAll(".transcript h2[id]")];
 if(!heads.length)return;
-var links=heads.map(function(h){return toc.querySelector('a[href="#'+h.id+'"]')});
-var vis={},hover=false;
-toc.addEventListener("mouseenter",function(){hover=true});
-toc.addEventListener("mouseleave",function(){hover=false});
-function update(){
-  var top=head?Math.max(0,head.getBoundingClientRect().bottom):0,last=-1,first=-1,end=-1;
-  for(var i=0;i<heads.length;i++)if(heads[i].getBoundingClientRect().top<=top)last=i;
-  for(var i=0;i<heads.length;i++){
-    var on=vis[heads[i].id]||i===last;
-    var a=links[i];if(!a)continue;
-    if(on){a.setAttribute("aria-current","true");if(first<0)first=i;end=i}
+const links=heads.map(h=>toc.querySelector(\`a[href="#\${h.id}"]\`));
+const vis=new Set();let hover=false;
+toc.addEventListener("mouseenter",()=>{hover=true});
+toc.addEventListener("mouseleave",()=>{hover=false});
+const update=()=>{
+  const top=head?Math.max(0,head.getBoundingClientRect().bottom):0;
+  const last=heads.findLastIndex(h=>h.getBoundingClientRect().top<=top);
+  let first=-1,end=-1;
+  heads.forEach((h,i)=>{
+    const a=links[i];if(!a)return;
+    if(vis.has(h.id)||i===last){a.setAttribute("aria-current","true");if(first<0)first=i;end=i}
     else a.removeAttribute("aria-current");
-  }
+  });
   if(first<0||hover||toc.matches(":focus-within"))return;
-  var a=links[first],b=links[end];if(!a||!b)return;
-  var r=toc.getBoundingClientRect();
-  var mid=(a.getBoundingClientRect().top+b.getBoundingClientRect().bottom)/2-r.top+toc.scrollTop;
-  var max=toc.scrollHeight-toc.clientHeight;
+  const a=links[first],b=links[end];if(!a||!b)return;
+  const r=toc.getBoundingClientRect();
+  const mid=(a.getBoundingClientRect().top+b.getBoundingClientRect().bottom)/2-r.top+toc.scrollTop;
+  const max=toc.scrollHeight-toc.clientHeight;
   toc.scrollTop=Math.max(0,Math.min(mid-toc.clientHeight/2,max));
-}
-var obs=new IntersectionObserver(function(es){
-  for(var i=0;i<es.length;i++)vis[es[i].target.id]=es[i].isIntersecting;
+};
+const obs=new IntersectionObserver(es=>{
+  for(const e of es)e.isIntersecting?vis.add(e.target.id):vis.delete(e.target.id);
   update();
 },{rootMargin:"0px 0px -60% 0px"});
-for(var i=0;i<heads.length;i++)obs.observe(heads[i]);
+for(const h of heads)obs.observe(h);
 })();`;
 
 /**
@@ -92,83 +93,77 @@ for(var i=0;i<heads.length;i++)obs.observe(heads[i]);
  * each quote post is rendered as a top-level comment with its own thread.
  * Every fetch fails silently and independently.
  */
-export const COMMENTS_SCRIPT = `(function(){
-var el=document.getElementById("comments");if(!el)return;
-var uri=el.dataset.thread;if(!uri)return;
-var API="https://public.api.bsky.app/xrpc/app.bsky.feed.";
-var repliesSlot=document.createElement("div");el.appendChild(repliesSlot);
-var quotesSlot=document.createElement("div");el.appendChild(quotesSlot);
-function get(path){
-  return fetch(API+path).then(function(r){return r.ok?r.json():Promise.reject(r.status)});
-}
-function item(post){
-  var a=post.author||{},rec=post.record||{};
-  var li=document.createElement("li");
-  var who=document.createElement("p");who.className="reply-author";
-  var link=document.createElement("a");
-  link.href="https://bsky.app/profile/"+(a.handle||a.did||"");
+export const COMMENTS_SCRIPT = `(async()=>{
+const el=document.getElementById("comments");if(!el)return;
+const uri=el.dataset.thread;if(!uri)return;
+const API="https://public.api.bsky.app/xrpc/app.bsky.feed.";
+const repliesSlot=el.appendChild(document.createElement("div"));
+const quotesSlot=el.appendChild(document.createElement("div"));
+const get=async path=>{const r=await fetch(API+path);if(!r.ok)throw r.status;return r.json()};
+const thread=(u,depth)=>get(\`getPostThread?uri=\${encodeURIComponent(u)}&depth=\${depth}\`);
+const when=new Intl.DateTimeFormat(undefined,{dateStyle:"medium"});
+const plural=new Intl.PluralRules("en");
+const item=post=>{
+  const a=post.author??{},rec=post.record??{};
+  const li=document.createElement("li");
+  const who=document.createElement("p");who.className="reply-author";
+  const link=document.createElement("a");
+  link.href=\`https://bsky.app/profile/\${a.handle||a.did||""}\`;
   link.rel="noreferrer";
-  link.textContent=(a.displayName||a.handle||"")+" @"+(a.handle||"");
-  who.appendChild(link);
-  var body=document.createElement("p");body.className="reply-text";
+  link.textContent=\`\${a.displayName||a.handle||""} @\${a.handle||""}\`;
+  who.append(link);
+  const body=document.createElement("p");body.className="reply-text";
   body.textContent=rec.text||"";
-  var when=document.createElement("time");when.className="reply-date";
-  var created=rec.createdAt||post.indexedAt||"";
-  when.dateTime=created;when.textContent=created.slice(0,10);
-  li.appendChild(who);li.appendChild(body);li.appendChild(when);
+  const time=document.createElement("time");time.className="reply-date";
+  const created=rec.createdAt||post.indexedAt||"";
+  time.dateTime=created;time.textContent=created?when.format(new Date(created)):"";
+  li.append(who,body,time);
   return li;
-}
-function render(replies){
-  if(!replies||!replies.length)return null;
-  var ol=document.createElement("ol");ol.className="replies";
-  for(var i=0;i<replies.length;i++){
-    var r=replies[i];if(!r||!r.post)continue;
-    var li=item(r.post);
-    var kids=render(r.replies);if(kids)li.appendChild(kids);
-    ol.appendChild(li);
+};
+const render=replies=>{
+  const ol=document.createElement("ol");ol.className="replies";
+  for(const r of replies??[]){
+    if(!r?.post)continue;
+    const li=item(r.post);
+    const kids=render(r.replies);if(kids)li.append(kids);
+    ol.append(li);
   }
   return ol.children.length?ol:null;
-}
-function counts(post){
-  var parts=[],names=[["replyCount","reply","replies"],["repostCount","repost","reposts"],
-    ["quoteCount","quote","quotes"],["likeCount","like","likes"]];
-  for(var i=0;i<names.length;i++){
-    var n=post[names[i][0]]||0;
-    if(n)parts.push(n+" "+(n===1?names[i][1]:names[i][2]));
+};
+const counts=post=>{
+  const parts=[];
+  for(const[key,one,many]of[["replyCount","reply","replies"],["repostCount","repost","reposts"],
+    ["quoteCount","quote","quotes"],["likeCount","like","likes"]]){
+    const n=post[key]||0;
+    if(n)parts.push(\`\${n} \${plural.select(n)==="one"?one:many}\`);
   }
-  if(!parts.length)return;
-  var p=el.querySelector("p");if(!p)return;
-  var summary=document.querySelector("[data-reaction-count]");
+  const p=el.querySelector("p");
+  if(!parts.length||!p)return;
+  const summary=document.querySelector("[data-reaction-count]");
   if(summary){summary.textContent=parts.join(" · ");return}
-  var span=document.createElement("span");span.className="count";
-  span.textContent=" · "+parts.join(" · ");
-  p.appendChild(span);
+  const span=document.createElement("span");span.className="count";
+  span.textContent=\` · \${parts.join(" · ")}\`;
+  p.append(span);
+};
+// The two top-level reads are independent; either may fail on its own.
+const[main,quotes]=await Promise.allSettled([
+  thread(uri,6),get(\`getQuotes?uri=\${encodeURIComponent(uri)}&limit=10\`)]);
+const t=main.value?.thread;
+if(t?.$type==="app.bsky.feed.defs#threadViewPost"){
+  counts(t.post??{});
+  const list=render(t.replies);if(list)repliesSlot.append(list);
 }
-get("getPostThread?uri="+encodeURIComponent(uri)+"&depth=6")
-.then(function(d){
-  var t=d&&d.thread;
-  if(!t||t.$type!=="app.bsky.feed.defs#threadViewPost")return;
-  counts(t.post||{});
-  var list=render(t.replies);if(list)repliesSlot.appendChild(list);
-})
-.catch(function(){});
-get("getQuotes?uri="+encodeURIComponent(uri)+"&limit=10")
-.then(function(d){
-  var posts=d&&d.posts;if(!posts||!posts.length)return;
-  var h=document.createElement("h3");h.textContent="Quote posts";
-  quotesSlot.appendChild(h);
-  var ol=document.createElement("ol");ol.className="replies";
-  quotesSlot.appendChild(ol);
-  posts.forEach(function(p){
-    var li=item(p);ol.appendChild(li);
-    get("getPostThread?uri="+encodeURIComponent(p.uri)+"&depth=3")
-    .then(function(d2){
-      var t=d2&&d2.thread;if(!t)return;
-      var kids=render(t.replies);if(kids)li.appendChild(kids);
-    }).catch(function(){});
-  });
-})
-.catch(function(){});
+const posts=quotes.value?.posts;
+if(posts?.length){
+  const h=document.createElement("h3");h.textContent="Quote posts";
+  const ol=document.createElement("ol");ol.className="replies";
+  quotesSlot.append(h,ol);
+  await Promise.allSettled(posts.map(async p=>{
+    const li=ol.appendChild(item(p));
+    const kids=render((await thread(p.uri,3))?.thread?.replies);
+    if(kids)li.append(kids);
+  }));
+}
 })();`;
 
 export function Outline({ items }: { items: OutlineItem[] }) {
@@ -177,6 +172,7 @@ export function Outline({ items }: { items: OutlineItem[] }) {
       {items.map((item, i) => {
         const seconds = toSeconds(item.time);
         return (
+          // react-doctor-disable-next-line react-doctor/no-array-index-as-key -- outlines legitimately repeat an entry, so position is the only identity
           <li key={`${item.anchor}-${i}`}>
             {seconds !== undefined && (
               <>
@@ -278,13 +274,16 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
                   headingText
                 )}
               </h2>
-              {section.segments.map((segment, i) => {
+              {section.segments.map((segment) => {
                 const seconds = toSeconds(segment.time);
                 const showSpeaker =
                   !!segment.speaker && segment.speaker !== previousSpeaker;
                 if (segment.speaker) previousSpeaker = segment.speaker;
                 return (
-                  <div className="segment" key={i}>
+                  <div
+                    className="segment"
+                    key={`${segment.time}-${segment.text}`}
+                  >
                     <div className="segment-meta">
                       {showSpeaker && (
                         <span className="speaker">{segment.speaker}</span>

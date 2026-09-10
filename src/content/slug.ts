@@ -35,23 +35,6 @@ export function slug(title: string): string {
     .replace(/\s+/g, "-");
 }
 
-export function timestampToSeconds(ts: string): number {
-  return ts.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
-}
-
-export function secondsToTimestamp(total: number): string {
-  const s = Math.max(0, Math.floor(total));
-  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
-  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-  const ss = String(s % 60).padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
-}
-
-/** `mm:ss`, `m:ss`, `h:mm:ss` or `hh:mm:ss` -> `hh:mm:ss`. */
-export function normalizeTime(raw: string): string {
-  return secondsToTimestamp(timestampToSeconds(raw.trim()));
-}
-
 /**
  * Episode titles carry boilerplate — a "TMiR 2026-07: " prefix on recent ones,
  * a "This Month in React, July 2024: " prefix on older ones, and a trailing

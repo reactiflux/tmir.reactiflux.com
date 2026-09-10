@@ -23,15 +23,13 @@ function walk(
 ): void {
   for (const item of items) {
     if (item.url) {
-      let host: string | undefined;
-      try {
-        const url = new URL(item.url);
-        if (["https:", "http:"].includes(url.protocol))
-          host = url.hostname.replace(/^www\./, "");
-      } catch {
-        // Not an absolute URL (e.g. an in-page anchor like "#section") — no
-        // external link to index.
-      }
+      // A relative URL (e.g. an in-page anchor like "#section") parses to null
+      // — no external link to index.
+      const url = URL.parse(item.url);
+      const host =
+        url && ["https:", "http:"].includes(url.protocol)
+          ? url.hostname.replace(/^www\./, "")
+          : undefined;
       if (host)
         out.push({
           text: item.title,
@@ -63,13 +61,7 @@ export function buildLinkIndex(episodes: Episode[]): LinkEntry[] {
 export function groupByHost(
   entries: LinkEntry[],
 ): { host: string; entries: LinkEntry[] }[] {
-  const map = new Map<string, LinkEntry[]>();
-  for (const entry of entries) {
-    const list = map.get(entry.host);
-    if (list) list.push(entry);
-    else map.set(entry.host, [entry]);
-  }
-  return [...map]
+  return [...Map.groupBy(entries, (entry) => entry.host)]
     .map(([host, list]) => ({ host, entries: list }))
     .sort(
       (a, b) =>
@@ -187,4 +179,58 @@ export function buildLinkResources(entries: LinkEntry[]): LinkResource[] {
       a.mentions[0].date.localeCompare(b.mentions[0].date) ||
       a.url.localeCompare(b.url),
   );
+}
+
+export type LinkQuery = {
+  q?: string;
+  subject?: SubjectId;
+  year?: string;
+  sort?: "newest" | "oldest";
+};
+
+/** A resource plus the mentions that matched, newest (or oldest) first. */
+export type LinkMatch = { resource: LinkResource; mentions: LinkEntry[] };
+
+// Search the words the show used, not the words the reader typed: the notes say
+// "RSC" and "React Forget" where a reader may type either form.
+const normalize = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/gu, "")
+    .replace(/\brscs?\b/g, "react server components")
+    .replace(/react forget/g, "react compiler");
+
+export function filterResources(
+  resources: LinkResource[],
+  { q, subject, year, sort }: LinkQuery,
+): LinkMatch[] {
+  const words = normalize(q?.trim() ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const newestFirst = sort !== "oldest";
+  const matches: LinkMatch[] = [];
+  for (const resource of resources) {
+    const mentions = resource.mentions.filter((mention) => {
+      const haystack = normalize(
+        [mention.text, mention.url, ...mention.context].join(" "),
+      );
+      return (
+        (!subject || mention.subjects.includes(subject)) &&
+        (!year || mention.date.startsWith(year)) &&
+        words.every((word) => haystack.includes(word))
+      );
+    });
+    if (!mentions.length) continue;
+    mentions.sort((a, b) => a.date.localeCompare(b.date));
+    if (newestFirst) mentions.reverse();
+    matches.push({ resource, mentions });
+  }
+  return matches.sort((a, b) => {
+    const order = a.mentions[0].date.localeCompare(b.mentions[0].date);
+    return (
+      (newestFirst ? -order : order) ||
+      a.resource.url.localeCompare(b.resource.url)
+    );
+  });
 }

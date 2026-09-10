@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { normalizeTime } from "../src/content/slug.ts";
+import { normalizeTime } from "../src/content/time.ts";
+import { requireEnv } from "./env.ts";
 import {
   flattenOutline,
   parseEpisode,
@@ -198,12 +199,6 @@ export async function pushSrtToTranscript(
   }
 }
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set`);
-  return value;
-}
-
 /** The whole of `npm run publish-transcript`, minus argv parsing. */
 export async function publishTranscript({
   slug: epSlug,
@@ -257,7 +252,8 @@ async function main() {
     console.error(
       "usage: npm run publish-transcript -- <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]",
     );
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   await publishTranscript({
     slug: epSlug,
@@ -267,4 +263,4 @@ async function main() {
   });
 }
 
-if (import.meta.filename === process.argv[1]) await main();
+if (import.meta.main) await main();

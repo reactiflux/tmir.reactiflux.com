@@ -95,6 +95,48 @@ test("deduplication preserves discussions across episodes and meaningful URL fra
   );
 });
 
+test("filterResources narrows by word, subject and year, and honours sort", async () => {
+  const { buildLinkResources, filterResources } =
+    await import("../src/content/links.ts");
+  const resources = buildLinkResources(buildLinkIndex(await loadEpisodes()));
+  const titles = (query: Parameters<typeof filterResources>[1]) =>
+    filterResources(resources, query).map((m) => m.mentions[0].text);
+
+  assert.deepEqual(titles({}), ["React Compiler", "Caveats", "TanStack Start"]);
+  assert.deepEqual(titles({ q: "tanstack" }), ["TanStack Start"]);
+  // "Caveats" is nested under React Compiler, so it inherits the subject.
+  assert.deepEqual(titles({ subject: "react-compiler" }), [
+    "React Compiler",
+    "Caveats",
+  ]);
+  assert.deepEqual(titles({ year: "1999" }), []);
+
+  // The fixture is a single episode, so dated copies are what exercise sorting.
+  const [entry] = buildLinkIndex(await loadEpisodes());
+  const dated = buildLinkResources([
+    {
+      ...entry,
+      text: "Old",
+      url: "https://example.com/old",
+      date: "2020-01-01",
+    },
+    {
+      ...entry,
+      text: "New",
+      url: "https://example.com/new",
+      date: "2024-01-01",
+    },
+  ]);
+  assert.deepEqual(
+    filterResources(dated, {}).map((m) => m.mentions[0].text),
+    ["New", "Old"],
+  );
+  assert.deepEqual(
+    filterResources(dated, { sort: "oldest" }).map((m) => m.mentions[0].text),
+    ["Old", "New"],
+  );
+});
+
 test("discussion links use valid parent headings and expand RSC abbreviations", async () => {
   const [episode] = await loadEpisodes();
   const custom = {

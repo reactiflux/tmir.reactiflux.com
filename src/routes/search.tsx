@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PagefindUI } from "../components/PagefindUI";
-import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 
 export const Route = createFileRoute("/search")({
   head: () => ({

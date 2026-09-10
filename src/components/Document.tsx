@@ -1,72 +1,7 @@
-export const SITE_NAME =
-  import.meta.env.VITE_SITE_NAME || "This Month in React";
-export const SITE_URL = (
-  import.meta.env.VITE_SITE_URL || "https://thismonthinreact.com"
-).replace(/\/$/, "");
-
-export const SITE_DESCRIPTION =
-  "Monthly conversations about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson.";
+import { ogMeta, SITE_NAME, SITE_URL, type Og } from "../content/site.ts";
 
 /** The navy of the wordmark and of the generated OG cards. */
-export const THEME_COLOR = "#123F8C";
-
-export interface Og {
-  title: string;
-  description: string;
-  url: string;
-  /** "article" for episodes, "website" for everything else. */
-  type?: "article" | "website";
-  /** Path under /og; the default card covers every non-episode page. */
-  image?: string;
-  imageAlt?: string;
-  /** Episodes only. */
-  publishedTime?: string;
-  audioUrl?: string;
-}
-
-/**
- * Open Graph tags as router `head().meta` descriptors. Image URLs are absolute
- * because relative ones do not unfurl in Discord or Slack.
- */
-export function ogMeta({
-  title,
-  description,
-  url,
-  type = "website",
-  image = "default",
-  imageAlt,
-  publishedTime,
-  audioUrl,
-}: Og): { property?: string; name?: string; content: string }[] {
-  const imageUrl = `${SITE_URL}/og/${image}.jpg`;
-  return [
-    { property: "og:title", content: title },
-    { property: "og:description", content: description },
-    { property: "og:url", content: url },
-    { property: "og:type", content: type },
-    { property: "og:locale", content: "en_US" },
-    { property: "og:image", content: imageUrl },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
-    { property: "og:image:type", content: "image/jpeg" },
-    { property: "og:image:alt", content: imageAlt ?? title },
-    ...(publishedTime
-      ? [{ property: "article:published_time", content: publishedTime }]
-      : []),
-    // Best-effort: standards-correct audio tags. Neither Discord nor Slack
-    // grants an inline player to an arbitrary site.
-    ...(audioUrl
-      ? [
-          { property: "og:audio", content: audioUrl },
-          { property: "og:audio:secure_url", content: audioUrl },
-          { property: "og:audio:type", content: "audio/mpeg" },
-        ]
-      : []),
-    { name: "twitter:title", content: title },
-    { name: "twitter:description", content: description },
-    { name: "twitter:image", content: imageUrl },
-  ];
-}
+const THEME_COLOR = "#123F8C";
 
 /** The same tags as elements, for the routes that render their own <head>. */
 export function OgTags(props: Og) {
@@ -80,21 +15,22 @@ export function OgTags(props: Og) {
 }
 
 /** Reserve the actual footer height, including wrapped links and open discussion. */
-const FOOTER_SCRIPT = `(function(){
-var footer=document.querySelector(".site-footer");if(!footer)return;
-function size(){document.documentElement.style.setProperty("--footer-block-size",footer.offsetHeight+"px")}
-size();if(window.ResizeObserver)new ResizeObserver(size).observe(footer);
-var details=footer.querySelector("details");
-function openHash(){if(details&&location.hash==="#comments")details.open=true}
-openHash();window.addEventListener("hashchange",openHash);
-if(details){details.addEventListener("toggle",size);details.addEventListener("keydown",function(e){if(e.key==="Escape"&&details.open){details.open=false;details.querySelector("summary").focus()}})}
+const FOOTER_SCRIPT = `(()=>{
+const footer=document.querySelector(".site-footer");if(!footer)return;
+const size=()=>document.documentElement.style.setProperty("--footer-block-size",footer.offsetHeight+"px");
+size();new ResizeObserver(size).observe(footer);
+const details=footer.querySelector("details");
+const openHash=()=>{if(details&&location.hash==="#comments")details.open=true};
+openHash();addEventListener("hashchange",openHash);
+if(details){details.addEventListener("toggle",size);details.addEventListener("keydown",e=>{if(e.key==="Escape"&&details.open){details.open=false;details.querySelector("summary").focus()}})}
 })();`;
 
 /**
- * Renders no <title> itself. The router shell passes <HeadContent/> here and the
- * static handlers pass their own <title>/<meta>/<link rel="canonical">. If the
- * shell emitted a <title> too, both would land in the HTML and browsers use the
- * first — silently overriding every route title. Verified in the risk-gate spike.
+ * Renders no <title> itself. The router shell passes <HeadContent/> here; static
+ * handlers render their own <title>/<meta>/<link> anywhere in the tree and React
+ * 19 hoists them into this <head>. If the shell emitted a <title> too, both would
+ * land in the HTML and browsers use the first — silently overriding every route
+ * title. Verified in the risk-gate spike.
  */
 export function Document({
   head,
@@ -103,7 +39,8 @@ export function Document({
   footerDiscussion,
   children,
 }: {
-  head: React.ReactNode;
+  /** Only the router shell needs this, for <HeadContent/>. */
+  head?: React.ReactNode;
   scripts?: React.ReactNode;
   bodyClass?: string;
   footerDiscussion?: React.ReactNode;

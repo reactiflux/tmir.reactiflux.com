@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 
+import { NewsletterForm } from "../components/NewsletterForm";
 import { PersonIdentity, ProfileLinks } from "../components/PersonIdentity";
 import { canonicalPersonName, personProfile } from "../content/people.ts";
+import { BUTTONDOWN_URL } from "../content/newsletter.ts";
 
-const BUTTONDOWN_USER = import.meta.env.VITE_BUTTONDOWN_USER;
 const BLUESKY_PROFILE_URL = import.meta.env.VITE_BLUESKY_PROFILE_URL;
 const TRANSISTOR_FEED = "https://feeds.transistor.fm/this-month-in-react";
 
@@ -259,24 +260,11 @@ function About() {
         </div>
       </section>
 
-      {BUTTONDOWN_USER && (
+      {BUTTONDOWN_URL && (
         <section className="newsletter">
           <h2>Newsletter</h2>
           <p>Every episode&rsquo;s outline and links, in your inbox.</p>
-          <form
-            action={`https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}`}
-            method="post"
-          >
-            <label htmlFor="bd-email">Email</label>
-            <input
-              id="bd-email"
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-            />
-            <button type="submit">Subscribe</button>
-          </form>
+          <NewsletterForm id="bd-email" label="Email" submitLabel="Subscribe" />
         </section>
       )}
     </div>

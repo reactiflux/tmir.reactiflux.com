@@ -1,12 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { renderToStaticMarkup } from "react-dom/server";
-import {
-  Document,
-  OgTags,
-  SITE_DESCRIPTION,
-  SITE_NAME,
-  SITE_URL,
-} from "../components/Document";
+import { Document, OgTags } from "../components/Document";
 import {
   COMMENTS_SCRIPT,
   EpisodeBody,
@@ -16,8 +10,9 @@ import {
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
 import { jsonLd } from "../content/jsonld.ts";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../content/site.ts";
 import { cardTitle } from "../content/slug.ts";
-import { hms, isoDuration } from "../content/time.ts";
+import { hms, isoDuration, longDate, monthYear } from "../content/time.ts";
 
 const ATPROTO_DID = import.meta.env.VITE_ATPROTO_DID;
 
@@ -72,29 +67,6 @@ export const Route = createFileRoute("/episodes/$slug")({
 
         const html = renderToStaticMarkup(
           <Document
-            head={
-              <>
-                <title>{title}</title>
-                <meta name="description" content={description} />
-                <link rel="canonical" href={url} />
-                <OgTags
-                  title={title}
-                  description={description}
-                  url={url}
-                  type="article"
-                  image={episode.slug}
-                  publishedTime={published}
-                  audioUrl={episode.audioUrl}
-                />
-                {episode.atUri && (
-                  <link rel="site.standard.document" href={episode.atUri} />
-                )}
-                <script
-                  type="application/ld+json"
-                  dangerouslySetInnerHTML={{ __html: structuredData }}
-                />
-              </>
-            }
             footerDiscussion={
               episode.bskyPostUrl && (
                 <section
@@ -114,6 +86,10 @@ export const Route = createFileRoute("/episodes/$slug")({
             bodyClass="episode-page"
             scripts={
               <>
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{ __html: structuredData }}
+                />
                 <script dangerouslySetInnerHTML={{ __html: PLAYER_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: SEEK_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: OUTLINE_SCRIPT }} />
@@ -125,13 +101,25 @@ export const Route = createFileRoute("/episodes/$slug")({
               </>
             }
           >
+            {/* React 19 hoists these into <head> during server rendering. */}
+            <title>{title}</title>
+            <meta name="description" content={description} />
+            <link rel="canonical" href={url} />
+            <OgTags
+              title={title}
+              description={description}
+              url={url}
+              type="article"
+              image={episode.slug}
+              publishedTime={published}
+              audioUrl={episode.audioUrl}
+            />
+            {episode.atUri && (
+              <link rel="site.standard.document" href={episode.atUri} />
+            )}
             <header className="episode-intro">
               <p className="eyebrow">
-                {episode.series ||
-                  new Date(`${episode.date}T12:00:00Z`).toLocaleDateString(
-                    "en-US",
-                    { month: "long", year: "numeric", timeZone: "UTC" },
-                  )}
+                {episode.series || monthYear(episode.date)}
                 {episode.season !== undefined && ` · Season ${episode.season}`}
                 {episode.episode !== undefined &&
                   ` / Episode ${episode.episode}`}
@@ -144,17 +132,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 {episode.people.length > 0 && (
                   <span>{episode.people.map((p) => p.name).join(" & ")}</span>
                 )}
-                <time dateTime={episode.date}>
-                  {new Date(`${episode.date}T12:00:00Z`).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      timeZone: "UTC",
-                    },
-                  )}
-                </time>
+                <time dateTime={episode.date}>{longDate(episode.date)}</time>
                 {episode.duration !== undefined && (
                   <time dateTime={isoDuration(episode.duration)}>
                     {Math.round(episode.duration / 60)} min

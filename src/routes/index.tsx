@@ -1,14 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { NewsletterForm } from "../components/NewsletterForm";
 import { Player } from "../components/Player";
-import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 import { jsonLd } from "../content/jsonld.ts";
-import { hms, isoDuration } from "../content/time.ts";
+import { BUTTONDOWN_URL } from "../content/newsletter.ts";
+import { hms, isoDuration, shortDate } from "../content/time.ts";
 import { cardTitle } from "../content/slug.ts";
 
 const HOME_DESCRIPTION =
   "A monthly conversation about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson. Releases, technical details, tradeoffs, and open questions.";
-const BUTTONDOWN_USER = import.meta.env.VITE_BUTTONDOWN_USER;
 
 // Editorial selections point to parsed transcript sections so their anchors and
 // timestamps stay consistent with the episode pages.
@@ -40,8 +41,10 @@ const CONVERSATIONS = [
 ];
 
 const getHome = createServerFn().handler(async () => {
-  const { loadEpisodes } = await import("../content/load.ts");
-  const { flattenLinks } = await import("../content/slug.ts");
+  const [{ loadEpisodes }, { flattenLinks }] = await Promise.all([
+    import("../content/load.ts"),
+    import("../content/slug.ts"),
+  ]);
   const episodes = await loadEpisodes();
   const latest = episodes[0];
   const mainTopics = latest?.outline.find((item) =>
@@ -64,23 +67,25 @@ const getHome = createServerFn().handler(async () => {
           duration: latest.duration,
           description: latest.description,
           audioUrl: latest.audioUrl,
-          topics: selectedTopics.flatMap((title) => {
-            const section = latest.sections.find(
-              (s) => flattenLinks(s.title) === title,
-            );
-            return section ? [{ title, anchor: section.anchor }] : [];
-          }),
+          topics: selectedTopics
+            .map((title) => {
+              const section = latest.sections.find(
+                (s) => flattenLinks(s.title) === title,
+              );
+              return section && { title, anchor: section.anchor };
+            })
+            .filter((topic) => topic !== undefined),
         }
       : null,
-    conversations: CONVERSATIONS.flatMap((selection) => {
+    conversations: CONVERSATIONS.map((selection) => {
       const episode = episodes.find((e) => e.slug === selection.slug);
       const section = episode?.sections.find(
         (s) => flattenLinks(s.title) === selection.chapter,
       );
-      return section
-        ? [{ ...selection, anchor: section.anchor, time: section.time }]
-        : [];
-    }),
+      return (
+        section && { ...selection, anchor: section.anchor, time: section.time }
+      );
+    }).filter((c) => c !== undefined),
     archive: episodes.map((e) => ({
       slug: e.slug,
       title: e.title,
@@ -114,15 +119,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function formatDate(date: string) {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
-
 function ArchiveList({
   episodes,
 }: {
@@ -132,7 +128,7 @@ function ArchiveList({
     <ul className="archive-list">
       {episodes.map((episode) => (
         <li key={episode.slug}>
-          <time dateTime={episode.date}>{formatDate(episode.date)}</time>
+          <time dateTime={episode.date}>{shortDate(episode.date)}</time>
           <div className="archive-copy">
             {episode.series && <p className="eyebrow">{episode.series}</p>}
             <h3>
@@ -211,9 +207,9 @@ function Home() {
           Reactiflux community experience. <strong>Mark Erikson</strong> brings
           a Redux maintainer's perspective on React and its ecosystem.
         </p>
-        <a href="/about">
+        <Link to="/about">
           Meet the hosts <span aria-hidden="true">↗</span>
-        </a>
+        </Link>
       </div>
 
       {latest && (
@@ -225,7 +221,7 @@ function Home() {
           <div className="feature-heading">
             <p className="eyebrow">Latest episode</p>
             <p className="episode-meta">
-              <time dateTime={latest.date}>{formatDate(latest.date)}</time>
+              <time dateTime={latest.date}>{shortDate(latest.date)}</time>
               {latest.duration != null && (
                 <>
                   {" "}
@@ -345,29 +341,19 @@ function Home() {
         </div>
         <p>
           <a href="/feed.xml">Show notes RSS</a> ·{" "}
-          <a href="/about#live">Join a live recording</a>
+          <Link to="/about" hash="live">
+            Join a live recording
+          </Link>
         </p>
-        {BUTTONDOWN_USER && (
-          <form
+        {BUTTONDOWN_URL && (
+          <NewsletterForm
             className="newsletter"
-            action={`https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}`}
-            method="post"
-          >
-            <label htmlFor="home-email">
-              Get each episode's outline and links by email
-            </label>
-            <div className="action-row">
-              <input
-                id="home-email"
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-              <button type="submit">Subscribe by email</button>
-            </div>
-          </form>
+            id="home-email"
+            label="Get each episode's outline and links by email"
+            placeholder="you@example.com"
+            submitLabel="Subscribe by email"
+            row
+          />
         )}
       </section>
     </div>

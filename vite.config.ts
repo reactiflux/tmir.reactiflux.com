@@ -1,5 +1,5 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { globSync, mkdirSync, writeFileSync } from "node:fs";
+import { defineConfig, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
@@ -8,12 +8,11 @@ import netlify from "@netlify/vite-plugin-tanstack-start";
 // Explicit prerender list for routes the crawler cannot reach from links.
 // Prerendering a path with no route 404s and fails the build, so each entry is
 // restored by the task that adds its route.
-const slugs = readdirSync("content/episodes")
-  .filter((f) => f.endsWith(".md"))
+const slugs = globSync("*.md", { cwd: "content/episodes" })
   .map((f) => f.slice(0, -".md".length))
   .sort();
 
-const pages: { path: string; prerender: { enabled: boolean } }[] = [
+const pages = [
   ...slugs.map((slug) => ({
     path: `/episodes/${slug}`,
     prerender: { enabled: true },
@@ -39,21 +38,27 @@ const wellKnownPublication = {
     mkdirSync("public/.well-known", { recursive: true });
     writeFileSync("public/.well-known/site.standard.publication", `${uri}\n`);
   },
-};
+} satisfies Plugin;
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     wellKnownPublication,
-    // RSC stays enabled for future supporting pages; the episode and links
-    // documents deliberately do not use it.
+    // RSC stays enabled for future supporting pages; the episode documents
+    // deliberately do not use it.
     tanstackStart({
       rsc: { enabled: true },
-      prerender: { enabled: true, crawlLinks: true },
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        // /links renders its own filter permutations as links. Prerendering
+        // them is unbounded and pointless — the Netlify function renders them.
+        filter: (page) => !page.path.includes("?"),
+      },
       pages,
     }),
     netlify(),
     rsc(),
-    viteReact(),
+    viteReact({ compiler: true }),
   ],
 });

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardTitle, monthYear, runtime } from "../scripts/og.ts";
+import { cardTitle, runtime } from "../scripts/og.ts";
+import { monthYear } from "../src/content/time.ts";
 
 test("strips the boilerplate from every title shape in the archive", () => {
   assert.equal(

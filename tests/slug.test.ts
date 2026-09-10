@@ -2,13 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   slug,
-  normalizeTime,
   flattenLinks,
   splitTitleLink,
   unescapeMarkdown,
+} from "../src/content/slug.ts";
+import {
+  normalizeTime,
   secondsToTimestamp,
   timestampToSeconds,
-} from "../src/content/slug.ts";
+} from "../src/content/time.ts";
 
 test("slug strips markdown links down to their text", () => {
   assert.equal(

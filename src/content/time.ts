@@ -25,6 +25,46 @@ export function hms(seconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
 }
 
+export function timestampToSeconds(ts: string): number {
+  return ts.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
+}
+
+export function secondsToTimestamp(total: number): string {
+  const s = Math.max(0, Math.floor(total));
+  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
+/** `mm:ss`, `m:ss`, `h:mm:ss` or `hh:mm:ss` -> `hh:mm:ss`. */
+export function normalizeTime(raw: string): string {
+  return secondsToTimestamp(timestampToSeconds(raw.trim()));
+}
+
+// One formatter per format, reused: constructing an Intl.DateTimeFormat per
+// call is the expensive part. Noon UTC so the calendar date never shifts.
+const dateFormat = (options: Intl.DateTimeFormatOptions) => {
+  const format = new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    ...options,
+  });
+  return (date: string) =>
+    format.format(new Date(`${date.slice(0, 10)}T12:00:00Z`));
+};
+
+export const monthYear = dateFormat({ month: "long", year: "numeric" });
+export const longDate = dateFormat({
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+export const shortDate = dateFormat({
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 /** Seconds -> an ISO 8601 duration (`PT1H2M3S`), for a valid <time dateTime>. */
 export function isoDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));

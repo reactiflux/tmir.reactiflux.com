@@ -1,9 +1,11 @@
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { globSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { AtpAgent } from "@atproto/api";
 import type { Episode, OutlineItem } from "../src/content/parse.ts";
+import { bskyUrlToParts } from "../src/content/atproto.ts";
 import { parseEpisode, splitFile } from "../src/content/parse.ts";
 import { serializeEpisodeFile } from "../src/content/serialize.ts";
+import { requireEnv } from "./env.ts";
 
 export const PUBLICATION_COLLECTION = "site.standard.publication";
 export const DOCUMENT_COLLECTION = "site.standard.document";
@@ -27,24 +29,12 @@ export function outlineToText(items: OutlineItem[], depth = 0): string {
   return lines.join("\n");
 }
 
-/** `https://bsky.app/profile/<handle-or-did>/post/<rkey>` -> its two parts. */
-export function bskyUrlToParts(
-  url: string,
-): { actor: string; rkey: string } | null {
-  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(
-    url.trim(),
-  );
-  return m ? { actor: m[1], rkey: m[2] } : null;
-}
-
 function hostnames(items: OutlineItem[], into: Set<string>): Set<string> {
   for (const item of items) {
     if (item.url) {
-      try {
-        into.add(new URL(item.url).hostname);
-      } catch {
-        // A malformed outline URL is not worth failing a publish over.
-      }
+      // A malformed outline URL is not worth failing a publish over.
+      const url = URL.parse(item.url);
+      if (url) into.add(url.hostname);
     }
     hostnames(item.children, into);
   }
@@ -70,12 +60,6 @@ export function buildDocumentRecord(
   };
   if (opts.bskyPostRef) record.bskyPostRef = opts.bskyPostRef;
   return record;
-}
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set (see .env.example)`);
-  return value;
 }
 
 /** bsky.app post URL -> the strong ref the document record needs. */
@@ -129,8 +113,7 @@ async function main() {
   const siteUri = publication.data.uri;
   console.log(`publication ${siteUri}`);
 
-  const names = readdirSync(EPISODE_DIR)
-    .filter((n) => n.endsWith(".md"))
+  const names = globSync("*.md", { cwd: EPISODE_DIR })
     .filter((n) => !only || n === `${only}.md`)
     .sort();
   if (only && names.length === 0)
@@ -164,4 +147,4 @@ async function main() {
   }
 }
 
-if (import.meta.filename === process.argv[1]) await main();
+if (import.meta.main) await main();
