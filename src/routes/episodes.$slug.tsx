@@ -67,29 +67,6 @@ export const Route = createFileRoute("/episodes/$slug")({
 
         const html = renderToStaticMarkup(
           <Document
-            head={
-              <>
-                <title>{title}</title>
-                <meta name="description" content={description} />
-                <link rel="canonical" href={url} />
-                <OgTags
-                  title={title}
-                  description={description}
-                  url={url}
-                  type="article"
-                  image={episode.slug}
-                  publishedTime={published}
-                  audioUrl={episode.audioUrl}
-                />
-                {episode.atUri && (
-                  <link rel="site.standard.document" href={episode.atUri} />
-                )}
-                <script
-                  type="application/ld+json"
-                  dangerouslySetInnerHTML={{ __html: structuredData }}
-                />
-              </>
-            }
             footerDiscussion={
               episode.bskyPostUrl && (
                 <section
@@ -109,6 +86,10 @@ export const Route = createFileRoute("/episodes/$slug")({
             bodyClass="episode-page"
             scripts={
               <>
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{ __html: structuredData }}
+                />
                 <script dangerouslySetInnerHTML={{ __html: PLAYER_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: SEEK_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: OUTLINE_SCRIPT }} />
@@ -120,6 +101,22 @@ export const Route = createFileRoute("/episodes/$slug")({
               </>
             }
           >
+            {/* React 19 hoists these into <head> during server rendering. */}
+            <title>{title}</title>
+            <meta name="description" content={description} />
+            <link rel="canonical" href={url} />
+            <OgTags
+              title={title}
+              description={description}
+              url={url}
+              type="article"
+              image={episode.slug}
+              publishedTime={published}
+              audioUrl={episode.audioUrl}
+            />
+            {episode.atUri && (
+              <link rel="site.standard.document" href={episode.atUri} />
+            )}
             <header className="episode-intro">
               <p className="eyebrow">
                 {episode.series || monthYear(episode.date)}

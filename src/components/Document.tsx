@@ -26,10 +26,11 @@ if(details){details.addEventListener("toggle",size);details.addEventListener("ke
 })();`;
 
 /**
- * Renders no <title> itself. The router shell passes <HeadContent/> here and the
- * static handlers pass their own <title>/<meta>/<link rel="canonical">. If the
- * shell emitted a <title> too, both would land in the HTML and browsers use the
- * first — silently overriding every route title. Verified in the risk-gate spike.
+ * Renders no <title> itself. The router shell passes <HeadContent/> here; static
+ * handlers render their own <title>/<meta>/<link> anywhere in the tree and React
+ * 19 hoists them into this <head>. If the shell emitted a <title> too, both would
+ * land in the HTML and browsers use the first — silently overriding every route
+ * title. Verified in the risk-gate spike.
  */
 export function Document({
   head,
@@ -38,7 +39,8 @@ export function Document({
   footerDiscussion,
   children,
 }: {
-  head: React.ReactNode;
+  /** Only the router shell needs this, for <HeadContent/>. */
+  head?: React.ReactNode;
   scripts?: React.ReactNode;
   bodyClass?: string;
   footerDiscussion?: React.ReactNode;
