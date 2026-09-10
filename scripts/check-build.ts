@@ -238,7 +238,12 @@ test("Stylesheet", () => {
     "@view-transition",
     "light-dark(",
     "@container",
-    "anchor-name:",
+    "@property --",
+    "@container episode",
+    "interpolate-size: allow-keywords",
+    "view-transition-name:",
+    ":user-invalid",
+    "oklch(",
     "text-wrap: balance",
     "text-wrap: pretty",
   ]) {

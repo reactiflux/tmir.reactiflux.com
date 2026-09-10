@@ -477,6 +477,11 @@
     max-inline-size: var(--measure);
   }
 
+  .newsletter .form-status {
+    flex-basis: 100%;
+    margin-block-start: 0.5rem;
+    color: var(--muted);
+  }
   .newsletter {
     & form {
       display: flex;
@@ -1591,6 +1596,7 @@
     color: var(--muted);
   }
   .explore-subjects {
+    align-self: end;
     background: none;
     color: var(--accent);
     border: 0;
@@ -1624,14 +1630,6 @@
       background: var(--bg);
       color: var(--text);
     }
-  }
-  #link-results > summary {
-    cursor: pointer;
-    padding-block: 1rem;
-    color: var(--accent);
-  }
-  .links-enhanced #link-results > summary {
-    display: none;
   }
   .archive-date-note {
     margin-block: 0.75rem 1.25rem;
@@ -1700,6 +1698,7 @@
   }
   #load-links,
   #links-empty button {
+    display: inline-block;
     margin-block-start: 1.5rem;
     padding: 0.7rem 1.25rem;
     cursor: pointer;
