@@ -53,6 +53,6 @@ export default defineConfig({
     }),
     netlify(),
     rsc(),
-    viteReact(),
+    viteReact({ compiler: true }),
   ],
 });
