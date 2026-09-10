@@ -92,6 +92,7 @@ main {
   max-block-size: 40vh;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  padding-inline-end: 1rem; /* keeps the scrollbar off the outline text */
   scroll-behavior: smooth;
   padding-block-end: 0.5rem;
   border-block-end: 1px solid var(--rule);

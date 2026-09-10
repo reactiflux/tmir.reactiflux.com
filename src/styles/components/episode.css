@@ -115,7 +115,7 @@
 }
 .episode-page {
   & .episode {
-    gap: 2rem 4.375rem;
+    gap: 2rem 3.375rem; /* 1rem moved into .toc padding-inline-end */
   }
   & .toc {
     font-family: var(--episode-font);
