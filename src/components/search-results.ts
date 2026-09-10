@@ -52,7 +52,6 @@ function contextExcerpt(excerpt: string) {
   context.className = "search-context";
   const short = document.createElement("span");
   short.className = "search-context-short";
-  if (start) short.append("… ");
   words.slice(start, start + 18).forEach((word, index) => {
     if (index) short.append(" ");
     if (word.marked) {
@@ -61,7 +60,6 @@ function contextExcerpt(excerpt: string) {
       short.append(mark);
     } else short.append(word.text);
   });
-  if (start + 18 < words.length) short.append(" …");
   const full = document.createElement("span");
   full.className = "search-context-full";
   full.id = `search-context-${++contextId}`;
@@ -138,17 +136,20 @@ export function prepareSearchResult(result: SearchResult): SearchResult {
 export function enhanceSearchContext(container: HTMLElement) {
   let active: HTMLElement | null = null;
   let animation: Animation | null = null;
-  let closeTimer: ReturnType<typeof setTimeout> | undefined;
   const hover = window.matchMedia("(hover: hover) and (pointer: fine)");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   function contextFor(target: EventTarget | null) {
-    return target instanceof Element
-      ? target.closest<HTMLElement>(".search-context")
-      : null;
+    if (!(target instanceof Element)) return null;
+    return (
+      target.closest<HTMLElement>(".search-context") ??
+      target
+        .closest(".pagefind-ui__result-excerpt")
+        ?.querySelector<HTMLElement>(".search-context") ??
+      null
+    );
   }
   function close() {
-    clearTimeout(closeTimer);
     animation?.cancel();
     animation = null;
     if (!active) return;
@@ -157,7 +158,6 @@ export function enhanceSearchContext(container: HTMLElement) {
     active = null;
   }
   function open(context: HTMLElement) {
-    clearTimeout(closeTimer);
     if (active === context) return;
     close();
     active = context;
@@ -174,8 +174,8 @@ export function enhanceSearchContext(container: HTMLElement) {
       .querySelector(".site-footer")
       ?.getBoundingClientRect();
     const bottom = Math.min(viewportBottom, footer?.top ?? viewportBottom) - 12;
-    // Reserve independently above and below the fixed anchor. Long context
-    // scrolls inside these regions instead of displacing the source snippet.
+    // Clip context at the viewport edges without creating user-scrollable
+    // regions or displacing the source snippet.
     const aboveSpace = Math.max(0, rect.top - viewportTop - 12);
     const belowSpace = Math.max(0, bottom - rect.bottom - 12);
     before.style.maxHeight = `${aboveSpace}px`;
@@ -190,18 +190,6 @@ export function enhanceSearchContext(container: HTMLElement) {
     const below = after.getBoundingClientRect().height + 12;
     panel.style.top = `${-above}px`;
     before.scrollTop = before.scrollHeight;
-    for (const [region, label] of [
-      [before, "Earlier transcript context"],
-      [after, "Later transcript context"],
-    ] as const) {
-      const scrollable = region.scrollHeight > region.clientHeight;
-      region.tabIndex = scrollable ? 0 : -1;
-      region.setAttribute("role", "region");
-      region.setAttribute(
-        "aria-label",
-        label + (scrollable ? "; scroll for more" : ""),
-      );
-    }
     context.dataset.open = "true";
     if (!reducedMotion.matches) {
       animation = panel.animate(
@@ -213,41 +201,43 @@ export function enhanceSearchContext(container: HTMLElement) {
       );
     }
   }
+  function paragraphFor(target: EventTarget | null) {
+    return target instanceof Element
+      ? target.closest<HTMLElement>(".pagefind-ui__result-excerpt")
+      : null;
+  }
   function enter(event: MouseEvent) {
     if (!hover.matches) return;
-    const context = contextFor(event.target);
-    if (!context) return;
+    const paragraph = paragraphFor(event.target);
+    if (!paragraph) return;
     if (
       event.relatedTarget instanceof Node &&
-      context.contains(event.relatedTarget)
+      paragraph.contains(event.relatedTarget)
     )
       return;
-    open(context);
+    const context = contextFor(paragraph);
+    if (context) open(context);
   }
   function leave(event: MouseEvent | FocusEvent) {
-    const context = contextFor(event.target);
-    if (!context || context !== active) return;
+    const paragraph = paragraphFor(event.target);
+    if (!paragraph || contextFor(paragraph) !== active) return;
     if (
       event.relatedTarget instanceof Node &&
-      context.contains(event.relatedTarget)
+      paragraph.contains(event.relatedTarget)
     )
       return;
-    if (event instanceof MouseEvent && context.querySelector(":focus-visible"))
-      return;
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => {
-      if (active === context) close();
-    }, 120);
+    close();
   }
   function focus(event: FocusEvent) {
-    const context = contextFor(event.target);
+    const paragraph = paragraphFor(event.target);
+    const context = paragraph && contextFor(paragraph);
     if (context) open(context);
   }
   function outside(event: PointerEvent) {
     if (
       active &&
       event.target instanceof Node &&
-      !active.contains(event.target)
+      !active.closest(".pagefind-ui__result-excerpt")?.contains(event.target)
     )
       close();
   }
@@ -255,8 +245,8 @@ export function enhanceSearchContext(container: HTMLElement) {
     if (event.key === "Escape") close();
   }
   function scroll(event: Event) {
-    // Internal context scrolling is allowed; page scrolling invalidates the
-    // available space above/below the anchor, so dismiss the preview.
+    // Ignore the programmatic offset used to reveal the nearest preceding
+    // text. Page scrolling dismisses the preview and proceeds normally.
     if (active && event.target instanceof Node && active.contains(event.target))
       return;
     close();

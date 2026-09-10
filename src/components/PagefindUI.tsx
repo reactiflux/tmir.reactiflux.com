@@ -126,7 +126,11 @@ export function PagefindUI() {
 
   return (
     <div className="transcript-search">
-      <link rel="stylesheet" href="/pagefind/pagefind-ui.css" precedence="default" />
+      <link
+        rel="stylesheet"
+        href="/pagefind/pagefind-ui.css"
+        precedence="default"
+      />
       <p id="search-help" className="search-help">
         Results are grouped by episode. Choose a section to jump straight into
         the transcript. Hover over or focus a match to read more context. Use
@@ -137,8 +141,12 @@ export function PagefindUI() {
           <span>Try a topic</span>
           {["React Compiler", "Server Components", "React Native"].map(
             (term) => (
-              <button type="button" key={term} onClick={() => search(term)}>
-                {term} <span aria-hidden="true">↗</span>
+              <button
+                type="button"
+                key={term}
+                onClick={() => search(`"${term}"`)}
+              >
+                &quot;{term}&quot; <span aria-hidden="true">↗</span>
               </button>
             ),
           )}

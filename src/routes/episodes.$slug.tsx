@@ -1,3 +1,7 @@
+import {
+  EpisodeNavigation,
+  EPISODE_NAVIGATION_SCRIPT,
+} from "../components/EpisodeNavigation";
 import { createFileRoute } from "@tanstack/react-router";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Document, OgTags } from "../components/Document";
@@ -93,6 +97,11 @@ export const Route = createFileRoute("/episodes/$slug")({
                 <script dangerouslySetInnerHTML={{ __html: PLAYER_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: SEEK_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: OUTLINE_SCRIPT }} />
+                <script
+                  dangerouslySetInnerHTML={{
+                    __html: EPISODE_NAVIGATION_SCRIPT,
+                  }}
+                />
                 {threadUri && (
                   <script
                     dangerouslySetInnerHTML={{ __html: COMMENTS_SCRIPT }}
@@ -188,6 +197,7 @@ export const Route = createFileRoute("/episodes/$slug")({
               </div>
             )}
             <EpisodeBody episode={episode} />
+            {episode.sections.length > 0 && <EpisodeNavigation />}
           </Document>,
         );
 
