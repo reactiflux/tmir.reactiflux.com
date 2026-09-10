@@ -9,6 +9,7 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "postbuild": "node scripts/og.ts && pagefind --site dist/client",
