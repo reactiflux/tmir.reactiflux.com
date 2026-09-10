@@ -177,6 +177,7 @@ export function Outline({ items }: { items: OutlineItem[] }) {
       {items.map((item, i) => {
         const seconds = toSeconds(item.time);
         return (
+          // react-doctor-disable-next-line react-doctor/no-array-index-as-key -- outlines legitimately repeat an entry, so position is the only identity
           <li key={`${item.anchor}-${i}`}>
             {seconds !== undefined && (
               <>
@@ -278,13 +279,16 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
                   headingText
                 )}
               </h2>
-              {section.segments.map((segment, i) => {
+              {section.segments.map((segment) => {
                 const seconds = toSeconds(segment.time);
                 const showSpeaker =
                   !!segment.speaker && segment.speaker !== previousSpeaker;
                 if (segment.speaker) previousSpeaker = segment.speaker;
                 return (
-                  <div className="segment" key={i}>
+                  <div
+                    className="segment"
+                    key={`${segment.time}-${segment.text}`}
+                  >
                     <div className="segment-meta">
                       {showSpeaker && (
                         <span className="speaker">{segment.speaker}</span>

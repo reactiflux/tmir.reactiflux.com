@@ -1,5 +1,6 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
-import { Document, SITE_NAME } from "../components/Document";
+import { Document } from "../components/Document";
+import { SITE_NAME } from "../content/site.ts";
 
 export const Route = createRootRoute({
   head: () => ({ meta: [{ title: SITE_NAME }] }),

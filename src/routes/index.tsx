@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Player } from "../components/Player";
-import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 import { jsonLd } from "../content/jsonld.ts";
 import { hms, isoDuration } from "../content/time.ts";
 import { cardTitle } from "../content/slug.ts";
@@ -40,8 +40,10 @@ const CONVERSATIONS = [
 ];
 
 const getHome = createServerFn().handler(async () => {
-  const { loadEpisodes } = await import("../content/load.ts");
-  const { flattenLinks } = await import("../content/slug.ts");
+  const [{ loadEpisodes }, { flattenLinks }] = await Promise.all([
+    import("../content/load.ts"),
+    import("../content/slug.ts"),
+  ]);
   const episodes = await loadEpisodes();
   const latest = episodes[0];
   const mainTopics = latest?.outline.find((item) =>
@@ -211,9 +213,9 @@ function Home() {
           Reactiflux community experience. <strong>Mark Erikson</strong> brings
           a Redux maintainer's perspective on React and its ecosystem.
         </p>
-        <a href="/about">
+        <Link to="/about">
           Meet the hosts <span aria-hidden="true">↗</span>
-        </a>
+        </Link>
       </div>
 
       {latest && (
@@ -345,7 +347,9 @@ function Home() {
         </div>
         <p>
           <a href="/feed.xml">Show notes RSS</a> ·{" "}
-          <a href="/about#live">Join a live recording</a>
+          <Link to="/about" hash="live">
+            Join a live recording
+          </Link>
         </p>
         {BUTTONDOWN_USER && (
           <form

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SITE_NAME } from "../components/Document";
+import { SITE_NAME } from "../content/site.ts";
 
 export const Route = createFileRoute("/specimen")({
   head: () => ({
@@ -141,6 +141,7 @@ function Specimen() {
           <div>
             <p className="eyebrow">Editorial label</p>
             <p className="episode-meta">Aug 12, 2026 · 1:10:27</p>
+            {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
             <a
               className="chapter-link"
               href="/episodes/2026-07#cross-framework-benchmark-measuring-reactivity"
@@ -158,12 +159,13 @@ function Specimen() {
           Hover or tab through these examples to inspect interaction states.
         </p>
         <div className="action-row">
-          <a className="button" href="/">
+          <Link className="button" to="/">
             Primary action
-          </a>
-          <a className="button button-secondary" href="/about">
+          </Link>
+          <Link className="button button-secondary" to="/about">
             Secondary action
-          </a>
+          </Link>
+          {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
           <a href="/links">Text link</a>
         </div>
         <div className="specimen-details">
@@ -196,15 +198,18 @@ function Specimen() {
           </p>
           <ul className="feature-topics">
             <li>
+              {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
               <a href="/episodes/2026-07#react-org-updates">React governance</a>
             </li>
             <li>
+              {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
               <a href="/episodes/2026-07#react-alikes">
                 Approaches to reactivity
               </a>
             </li>
           </ul>
           <div className="player">
+            {/* react-doctor-disable-next-line react-doctor/media-has-caption -- appearance sample with no src, so there is nothing to caption */}
             <audio
               controls
               preload="none"
@@ -212,6 +217,7 @@ function Specimen() {
             />
           </div>
           <p>Native audio controls shown without a recording.</p>
+          {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
           <a className="button" href="/episodes/2026-07">
             Read the episode
           </a>
@@ -222,16 +228,18 @@ function Specimen() {
             <h2>See you next month.</h2>
             <p>A warm surface for listening destinations.</p>
             <div className="action-row">
-              <a className="button" href="/about#subscribe">
+              <Link className="button" to="/about" hash="subscribe">
                 Subscribe
-              </a>
+              </Link>
             </div>
           </div>
           <div className="community-panel">
             <p className="eyebrow">Reactiflux</p>
             <h2>Be part of the conversation.</h2>
             <p>A cool surface for community participation.</p>
-            <a href="/about#live">Live recordings ↗</a>
+            <Link to="/about" hash="live">
+              Live recordings ↗
+            </Link>
           </div>
         </div>
       </section>
@@ -244,6 +252,7 @@ function Specimen() {
               <time dateTime="2026-08-12">Aug 12, 2026</time>
               <div className="archive-copy">
                 <h3>
+                  {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
                   <a href="/episodes/2026-07">
                     React-alikes, governance, and state management
                   </a>
@@ -264,6 +273,7 @@ function Specimen() {
             <strong className="speaker">Speaker:</strong> A readable transcript
             keeps the discussion accessible, with clear speaker names and links
             back to the recording.{" "}
+            {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- episode and links pages are static documents outside the router */}
             <a className="ts" href="/episodes/2026-07#react-alikes">
               [00:21:30]
             </a>

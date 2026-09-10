@@ -62,17 +62,14 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
     ...new Set(mentions.map((mention) => mention.date.slice(0, 4))),
   ].sort();
   const episodes = new Set(mentions.map((mention) => mention.episodeSlug)).size;
-  const monthGroups = new Map<string, LinkResource[]>();
-  for (const resource of [...resources].sort(
-    (a, b) =>
-      b.mentions.at(-1)!.date.localeCompare(a.mentions.at(-1)!.date) ||
-      a.url.localeCompare(b.url),
-  )) {
-    const key = resource.mentions.at(-1)!.date.slice(0, 7);
-    const group = monthGroups.get(key) ?? [];
-    group.push(resource);
-    monthGroups.set(key, group);
-  }
+  const monthGroups = Map.groupBy(
+    resources.toSorted(
+      (a, b) =>
+        b.mentions.at(-1)!.date.localeCompare(a.mentions.at(-1)!.date) ||
+        a.url.localeCompare(b.url),
+    ),
+    (resource) => resource.mentions.at(-1)!.date.slice(0, 7),
+  );
   return (
     <div className="link-library">
       <header className="links-intro">
@@ -240,9 +237,9 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
                               {resource.mentions.length} discussions
                             </summary>
                             <ul>
-                              {resource.mentions.map((mention, i) => (
+                              {resource.mentions.map((mention) => (
                                 <li
-                                  key={i}
+                                  key={`${mention.episodeSlug}-${mention.discussionUrl}-${mention.time}`}
                                   className="resource-mention"
                                   data-date={mention.date}
                                   data-month={month(mention.date)}

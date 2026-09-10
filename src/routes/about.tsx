@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
+import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 
 import { PersonIdentity, ProfileLinks } from "../components/PersonIdentity";
 import { canonicalPersonName, personProfile } from "../content/people.ts";

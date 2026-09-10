@@ -1,12 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { renderToStaticMarkup } from "react-dom/server";
-import {
-  Document,
-  OgTags,
-  SITE_DESCRIPTION,
-  SITE_NAME,
-  SITE_URL,
-} from "../components/Document";
+import { Document, OgTags } from "../components/Document";
 import {
   COMMENTS_SCRIPT,
   EpisodeBody,
@@ -16,6 +10,11 @@ import {
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
 import { jsonLd } from "../content/jsonld.ts";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+} from "../content/site.ts";
 import { cardTitle } from "../content/slug.ts";
 import { hms, isoDuration } from "../content/time.ts";
 

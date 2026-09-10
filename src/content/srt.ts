@@ -21,16 +21,16 @@ function cueTime(seconds: number): string {
  */
 export function toSrt(episode: Episode): string {
   let speaker: string | undefined;
-  const cues = episode.sections
-    .flatMap((section) => section.segments)
-    .filter((segment) => segment.time)
-    .map((segment) => {
+  const cues = episode.sections.flatMap((section) =>
+    section.segments.flatMap((segment) => {
+      if (!segment.time) return [];
       if (segment.speaker) speaker = segment.speaker;
       return {
-        start: timestampToSeconds(segment.time!),
+        start: timestampToSeconds(segment.time),
         text: speaker ? `${speaker}: ${segment.text}` : segment.text,
       };
-    });
+    }),
+  );
 
   return cues
     .map((cue, i) => {
