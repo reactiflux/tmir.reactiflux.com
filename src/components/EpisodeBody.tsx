@@ -174,7 +174,73 @@ export function Outline({ items }: { items: OutlineItem[] }) {
   );
 }
 
+/**
+ * What an episode page has to say when there is no outline and no transcript —
+ * the Office Hours and Spotlight archive imports, which never had either.
+ * Without it the page would be a title and a player over an empty grid.
+ */
+function EpisodeSummary({ episode }: { episode: Episode }) {
+  return (
+    <div>
+      {episode.description && <p className="lead">{episode.description}</p>}
+      <p className="episode-meta">
+        <time dateTime={episode.date}>
+          {new Date(`${episode.date}T12:00:00Z`).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            timeZone: "UTC",
+          })}
+        </time>
+        {episode.duration !== undefined && (
+          <time dateTime={isoDuration(episode.duration)}>
+            {hms(episode.duration)}
+          </time>
+        )}
+      </p>
+      {episode.people.length > 0 && (
+        <section className="people">
+          <h2>People</h2>
+          <ul>
+            {episode.people.map((person) => (
+              <li key={person.name}>
+                {person.img && (
+                  <img
+                    src={person.img}
+                    alt={person.name}
+                    width="48"
+                    height="48"
+                    loading="lazy"
+                  />
+                )}
+                <div>
+                  {person.href ? (
+                    <a href={person.href} rel="noreferrer">
+                      {person.name}
+                    </a>
+                  ) : (
+                    person.name
+                  )}
+                  {person.role && <span className="role">{person.role}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
 export function EpisodeBody({ episode }: { episode: Episode }) {
+  // No transcript means no outline either: these are archive imports, not
+  // half-published episodes. Render the summary instead of two empty shells.
+  if (episode.sections.length === 0)
+    return (
+      <div className="episode">
+        <EpisodeSummary episode={episode} />
+      </div>
+    );
   return (
     <div className="episode">
       <nav className="toc" aria-label="Episode outline" data-pagefind-ignore="">

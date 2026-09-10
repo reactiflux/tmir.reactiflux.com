@@ -76,3 +76,28 @@ test("every episode in content/ produces cues with a positive duration", async (
   }
   assert.deepEqual(bad, []);
 });
+
+test("toSrt carries a speaker forward until someone else speaks", () => {
+  const episode = {
+    sections: [
+      {
+        segments: [
+          { time: "00:00:01", speaker: "Carl", text: "one" },
+          { time: "00:00:05", text: "two" },
+          { time: "00:00:09", speaker: "Mark", text: "three" },
+          { time: "00:00:13", text: "four" },
+        ],
+      },
+    ],
+  } as unknown as Parameters<typeof toSrt>[0];
+
+  const texts = toSrt(episode)
+    .split("\n\n")
+    .map((cue) => cue.split("\n")[2]);
+  assert.deepEqual(texts, [
+    "Carl: one",
+    "Carl: two",
+    "Mark: three",
+    "Mark: four",
+  ]);
+});

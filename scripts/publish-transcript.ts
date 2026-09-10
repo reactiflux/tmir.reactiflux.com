@@ -1,7 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeTime } from "../src/content/slug.ts";
-import { parseEpisode, TRANSCRIPT_MARKER } from "../src/content/parse.ts";
+import {
+  flattenOutline,
+  parseEpisode,
+  TRANSCRIPT_MARKER,
+} from "../src/content/parse.ts";
 import { insertHeadings } from "../src/content/headings.ts";
 import { toSrt } from "../src/content/srt.ts";
 
@@ -44,6 +48,9 @@ export function descriptToCanonical(markdown: string): string {
     if (s) {
       text = `**${normalizeSpeaker(s[1])}:** ${text.slice(s[0].length)}`;
     }
+    // Descript emits the occasional block that is a timecode and nothing else.
+    // Kept, it becomes a blank segment on the page and an empty SRT cue.
+    if (!text.trim()) continue;
     out.push(time ? `${text.trim()} [${time}]` : text.trim());
   }
   return out.join("\n\n");
@@ -52,16 +59,23 @@ export function descriptToCanonical(markdown: string): string {
 /**
  * A Descript export carries no `## ` headings, so a transcript written from
  * one straight would have no sections at all. Synthesize them from the
- * episode's existing outline.
+ * episode's chapter list — those titles are what the outline's anchors are
+ * built from, so the two only agree if the headings come from the chapters.
+ *
+ * Episodes published before `chapters:` existed fall back to the outline,
+ * flattened: a nested item is a section of the show too.
  */
 export function addOutlineHeadings(
   fileText: string,
   transcriptBody: string,
 ): string {
-  const { outline } = parseEpisode(fileText, "");
-  const items = outline
-    .filter((item) => item.time)
-    .map((item) => ({ time: item.time!, title: item.title }));
+  const { outline, chapters } = parseEpisode(fileText, "");
+  const items =
+    chapters.length > 0
+      ? chapters
+      : flattenOutline(outline)
+          .filter((item) => item.time)
+          .map((item) => ({ time: item.time!, title: item.title }));
   const paragraphs = transcriptBody.split(/\n{2,}/).filter((p) => p.trim());
   return insertHeadings(paragraphs, items).join("\n\n");
 }
@@ -75,7 +89,7 @@ export function replaceTranscript(
   if (marker === -1)
     throw new Error(`file has no "${TRANSCRIPT_MARKER}" heading`);
   const head = fileText.slice(0, marker + TRANSCRIPT_MARKER.length + 1);
-  return `${head}\n${transcriptBody.trimEnd()}\n`;
+  return `${head}\n\n${transcriptBody.trimEnd()}\n`;
 }
 
 export async function fetchDescriptTranscript(
@@ -91,9 +105,14 @@ export async function fetchDescriptTranscript(
     body: JSON.stringify({
       project_id: projectId,
       format: "markdown",
-      include_speaker_labels: true,
+      // Enum, not a boolean: off | changes | every_paragraph. "changes" labels
+      // a speaker once per run rather than on every paragraph; toSrt carries the
+      // current speaker forward so cues stay attributed either way.
+      include_speaker_labels: "changes",
       include_markers: false,
-      timecodes: true,
+      // Also an object now, not a boolean. descriptToCanonical reads a leading
+      // [mm:ss] off each paragraph, so paragraph timecodes are the ones we need.
+      timecodes: { on_paragraphs: true },
     }),
   });
   if (!res.ok) {
@@ -112,6 +131,28 @@ export async function fetchDescriptTranscript(
     );
   }
   return text;
+}
+
+/**
+ * The account's show. Transistor's episode list wants the numeric show id, and
+ * the obvious value to reach for — the hex share id in the feed URL — 404s with
+ * an unhelpful "Resource not found". There is one show, so look it up rather
+ * than making it something to configure wrongly.
+ */
+async function resolveShowId(apiKey: string): Promise<string> {
+  const res = await fetch(`${TRANSISTOR_BASE}/v1/shows`, {
+    headers: { "x-api-key": apiKey },
+  });
+  if (!res.ok)
+    throw new Error(
+      `Transistor shows failed: ${res.status} ${await res.text()}`,
+    );
+  const { data } = (await res.json()) as { data: { id: string }[] };
+  if (data.length !== 1)
+    throw new Error(
+      `expected exactly one Transistor show, found ${data.length}; pass the numeric show id explicitly`,
+    );
+  return data[0].id;
 }
 
 async function findTransistorEpisodeId(
@@ -142,8 +183,8 @@ export async function pushSrtToTranscript(
   transistorId: string,
   srt: string,
   apiKey: string,
-  showId: string,
 ): Promise<void> {
+  const showId = await resolveShowId(apiKey);
   const id = await findTransistorEpisodeId(transistorId, apiKey, showId);
   const res = await fetch(`${TRANSISTOR_BASE}/v1/episodes/${id}`, {
     method: "PATCH",
@@ -163,25 +204,24 @@ function requireEnv(name: string): string {
   return value;
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  const skipDescript = args.includes("--skip-descript");
-  const skipTransistor = args.includes("--skip-transistor");
-  const [epSlug, projectId] = args.filter((a) => !a.startsWith("--"));
-
-  if (!epSlug || (!projectId && !skipDescript)) {
-    console.error(
-      "usage: npm run publish-transcript -- <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]",
-    );
-    process.exit(1);
-  }
-
+/** The whole of `npm run publish-transcript`, minus argv parsing. */
+export async function publishTranscript({
+  slug: epSlug,
+  projectId,
+  skipDescript = false,
+  skipTransistor = false,
+}: {
+  slug: string;
+  projectId?: string;
+  skipDescript?: boolean;
+  skipTransistor?: boolean;
+}): Promise<void> {
   const path = resolve("content/episodes", `${epSlug}.md`);
   let fileText = readFileSync(path, "utf8");
 
   if (!skipDescript) {
     const markdown = await fetchDescriptTranscript(
-      projectId,
+      projectId!,
       requireEnv("DESCRIPT_TOKEN"),
     );
     const body = addOutlineHeadings(fileText, descriptToCanonical(markdown));
@@ -200,12 +240,31 @@ async function main() {
       episode.transistorId,
       srt,
       requireEnv("TRANSISTOR_API_KEY"),
-      requireEnv("TRANSISTOR_SHOW_ID"),
     );
     console.log(
       `pushed ${srt.split("\n\n").length} SRT cues to Transistor episode ${episode.transistorId}`,
     );
   }
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const skipDescript = args.includes("--skip-descript");
+  const skipTransistor = args.includes("--skip-transistor");
+  const [epSlug, projectId] = args.filter((a) => !a.startsWith("--"));
+
+  if (!epSlug || (!projectId && !skipDescript)) {
+    console.error(
+      "usage: npm run publish-transcript -- <yyyy-mm> <descriptProjectId> [--skip-descript] [--skip-transistor]",
+    );
+    process.exit(1);
+  }
+  await publishTranscript({
+    slug: epSlug,
+    projectId,
+    skipDescript,
+    skipTransistor,
+  });
 }
 
 if (import.meta.filename === process.argv[1]) await main();

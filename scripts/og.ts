@@ -52,7 +52,12 @@ const el = (type: string, props: Record<string, unknown>): Node => ({
   props,
 });
 
-function card(artwork: string, title: string, meta: string[]): Node {
+function card(
+  artwork: string,
+  title: string,
+  meta: string[],
+  eyebrow?: string,
+): Node {
   // Long titles get a smaller face so three lines still say something useful.
   const size = title.length > 58 ? 34 : title.length > 34 ? 40 : 46;
   return el("div", {
@@ -69,6 +74,25 @@ function card(artwork: string, title: string, meta: string[]): Node {
           padding: "56px 48px",
         },
         children: [
+          // Mirrors the site's `.eyebrow`: mono-ish caps above the title, used
+          // to mark the episodes that are not the monthly show.
+          ...(eyebrow
+            ? [
+                el("div", {
+                  style: {
+                    display: "flex",
+                    marginBottom: 18,
+                    color: MUTED,
+                    fontFamily: "Inter",
+                    fontWeight: 700,
+                    fontSize: 19,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                  },
+                  children: eyebrow,
+                }),
+              ]
+            : []),
           el("div", {
             style: {
               display: "-webkit-box",
@@ -154,11 +178,12 @@ async function main() {
   for (const ep of episodes) {
     await render(
       ep.slug,
-      card(artwork, cardTitle(ep.title), [
-        monthYear(ep.date),
-        hosts(ep),
-        runtime(ep.duration),
-      ]),
+      card(
+        artwork,
+        cardTitle(ep.title),
+        [monthYear(ep.date), hosts(ep), runtime(ep.duration)],
+        ep.series,
+      ),
     );
   }
   await render(

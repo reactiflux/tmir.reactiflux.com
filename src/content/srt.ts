@@ -12,17 +12,25 @@ function cueTime(seconds: number): string {
   return `${secondsToTimestamp(seconds)},000`;
 }
 
-/** Episode -> SRT with `Speaker: text` cues, one cue per timestamped segment. */
+/**
+ * Episode -> SRT with `Speaker: text` cues, one cue per timestamped segment.
+ *
+ * The Descript export labels a speaker once per run rather than on every
+ * paragraph, so the label is carried forward until someone else speaks —
+ * otherwise every continuation cue would go out unattributed.
+ */
 export function toSrt(episode: Episode): string {
+  let speaker: string | undefined;
   const cues = episode.sections
     .flatMap((section) => section.segments)
     .filter((segment) => segment.time)
-    .map((segment) => ({
-      start: timestampToSeconds(segment.time!),
-      text: segment.speaker
-        ? `${segment.speaker}: ${segment.text}`
-        : segment.text,
-    }));
+    .map((segment) => {
+      if (segment.speaker) speaker = segment.speaker;
+      return {
+        start: timestampToSeconds(segment.time!),
+        text: speaker ? `${speaker}: ${segment.text}` : segment.text,
+      };
+    });
 
   return cues
     .map((cue, i) => {

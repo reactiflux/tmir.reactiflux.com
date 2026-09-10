@@ -257,6 +257,18 @@
     margin-block-end: 0;
     text-wrap: pretty;
   }
+  /* The series label rides directly above the title, so it needs none of the
+     generous spacing an .eyebrow gets at the top of a page section. */
+  .episode-header .eyebrow,
+  .archive-copy .eyebrow {
+    margin-block-end: 0.2rem;
+  }
+  .people {
+    margin-block-start: 1.5rem;
+  }
+  .people .role {
+    display: block;
+  }
 
   .outline {
     display: grid;
