@@ -36,11 +36,21 @@ function slugs(): string[] {
 const allSlugs = slugs();
 const newest = allSlugs.at(-1);
 
+/** Vite hashes the bundled stylesheet, so the URL is discovered, not spelled. */
+function stylesheetPath(): string {
+  const assets = readdirSync(join(dist, "assets")).filter(
+    (f) => f.startsWith("index-") && f.endsWith(".css"),
+  );
+  assert.equal(assets.length, 1, "exactly one bundled stylesheet");
+  return `assets/${assets[0]}`;
+}
+
 test("Shell", () => {
   hasFile("index.html");
-  hasFile("styles.css");
   contains("index.html", 'class="site-nav"');
-  contains("index.html", 'href="/styles.css"');
+  contains("index.html", `href="/${stylesheetPath()}"`);
+  hasFile("favicon.png");
+  contains("index.html", 'rel="icon" href="/favicon.png"');
   // The skip link must precede the header on both rendering paths — the router
   // shell and the static document handlers build their own markup.
   for (const path of ["index.html", "links/index.html"]) {
@@ -232,7 +242,10 @@ test("Design specimen", () => {
 });
 
 test("Stylesheet", () => {
-  const cssSource = readFileSync("public/styles.css", "utf8");
+  const cssSource = globSync("src/styles/**/*.css")
+    .sort()
+    .map((f) => readFileSync(f, "utf8"))
+    .join("\n");
   for (const needle of [
     "@layer reset, tokens, layout, components, utilities;",
     "@view-transition",
@@ -247,15 +260,22 @@ test("Stylesheet", () => {
     "text-wrap: balance",
     "text-wrap: pretty",
   ]) {
-    assert.ok(cssSource.includes(needle), `styles.css uses ${needle}`);
+    assert.ok(cssSource.includes(needle), `src/styles uses ${needle}`);
   }
-  assert.equal(file("styles.css"), cssSource, "styles.css is served verbatim");
+  // The Pagefind overrides beat Pagefind's own sheet only while they stay
+  // unlayered, so the bundle must not have swept them into @layer components.
+  const bundled = file(stylesheetPath()) || "";
+  const at = bundled.indexOf("#pagefind-ui .pagefind-ui__search-input");
+  assert.ok(at !== -1, "bundle keeps the Pagefind overrides");
+  const before = bundled.slice(0, at);
+  const depth =
+    before.split("{").length - before.split("}").length; /* 0 = top level */
+  assert.equal(depth, 0, "Pagefind overrides are unlayered");
 });
 
 test("Prerender coverage", () => {
   const expected = [
     "index.html",
-    "styles.css",
     "links/index.html",
     "search/index.html",
     "about/index.html",

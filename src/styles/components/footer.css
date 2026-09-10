@@ -1,0 +1,72 @@
+.site-footer {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 5;
+  display: block;
+  max-inline-size: none;
+  margin: 0;
+  padding: 0 clamp(1.25rem, 4vw, 3rem) env(safe-area-inset-bottom);
+  background: var(--bg);
+  border-block-start: 1px solid var(--rule);
+  view-transition-name: site-footer;
+}
+/* With JS the footer's real height lands in --footer-block-size; without it,
+   an opened discussion has to be reserved literally. */
+@media (scripting: none) {
+  body:has(.footer-discussion[open]) {
+    padding-block-end: calc(40svh + 10.5rem);
+  }
+}
+.footer-inner {
+  max-inline-size: 75rem;
+  margin-inline: auto;
+}
+.footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding-block: 0.75rem;
+}
+.footer-links {
+  gap: 0.4rem 1rem;
+}
+.footer-discussion {
+  & > summary {
+    padding-block: 0.6rem;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.875rem;
+  }
+  & > summary::marker {
+    font-size: 0.75rem;
+  }
+  & [data-reaction-count] {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    margin-inline-start: 0.75rem;
+  }
+  & #comments {
+    margin: 0;
+  }
+  & #comments h2 {
+    font-size: 1.25rem;
+  }
+  & .replies {
+    margin-block-start: 1rem;
+  }
+  &:has(+ .footer-bar) {
+    border-block-end: 1px solid var(--rule);
+  }
+}
+.footer-discussion-content {
+  max-block-size: min(40svh, 28rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0.75rem 0.5rem 1rem 0;
+  border-block-start: 1px solid var(--rule);
+}

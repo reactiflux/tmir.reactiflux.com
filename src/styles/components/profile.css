@@ -1,0 +1,26 @@
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-block: 0.35rem 0.5rem;
+  & a {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 0.25rem;
+    color: var(--muted);
+  }
+  & a:hover,
+  & a:focus-visible {
+    color: var(--accent);
+    background: var(--surface);
+  }
+}
+.person-name {
+  color: var(--text);
+  text-decoration-color: var(--rule);
+}
+.host-bio .profile-links + .role {
+  margin-block-start: 0;
+}

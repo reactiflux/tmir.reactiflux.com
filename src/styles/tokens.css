@@ -1,0 +1,34 @@
+/* oklch literals. --surface/--rule/--muted were checked against color-mix()
+   derivations from --bg/--text/--accent; none landed inside 1 ΔE in both
+   schemes, so they stay literal. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(oklch(97.65% 0.0098 87.47), oklch(22.34% 0.0229 254.29));
+  --surface: light-dark(oklch(93.87% 0.016 82.79), oklch(28.05% 0.0308 252.71));
+  --text: light-dark(oklch(28.06% 0.0247 251.13), oklch(95.05% 0.0131 82.4));
+  --muted: light-dark(oklch(48.92% 0.0189 254.01), oklch(78.48% 0.0204 252.91));
+  --accent: light-dark(oklch(38.75% 0.1372 260.59), oklch(80.35% 0.0985 262.7));
+  --rule: light-dark(oklch(86.3% 0.0181 81.33), oklch(39.23% 0.0327 252.04));
+  --control-border: light-dark(
+    oklch(59.68% 0.0116 248.02),
+    oklch(64.97% 0.0377 252.39)
+  );
+  --feature-bg: light-dark(
+    oklch(38.75% 0.1372 260.59),
+    oklch(37.11% 0.0922 259.22)
+  );
+  --feature-text: oklch(95.05% 0.0131 82.4);
+  --danger: light-dark(oklch(52% 0.19 27), oklch(75% 0.14 27));
+  --warm-bg: light-dark(oklch(90.12% 0.038 51.69), oklch(31.24% 0.0211 27.73));
+  --cool-bg: light-dark(
+    oklch(92.07% 0.0183 175.29),
+    oklch(32.32% 0.0316 186.09)
+  );
+  --measure: 70ch;
+  --gap: 1.25rem;
+  --radius: 0.25rem;
+  --font:
+    Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-title: "Sk Modernist", Inter, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}

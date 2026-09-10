@@ -1,0 +1,264 @@
+/* Episode editorial layout: Sk-Modernist display type and a serif transcript. */
+
+.episode-page {
+  --episode-font: var(--font-title);
+}
+.episode-intro {
+  padding-block: 0.75rem 0;
+  font-family: var(--episode-font);
+  font-synthesis: none;
+  & .eyebrow {
+    margin-block-end: 1.25rem;
+  }
+  /* Paired with .latest-feature h2 on the home page. */
+  & h1 {
+    max-inline-size: 65rem;
+    font-size: clamp(2.125rem, 4.6vw, 4.125rem);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.045em;
+    text-wrap: pretty;
+    margin: 0;
+    view-transition-name: episode-title;
+  }
+  & .lead {
+    font-size: 1.25rem;
+    max-inline-size: 42rem;
+    line-height: 1.45;
+    margin-block-start: 1.4rem;
+  }
+  & .episode-meta {
+    margin-block-start: 1.25rem;
+  }
+}
+.episode-page .episode-header {
+  display: block;
+  padding-block: 1rem;
+  border-block: 1px solid var(--rule);
+}
+.episode-header audio {
+  inline-size: 100%;
+}
+.episode-controls {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  & button {
+    cursor: pointer;
+  }
+}
+.episode-play {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+}
+.playback-time,
+.episode-speed,
+.audio-download {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.episode-progress {
+  flex: 1;
+  min-inline-size: 2rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+  block-size: 1.5rem;
+}
+/* Vendor pseudo-elements stay: `appearance: base` on <input type=range>, with
+   ::slider-track / ::slider-thumb, is not in stable Safari yet. They cannot be
+   grouped with the standard pair — one unknown selector drops the whole rule. */
+.episode-progress::-webkit-slider-runnable-track {
+  block-size: 3px;
+  background: var(--control-border);
+}
+.episode-progress::-moz-range-track {
+  block-size: 3px;
+  background: var(--control-border);
+}
+.episode-progress::-webkit-slider-thumb {
+  appearance: none;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-block-start: -4.5px;
+}
+.episode-progress::-moz-range-thumb {
+  inline-size: 12px;
+  block-size: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.episode-speed {
+  border: 1px solid var(--control-border);
+  padding: 0.35rem 0.6rem;
+  background: transparent;
+  color: var(--text);
+}
+.audio-download {
+  text-decoration: none;
+}
+.playback-status {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.episode-page {
+  & .episode {
+    gap: 2rem 3.375rem; /* 1rem moved into .toc padding-inline-end */
+  }
+  & .toc {
+    font-family: var(--episode-font);
+  }
+}
+.chapter-disclosure summary {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  cursor: pointer;
+  padding-block: 0.5rem 1.25rem;
+}
+.episode-page {
+  & .outline {
+    gap: 0;
+    & > li {
+      padding-block: 0.6rem;
+      border-block-end: 1px solid var(--rule);
+      line-height: 1.5;
+    }
+    & ol {
+      margin-block-start: 0.5rem;
+    }
+    & ol > li:last-child {
+      border-block-end: 0;
+    }
+    & a {
+      color: var(--text);
+      text-decoration: none;
+    }
+    & a:hover {
+      text-decoration: underline;
+    }
+    & a[aria-current="true"] {
+      color: var(--accent);
+    }
+    & .ts,
+    & .outbound {
+      color: var(--muted);
+    }
+    & .ts {
+      margin-inline-end: 0.35rem;
+    }
+  }
+  & .transcript {
+    max-inline-size: 48rem;
+    & h2 {
+      font-family: var(--episode-font);
+      font-synthesis: none;
+      font-size: 1.5625rem;
+      font-weight: 400;
+      border: 0;
+      padding: 0;
+      margin-block-end: 1.5rem;
+    }
+    & h2 a {
+      color: inherit;
+      text-decoration-color: var(--rule);
+    }
+    /* Long documents: skip rendering the sections nobody is looking at.
+       45rem is the median section height; `auto` replaces the guess with the
+       real one as soon as a section has been rendered once. */
+    & section {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 45rem;
+    }
+    & section + section {
+      border-block-start: 1px solid var(--rule);
+      padding-block-start: 1.75rem;
+      margin-block-start: 2rem;
+    }
+  }
+  & .segment {
+    display: grid;
+    grid-template-columns: 6.25rem minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-block-start: 1.5rem;
+    & p {
+      font:
+        1.25rem/1.75 Georgia,
+        "Times New Roman",
+        serif;
+      margin: 0;
+    }
+    & .ts {
+      font-size: 0.6875rem;
+      color: var(--muted);
+    }
+  }
+  & .speaker {
+    display: block;
+    font: 0.8125rem/1.5 var(--episode-font);
+    color: var(--accent);
+  }
+}
+.segment-meta {
+  padding-block-start: 0.25rem;
+}
+/* Everything below is about the episode column's own width, so it asks the
+   `episode` container rather than the viewport. The thresholds are the old
+   viewport breakpoints minus body's padding-inline at that width. */
+@container episode (inline-size > 56rem) {
+  .episode-page .episode {
+    grid-template-columns: 15.625rem minmax(0, 1fr);
+  }
+}
+@container episode (inline-size <= 51.5rem) {
+  .episode-page .toc {
+    max-block-size: 45vh;
+  }
+  .chapter-disclosure summary {
+    padding-block-end: 0.75rem;
+  }
+}
+@container episode (inline-size <= 40.25rem) {
+  .episode-page {
+    & .segment {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+    & .speaker {
+      display: inline;
+      margin-inline-end: 0.75rem;
+    }
+    & .episode {
+      gap: 1.5rem;
+    }
+  }
+  .episode-controls {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .playback-time,
+  .audio-download {
+    font-size: 0.625rem;
+  }
+  .episode-speed {
+    font-size: 0.6875rem;
+    padding: 0.25rem;
+  }
+  .episode-intro .lead {
+    font-size: 1.125rem;
+  }
+}

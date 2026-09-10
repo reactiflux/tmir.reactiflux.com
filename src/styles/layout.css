@@ -1,0 +1,119 @@
+html {
+  scroll-padding-block: calc(var(--header-block-size) + var(--gap)) 6rem;
+  scroll-padding-block-end: calc(var(--footer-block-size) + 1rem);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+  padding-block-end: calc(var(--footer-block-size) + 1.5rem);
+}
+
+.site-header,
+.site-footer,
+main {
+  max-inline-size: 75rem;
+  margin-inline: auto;
+}
+/* Off-screen until focused, so keyboard users can jump the nav. */
+.skip-link {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 4;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  translate: 0 -110%;
+  &:focus-visible {
+    translate: 0;
+  }
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  align-items: baseline;
+  justify-content: space-between;
+  padding-block: var(--gap);
+  border-block-end: 1px solid var(--rule);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+.site-name {
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.site-footer {
+  padding-block: 2rem;
+  color: var(--muted);
+}
+main {
+  padding-block: 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+/* Container query: outline beside the transcript when the page is wide enough. */
+.episode-page-main {
+  container: episode / inline-size;
+}
+/* The player stays at the top; --header-block-size is measured at runtime
+   so chapter anchors land below it. */
+.episode-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 3;
+  display: grid;
+  gap: 0.5rem var(--gap);
+  align-items: center;
+  background: var(--bg);
+  border-block-end: 1px solid var(--rule);
+  padding-block: 0.6rem;
+}
+@container episode (inline-size > 40rem) {
+  .episode-header {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+  }
+}
+/* Narrow: cap the outline so the transcript is reachable without a long scroll. */
+.toc {
+  max-block-size: 40vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-inline-end: 1rem; /* keeps the scrollbar off the outline text */
+  scroll-behavior: smooth;
+  padding-block-end: 0.5rem;
+  border-block-end: 1px solid var(--rule);
+}
+.episode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap) 2.5rem;
+  align-items: start;
+}
+
+@container episode (inline-size > 56rem) {
+  .episode {
+    grid-template-columns: 18rem minmax(0, 1fr);
+  }
+  .toc {
+    position: sticky;
+    inset-block-start: calc(var(--header-block-size) + var(--gap));
+    max-block-size: calc(100svh - var(--header-block-size) - 2 * var(--gap));
+    font-size: 0.9rem;
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+}

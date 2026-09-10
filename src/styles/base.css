@@ -1,0 +1,45 @@
+@font-face {
+  font-family: "Sk Modernist";
+  src: url("/fonts/Sk-Modernist-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/Inter-Regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/Inter-Bold.woff") format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Measured at runtime by the footer/outline scripts. Registering them makes the
+ initial value the fallback, so no call site repeats one. Outside @layer:
+ @property is ignored inside one. An initial-value has to be computationally
+ independent, hence px rather than the 4.5rem/9rem these used to spell. */
+@property --header-block-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 72px;
+}
+@property --footer-block-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 144px;
+}
+
+/* Cross-document, and outside every layer: @view-transition is ignored inside one. */
+@view-transition {
+  navigation: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}

@@ -1,0 +1,27 @@
+[hidden] {
+  display: none !important;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Higher-contrast rings on the coloured panels. These live in `utilities`
+   because the bare :focus-visible above would otherwise outrank them. */
+.latest-feature :focus-visible {
+  outline-color: var(--feature-text);
+}
+:is(.subscribe-panel, .community-panel) :focus-visible {
+  outline-color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .toc {
+    scroll-behavior: auto;
+  }
+}
