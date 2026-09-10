@@ -21,17 +21,17 @@ const getLinks = createServerFn()
   .inputValidator((search: LinkSearch) => search)
   .handler(async ({ data }) => {
     const [
-      { loadEpisodes },
+      { episodes },
       { buildLinkIndex, buildLinkResources, filterResources },
       { LinkResults },
       { renderServerComponent },
     ] = await Promise.all([
-      import("../content/load.ts"),
+      import("../content/bundled.ts"),
       import("../content/links.ts"),
       import("../components/LinkResults.tsx"),
       import("@tanstack/react-start/rsc"),
     ]);
-    const resources = buildLinkResources(buildLinkIndex(await loadEpisodes()));
+    const resources = buildLinkResources(buildLinkIndex(episodes));
     const matches = filterResources(resources, data);
     const limit =
       data.view === "all" ? matches.length : (data.page ?? 1) * PAGE;
