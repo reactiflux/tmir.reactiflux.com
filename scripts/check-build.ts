@@ -91,14 +91,24 @@ test("Episode documents", () => {
   }
 });
 
+// /links is a router route: the loader renders the matching page of rows as an
+// RSC, so the default document carries one page of results, not all 1,200.
+const LINKS_MAX_BYTES = 75_000;
+
 test("Links document", () => {
   hasFile("links/index.html");
-  contains("links/index.html", 'class="link-row"');
-  contains("links/index.html", "data-text=");
-  contains("links/index.html", 'id="link-filter"');
+  const html = file("links/index.html")!;
   assert.ok(
-    !/\/assets\/[^"']*\.js/.test(file("links/index.html") || ""),
-    "links/index.html references no bundled JS",
+    html.length < LINKS_MAX_BYTES,
+    `links/index.html is ${html.length} B, under the ${LINKS_MAX_BYTES} B cap`,
+  );
+  contains("links/index.html", 'id="subject-browser"');
+  contains("links/index.html", 'class="link-row"');
+  contains("links/index.html", 'id="link-filter"');
+  // With no JavaScript the filters still work, as a plain GET form.
+  assert.ok(
+    /<form[^>]*method="get"[^>]*>/.test(html),
+    "links/index.html filters submit as a GET form without JavaScript",
   );
 });
 
@@ -456,8 +466,17 @@ test("Sizes", () => {
       `  episode document ${newest}/index.html: ${html.length} B raw / ${gzipSync(html).length} B gzip, 0 external scripts`,
     );
   }
+  const linksHtml = readFileSync(join(dist, "links", "index.html"));
+  const linksJs = [
+    ...new Set(linksHtml.toString().match(/\/assets\/[^"']*\.js/g) ?? []),
+  ].map((href) => readFileSync(join(dist, href.slice(1))));
+  lines.push(
+    `  links document links/index.html: ${linksHtml.length} B raw / ${gzipSync(linksHtml).length} B gzip (cap ${LINKS_MAX_BYTES} B)`,
+    `  links page JS (${linksJs.length} files): ${linksJs.reduce((n, b) => n + b.length, 0)} B raw / ${linksJs.reduce((n, b) => n + gzipSync(b).length, 0)} B gzip`,
+  );
   lines.push(
     "  spike baselines: router runtime 342267 B raw / 108613 B gzip; 100 KB fixture document 101837 B HTML",
+    "  links baseline before RSC: 1610228 B raw / 151982 B gzip, 0 external scripts",
   );
   console.log(lines.join("\n"));
 });
