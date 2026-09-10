@@ -15,14 +15,14 @@ export function OgTags(props: Og) {
 }
 
 /** Reserve the actual footer height, including wrapped links and open discussion. */
-const FOOTER_SCRIPT = `(function(){
-var footer=document.querySelector(".site-footer");if(!footer)return;
-function size(){document.documentElement.style.setProperty("--footer-block-size",footer.offsetHeight+"px")}
-size();if(window.ResizeObserver)new ResizeObserver(size).observe(footer);
-var details=footer.querySelector("details");
-function openHash(){if(details&&location.hash==="#comments")details.open=true}
-openHash();window.addEventListener("hashchange",openHash);
-if(details){details.addEventListener("toggle",size);details.addEventListener("keydown",function(e){if(e.key==="Escape"&&details.open){details.open=false;details.querySelector("summary").focus()}})}
+const FOOTER_SCRIPT = `(()=>{
+const footer=document.querySelector(".site-footer");if(!footer)return;
+const size=()=>document.documentElement.style.setProperty("--footer-block-size",footer.offsetHeight+"px");
+size();new ResizeObserver(size).observe(footer);
+const details=footer.querySelector("details");
+const openHash=()=>{if(details&&location.hash==="#comments")details.open=true};
+openHash();addEventListener("hashchange",openHash);
+if(details){details.addEventListener("toggle",size);details.addEventListener("keydown",e=>{if(e.key==="Escape"&&details.open){details.open=false;details.querySelector("summary").focus()}})}
 })();`;
 
 /**
