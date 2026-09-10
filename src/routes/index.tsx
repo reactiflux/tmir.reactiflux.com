@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { NewsletterForm } from "../components/NewsletterForm";
 import { Player } from "../components/Player";
 import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 import { jsonLd } from "../content/jsonld.ts";
+import { BUTTONDOWN_URL } from "../content/newsletter.ts";
 import { hms, isoDuration, shortDate } from "../content/time.ts";
 import { cardTitle } from "../content/slug.ts";
 
 const HOME_DESCRIPTION =
   "A monthly conversation about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson. Releases, technical details, tradeoffs, and open questions.";
-const BUTTONDOWN_USER = import.meta.env.VITE_BUTTONDOWN_USER;
 
 // Editorial selections point to parsed transcript sections so their anchors and
 // timestamps stay consistent with the episode pages.
@@ -344,27 +345,15 @@ function Home() {
             Join a live recording
           </Link>
         </p>
-        {BUTTONDOWN_USER && (
-          <form
+        {BUTTONDOWN_URL && (
+          <NewsletterForm
             className="newsletter"
-            action={`https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}`}
-            method="post"
-          >
-            <label htmlFor="home-email">
-              Get each episode's outline and links by email
-            </label>
-            <div className="action-row">
-              <input
-                id="home-email"
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-              <button type="submit">Subscribe by email</button>
-            </div>
-          </form>
+            id="home-email"
+            label="Get each episode's outline and links by email"
+            placeholder="you@example.com"
+            submitLabel="Subscribe by email"
+            row
+          />
         )}
       </section>
     </div>
