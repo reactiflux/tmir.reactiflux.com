@@ -180,3 +180,57 @@ export function buildLinkResources(entries: LinkEntry[]): LinkResource[] {
       a.url.localeCompare(b.url),
   );
 }
+
+export type LinkQuery = {
+  q?: string;
+  subject?: SubjectId;
+  year?: string;
+  sort?: "newest" | "oldest";
+};
+
+/** A resource plus the mentions that matched, newest (or oldest) first. */
+export type LinkMatch = { resource: LinkResource; mentions: LinkEntry[] };
+
+// Search the words the show used, not the words the reader typed: the notes say
+// "RSC" and "React Forget" where a reader may type either form.
+const normalize = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/gu, "")
+    .replace(/\brscs?\b/g, "react server components")
+    .replace(/react forget/g, "react compiler");
+
+export function filterResources(
+  resources: LinkResource[],
+  { q, subject, year, sort }: LinkQuery,
+): LinkMatch[] {
+  const words = normalize(q?.trim() ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const newestFirst = sort !== "oldest";
+  const matches: LinkMatch[] = [];
+  for (const resource of resources) {
+    const mentions = resource.mentions.filter((mention) => {
+      const haystack = normalize(
+        [mention.text, mention.url, ...mention.context].join(" "),
+      );
+      return (
+        (!subject || mention.subjects.includes(subject)) &&
+        (!year || mention.date.startsWith(year)) &&
+        words.every((word) => haystack.includes(word))
+      );
+    });
+    if (!mentions.length) continue;
+    mentions.sort((a, b) => a.date.localeCompare(b.date));
+    if (newestFirst) mentions.reverse();
+    matches.push({ resource, mentions });
+  }
+  return matches.sort((a, b) => {
+    const order = a.mentions[0].date.localeCompare(b.mentions[0].date);
+    return (
+      (newestFirst ? -order : order) ||
+      a.resource.url.localeCompare(b.resource.url)
+    );
+  });
+}
