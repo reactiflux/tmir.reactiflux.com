@@ -1,5 +1,5 @@
 import { globSync, mkdirSync, writeFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
@@ -12,7 +12,7 @@ const slugs = globSync("*.md", { cwd: "content/episodes" })
   .map((f) => f.slice(0, -".md".length))
   .sort();
 
-const pages: { path: string; prerender: { enabled: boolean } }[] = [
+const pages = [
   ...slugs.map((slug) => ({
     path: `/episodes/${slug}`,
     prerender: { enabled: true },
@@ -38,7 +38,7 @@ const wellKnownPublication = {
     mkdirSync("public/.well-known", { recursive: true });
     writeFileSync("public/.well-known/site.standard.publication", `${uri}\n`);
   },
-};
+} satisfies Plugin;
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },

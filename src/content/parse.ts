@@ -56,6 +56,15 @@ export interface Episode {
   atUri?: string;
 }
 
+/**
+ * What an episode file's front matter may carry. Everything is optional and
+ * unvalidated: it is YAML a human wrote. `date` is deliberately `unknown`,
+ * because YAML parses an unquoted date into a Date, not a string.
+ */
+type FrontMatter = Partial<
+  Omit<Episode, "slug" | "date" | "outline" | "sections">
+> & { date?: unknown };
+
 export const TRANSCRIPT_MARKER = "# Transcript";
 
 /**
@@ -333,7 +342,7 @@ export function parseEpisode(text: string, epSlug: string): Episode {
   const sections = parseSections(transcriptRegion);
   reconcileOutlineAnchors(outline, sections);
 
-  const fm = frontMatter as Record<string, any>;
+  const fm = frontMatter as FrontMatter;
   // A missing or unparseable date silently becomes `<pubDate>Invalid Date</pubDate>`
   // in the feed and throws mid-loop in publish-atproto, after records are already
   // written. Fail here, naming the episode, before any of that runs.
@@ -356,9 +365,9 @@ export function parseEpisode(text: string, epSlug: string): Episode {
     duration: fm.duration,
     season: fm.season,
     episode: fm.episode,
-    people: Array.isArray(fm.people) ? (fm.people as Person[]) : [],
-    guests: Array.isArray(fm.guests) ? (fm.guests as string[]).map(String) : [],
-    chapters: Array.isArray(fm.chapters) ? (fm.chapters as TimedItem[]) : [],
+    people: Array.isArray(fm.people) ? fm.people : [],
+    guests: Array.isArray(fm.guests) ? fm.guests.map(String) : [],
+    chapters: Array.isArray(fm.chapters) ? fm.chapters : [],
     outline,
     sections,
     bskyPostUrl: fm.bskyPostUrl,
