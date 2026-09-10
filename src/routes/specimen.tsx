@@ -65,7 +65,9 @@ function Specimen() {
 
   return (
     <div className="specimen" data-pagefind-ignore="">
-      <style>{STYLES}</style>
+      <style href="specimen" precedence="default">
+        {STYLES}
+      </style>
       <header>
         <p className="eyebrow">This Month in React · Design reference</p>
         <h1>Design specimen</h1>

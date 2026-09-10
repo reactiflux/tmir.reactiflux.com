@@ -1,5 +1,4 @@
 "use client";
-import { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -11,29 +10,26 @@ declare global {
 }
 
 export function PagefindUI() {
-  useEffect(() => {
-    const css = document.createElement("link");
-    css.rel = "stylesheet";
-    css.href = "/pagefind/pagefind-ui.css";
-    document.head.appendChild(css);
-
-    const script = document.createElement("script");
-    script.src = "/pagefind/pagefind-ui.js";
-    script.onload = () => {
-      if (window.PagefindUI) {
-        new window.PagefindUI({
-          element: "#pagefind-ui",
-          showSubResults: true,
-        });
-      }
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      css.remove();
-      script.remove();
-    };
-  }, []);
-
-  return <div id="pagefind-ui" />;
+  return (
+    <>
+      <link
+        rel="stylesheet"
+        href="/pagefind/pagefind-ui.css"
+        precedence="default"
+      />
+      {/* onLoad keeps this client-only, which is what we want: the prerendered
+          document must not reference the Pagefind bundle. */}
+      <script
+        async
+        src="/pagefind/pagefind-ui.js"
+        onLoad={() => {
+          new window.PagefindUI!({
+            element: "#pagefind-ui",
+            showSubResults: true,
+          });
+        }}
+      />
+      <div id="pagefind-ui" />
+    </>
+  );
 }
