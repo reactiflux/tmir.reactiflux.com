@@ -1,5 +1,5 @@
 import type { Episode } from "./parse.ts";
-import { secondsToTimestamp, timestampToSeconds } from "./slug.ts";
+import { secondsToTimestamp, timestampToSeconds } from "./time.ts";
 
 const LAST_CUE_SECONDS = 5;
 // Transcript timestamps are whole seconds and two segments can share one (or,

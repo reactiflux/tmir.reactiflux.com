@@ -1,3 +1,13 @@
+/** `https://bsky.app/profile/<handle-or-did>/post/<rkey>` -> its two parts. */
+export function bskyUrlToParts(
+  url: string,
+): { actor: string; rkey: string } | null {
+  const m = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(
+    url.trim(),
+  );
+  return m ? { actor: m[1], rkey: m[2] } : null;
+}
+
 /**
  * `https://bsky.app/profile/<handle-or-did>/post/<rkey>` -> `at://<did>/app.bsky.feed.post/<rkey>`.
  * Build-time only: a handle cannot be resolved without a network call, so the
@@ -8,11 +18,9 @@ export function bskyPostToAtUri(
   url: string,
   did: string | undefined,
 ): string | undefined {
-  const match = /^https:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?#]+)/.exec(
-    url.trim(),
-  );
-  if (!match) return undefined;
-  const repo = match[1].startsWith("did:") ? match[1] : did;
+  const parts = bskyUrlToParts(url);
+  if (!parts) return undefined;
+  const repo = parts.actor.startsWith("did:") ? parts.actor : did;
   if (!repo) return undefined;
-  return `at://${repo}/app.bsky.feed.post/${match[2]}`;
+  return `at://${repo}/app.bsky.feed.post/${parts.rkey}`;
 }

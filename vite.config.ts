@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { globSync, mkdirSync, writeFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -8,8 +8,7 @@ import netlify from "@netlify/vite-plugin-tanstack-start";
 // Explicit prerender list for routes the crawler cannot reach from links.
 // Prerendering a path with no route 404s and fails the build, so each entry is
 // restored by the task that adds its route.
-const slugs = readdirSync("content/episodes")
-  .filter((f) => f.endsWith(".md"))
+const slugs = globSync("*.md", { cwd: "content/episodes" })
   .map((f) => f.slice(0, -".md".length))
   .sort();
 

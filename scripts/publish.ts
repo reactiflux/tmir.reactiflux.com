@@ -41,7 +41,8 @@ async function main() {
   const epSlug = process.argv[2];
   if (!epSlug) {
     console.error("usage: npm run publish -- <yyyy-mm>");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   const path = resolve("content/episodes", `${epSlug}.md`);
 
@@ -121,9 +122,9 @@ async function main() {
   console.log(`\n${epSlug} is ready. Commit it.`);
 }
 
-if (import.meta.filename === process.argv[1]) {
+if (import.meta.main) {
   await main().catch((err: unknown) => {
     console.error(`\n${err instanceof Error ? err.message : String(err)}`);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }

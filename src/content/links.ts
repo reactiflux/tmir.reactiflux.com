@@ -23,15 +23,13 @@ function walk(
 ): void {
   for (const item of items) {
     if (item.url) {
-      let host: string | undefined;
-      try {
-        const url = new URL(item.url);
-        if (["https:", "http:"].includes(url.protocol))
-          host = url.hostname.replace(/^www\./, "");
-      } catch {
-        // Not an absolute URL (e.g. an in-page anchor like "#section") — no
-        // external link to index.
-      }
+      // A relative URL (e.g. an in-page anchor like "#section") parses to null
+      // — no external link to index.
+      const url = URL.parse(item.url);
+      const host =
+        url && ["https:", "http:"].includes(url.protocol)
+          ? url.hostname.replace(/^www\./, "")
+          : undefined;
       if (host)
         out.push({
           text: item.title,
@@ -63,13 +61,7 @@ export function buildLinkIndex(episodes: Episode[]): LinkEntry[] {
 export function groupByHost(
   entries: LinkEntry[],
 ): { host: string; entries: LinkEntry[] }[] {
-  const map = new Map<string, LinkEntry[]>();
-  for (const entry of entries) {
-    const list = map.get(entry.host);
-    if (list) list.push(entry);
-    else map.set(entry.host, [entry]);
-  }
-  return [...map]
+  return [...Map.groupBy(entries, (entry) => entry.host)]
     .map(([host, list]) => ({ host, entries: list }))
     .sort(
       (a, b) =>

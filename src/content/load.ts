@@ -1,4 +1,5 @@
-import { readdir, readFile } from "node:fs/promises";
+import { globSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseEpisode, type Episode } from "./parse.ts";
 
@@ -27,7 +28,7 @@ export function episodeOrder(
 export function loadEpisodes(): Promise<Episode[]> {
   cache ??= (async () => {
     const dir = contentDir();
-    const files = (await readdir(dir)).filter((f) => f.endsWith(".md")).sort();
+    const files = globSync("*.md", { cwd: dir }).sort();
     const episodes = await Promise.all(
       files.map(async (f) => {
         const markdown = await readFile(join(dir, f), "utf8");

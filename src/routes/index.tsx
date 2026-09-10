@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { Player } from "../components/Player";
 import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
 import { jsonLd } from "../content/jsonld.ts";
-import { hms, isoDuration } from "../content/time.ts";
+import { hms, isoDuration, shortDate } from "../content/time.ts";
 import { cardTitle } from "../content/slug.ts";
 
 const HOME_DESCRIPTION =
@@ -66,23 +66,25 @@ const getHome = createServerFn().handler(async () => {
           duration: latest.duration,
           description: latest.description,
           audioUrl: latest.audioUrl,
-          topics: selectedTopics.flatMap((title) => {
-            const section = latest.sections.find(
-              (s) => flattenLinks(s.title) === title,
-            );
-            return section ? [{ title, anchor: section.anchor }] : [];
-          }),
+          topics: selectedTopics
+            .map((title) => {
+              const section = latest.sections.find(
+                (s) => flattenLinks(s.title) === title,
+              );
+              return section && { title, anchor: section.anchor };
+            })
+            .filter((topic) => topic !== undefined),
         }
       : null,
-    conversations: CONVERSATIONS.flatMap((selection) => {
+    conversations: CONVERSATIONS.map((selection) => {
       const episode = episodes.find((e) => e.slug === selection.slug);
       const section = episode?.sections.find(
         (s) => flattenLinks(s.title) === selection.chapter,
       );
-      return section
-        ? [{ ...selection, anchor: section.anchor, time: section.time }]
-        : [];
-    }),
+      return (
+        section && { ...selection, anchor: section.anchor, time: section.time }
+      );
+    }).filter((c) => c !== undefined),
     archive: episodes.map((e) => ({
       slug: e.slug,
       title: e.title,
@@ -116,15 +118,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function formatDate(date: string) {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
-
 function ArchiveList({
   episodes,
 }: {
@@ -134,7 +127,7 @@ function ArchiveList({
     <ul className="archive-list">
       {episodes.map((episode) => (
         <li key={episode.slug}>
-          <time dateTime={episode.date}>{formatDate(episode.date)}</time>
+          <time dateTime={episode.date}>{shortDate(episode.date)}</time>
           <div className="archive-copy">
             {episode.series && <p className="eyebrow">{episode.series}</p>}
             <h3>
@@ -227,7 +220,7 @@ function Home() {
           <div className="feature-heading">
             <p className="eyebrow">Latest episode</p>
             <p className="episode-meta">
-              <time dateTime={latest.date}>{formatDate(latest.date)}</time>
+              <time dateTime={latest.date}>{shortDate(latest.date)}</time>
               {latest.duration != null && (
                 <>
                   {" "}

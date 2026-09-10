@@ -1,11 +1,7 @@
 import YAML from "yaml";
-import {
-  flattenLinks,
-  normalizeTime,
-  slug,
-  timestampToSeconds,
-} from "../src/content/slug.ts";
-import { TRANSCRIPT_MARKER } from "../src/content/parse.ts";
+import { flattenLinks, slug } from "../src/content/slug.ts";
+import { normalizeTime, timestampToSeconds } from "../src/content/time.ts";
+import { frontMatterEnd, TRANSCRIPT_MARKER } from "../src/content/parse.ts";
 import { decode, FEED_URL, slugFromTitle } from "./ingest.ts";
 
 export interface Chapter {
@@ -242,10 +238,7 @@ export function replaceOutlineRegion(
   fileText: string,
   outline: string,
 ): string {
-  const fmEnd = fileText.startsWith("---\n")
-    ? fileText.indexOf("\n---\n", 3)
-    : -1;
-  if (fmEnd === -1) throw new Error("file does not start with front matter");
+  const fmEnd = frontMatterEnd(fileText);
   const head = fileText.slice(0, fmEnd + 5);
 
   const marker = fileText.indexOf(`\n${TRANSCRIPT_MARKER}`, fmEnd);
@@ -260,10 +253,7 @@ export function replaceOutlineRegion(
  * (`npm run publish-transcript`) and so can't re-read the feed itself.
  */
 export function withChapters(fileText: string, chapters: Chapter[]): string {
-  if (!fileText.startsWith("---\n"))
-    throw new Error("file does not start with front matter");
-  const end = fileText.indexOf("\n---\n", 3);
-  if (end === -1) throw new Error("unterminated front matter");
+  const end = frontMatterEnd(fileText);
   // parseDocument, not parse+stringify: it leaves every key we don't touch
   // formatted exactly as the author wrote it.
   const doc = YAML.parseDocument(fileText.slice(4, end + 1));
@@ -275,10 +265,7 @@ export function withChapters(fileText: string, chapters: Chapter[]): string {
 
 /** The text between the front matter and `# Transcript`. */
 export function outlineRegion(fileText: string): string {
-  const fmEnd = fileText.startsWith("---\n")
-    ? fileText.indexOf("\n---\n", 3)
-    : -1;
-  if (fmEnd === -1) throw new Error("file does not start with front matter");
+  const fmEnd = frontMatterEnd(fileText);
   const marker = fileText.indexOf(`\n${TRANSCRIPT_MARKER}`, fmEnd);
   return fileText.slice(fmEnd + 5, marker === -1 ? undefined : marker);
 }

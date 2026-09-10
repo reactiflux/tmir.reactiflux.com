@@ -81,7 +81,9 @@ export function subjectsForLink(
       (subject) => subject.id,
     ),
   );
-  for (const id of correction?.add ?? []) subjects.add(id);
-  for (const id of correction?.remove ?? []) subjects.delete(id);
-  return [...subjects];
+  return [
+    ...subjects
+      .union(new Set(correction?.add ?? []))
+      .difference(new Set(correction?.remove ?? [])),
+  ];
 }

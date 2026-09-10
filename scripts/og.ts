@@ -5,11 +5,11 @@
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { encode } from "jpeg-js";
 import { loadEpisodes } from "../src/content/load.ts";
+import { monthYear } from "../src/content/time.ts";
 import type { Episode } from "../src/content/parse.ts";
 import { cardTitle } from "../src/content/slug.ts";
 
@@ -33,17 +33,6 @@ export function runtime(seconds: number | undefined): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.round((seconds % 3600) / 60);
   return h ? `${h}h ${m}m` : `${m}m`;
-}
-
-export function monthYear(date: string): string {
-  return new Date(`${date.slice(0, 10)}T00:00:00Z`).toLocaleDateString(
-    "en-US",
-    {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  );
 }
 
 type Node = { type: string; props: Record<string, unknown> };
@@ -197,9 +186,4 @@ async function main() {
   );
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
-  await main();
-}
+if (import.meta.main) await main();

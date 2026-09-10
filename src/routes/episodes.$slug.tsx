@@ -10,13 +10,9 @@ import {
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
 import { jsonLd } from "../content/jsonld.ts";
-import {
-  SITE_DESCRIPTION,
-  SITE_NAME,
-  SITE_URL,
-} from "../content/site.ts";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../content/site.ts";
 import { cardTitle } from "../content/slug.ts";
-import { hms, isoDuration } from "../content/time.ts";
+import { hms, isoDuration, longDate, monthYear } from "../content/time.ts";
 
 const ATPROTO_DID = import.meta.env.VITE_ATPROTO_DID;
 
@@ -126,11 +122,7 @@ export const Route = createFileRoute("/episodes/$slug")({
           >
             <header className="episode-intro">
               <p className="eyebrow">
-                {episode.series ||
-                  new Date(`${episode.date}T12:00:00Z`).toLocaleDateString(
-                    "en-US",
-                    { month: "long", year: "numeric", timeZone: "UTC" },
-                  )}
+                {episode.series || monthYear(episode.date)}
                 {episode.season !== undefined && ` · Season ${episode.season}`}
                 {episode.episode !== undefined &&
                   ` / Episode ${episode.episode}`}
@@ -143,17 +135,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 {episode.people.length > 0 && (
                   <span>{episode.people.map((p) => p.name).join(" & ")}</span>
                 )}
-                <time dateTime={episode.date}>
-                  {new Date(`${episode.date}T12:00:00Z`).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      timeZone: "UTC",
-                    },
-                  )}
-                </time>
+                <time dateTime={episode.date}>{longDate(episode.date)}</time>
                 {episode.duration !== undefined && (
                   <time dateTime={isoDuration(episode.duration)}>
                     {Math.round(episode.duration / 60)} min

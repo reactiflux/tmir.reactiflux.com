@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { Person } from "../src/content/parse.ts";
 import { splitFile } from "../src/content/parse.ts";
@@ -324,13 +324,11 @@ export async function ingestFeed() {
     else if (before !== after) console.log(`updated ${item.slug}`);
   }
 
-  for (const name of readdirSync(EPISODE_DIR)) {
-    const epSlug = name.replace(/\.md$/, "");
-    if (name.endsWith(".md") && !seen.has(epSlug)) {
-      console.log(`no feed item for file ${epSlug}`);
-    }
+  for (const name of globSync("*.md", { cwd: EPISODE_DIR })) {
+    const epSlug = name.slice(0, -".md".length);
+    if (!seen.has(epSlug)) console.log(`no feed item for file ${epSlug}`);
   }
   console.log(`\n${items.length} TMiR feed items, ${seen.size} matched.`);
 }
 
-if (import.meta.filename === process.argv[1]) await ingestFeed();
+if (import.meta.main) await ingestFeed();

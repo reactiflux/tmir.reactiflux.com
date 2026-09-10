@@ -1,4 +1,4 @@
-import { timestampToSeconds } from "./slug.ts";
+import { timestampToSeconds } from "./time.ts";
 
 export interface TimedItem {
   time: string;

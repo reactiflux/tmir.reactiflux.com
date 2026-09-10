@@ -1,6 +1,6 @@
 import { LINK_SUBJECTS } from "../content/link-subjects.ts";
 import type { LinkResource } from "../content/links.ts";
-import { hms } from "../content/time.ts";
+import { hms, monthYear } from "../content/time.ts";
 
 export const LINK_LIBRARY_SCRIPT = `(function(){
 var root=document.querySelector('.link-library');if(!root)return;
@@ -47,14 +47,6 @@ input.addEventListener('input',function(){limit=PAGE;url(false);update()});
 more.addEventListener('click',function(){var before=limit;limit+=PAGE;update();var shown=list.querySelectorAll('.link-row:not([hidden])');if(shown[before])shown[before].querySelector('.resource-title a').focus()});
 window.addEventListener('popstate',function(){restore();update()});restore();update();
 })();`;
-
-function month(date: string) {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
   const mentions = resources.flatMap((resource) => resource.mentions);
@@ -202,13 +194,13 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
               aria-labelledby={`month-${key}`}
             >
               <h3 id={`month-${key}`} className="resource-month-heading">
-                <time dateTime={key}>{month(`${key}-01`)}</time>
+                <time dateTime={key}>{monthYear(`${key}-01`)}</time>
               </h3>
               <ol>
                 {grouped.map((resource) => {
                   const first = resource.mentions.at(-1)!;
                   const discussionLabel = (mention: typeof first) =>
-                    `${mention.discussionUrl.includes("#") ? "Open discussion" : "Open episode"} · ${month(mention.date)}${mention.time !== undefined ? ` · ${hms(mention.time)}` : ""}`;
+                    `${mention.discussionUrl.includes("#") ? "Open discussion" : "Open episode"} · ${monthYear(mention.date)}${mention.time !== undefined ? ` · ${hms(mention.time)}` : ""}`;
                   return (
                     <li
                       className="link-row"
@@ -242,7 +234,7 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
                                   key={`${mention.episodeSlug}-${mention.discussionUrl}-${mention.time}`}
                                   className="resource-mention"
                                   data-date={mention.date}
-                                  data-month={month(mention.date)}
+                                  data-month={monthYear(mention.date)}
                                   data-title={mention.text}
                                   data-subjects={mention.subjects.join(" ")}
                                   data-text={[

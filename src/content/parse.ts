@@ -1,12 +1,7 @@
 import YAML from "yaml";
 import type { TimedItem } from "./headings.ts";
-import {
-  flattenLinks,
-  normalizeTime,
-  slug,
-  timestampToSeconds,
-  unescapeMarkdown,
-} from "./slug.ts";
+import { flattenLinks, slug, unescapeMarkdown } from "./slug.ts";
+import { normalizeTime, timestampToSeconds } from "./time.ts";
 
 export interface Person {
   name: string;
@@ -63,19 +58,29 @@ export interface Episode {
 
 export const TRANSCRIPT_MARKER = "# Transcript";
 
+/**
+ * Index of the `\n---\n` that closes the front matter. Front matter spans
+ * `text.slice(4, end + 1)` and the body starts at `end + 5`.
+ */
+export function frontMatterEnd(text: string): number {
+  if (!text.startsWith("---\n"))
+    throw new Error("file does not start with front matter");
+  const end = text.indexOf("\n---\n", 3);
+  if (end === -1) throw new Error("unterminated front matter");
+  return end;
+}
+
 /** Split a file into its parsed front matter and the raw body text after it. */
 export function splitFile(text: string): {
   frontMatter: Record<string, unknown>;
   body: string;
 } {
-  if (!text.startsWith("---\n")) {
-    throw new Error("file does not start with front matter");
-  }
-  const end = text.indexOf("\n---\n", 3);
-  if (end === -1) throw new Error("unterminated front matter");
-  const yaml = text.slice(4, end + 1);
+  const end = frontMatterEnd(text);
   return {
-    frontMatter: (YAML.parse(yaml) ?? {}) as Record<string, unknown>,
+    frontMatter: (YAML.parse(text.slice(4, end + 1)) ?? {}) as Record<
+      string,
+      unknown
+    >,
     body: text.slice(end + 5),
   };
 }
@@ -84,7 +89,7 @@ const OUTLINE_LINE = /^(\s*)- (.+)$/;
 const OUTLINE_TIME = /^\[\[(\d{1,3}(?::\d{2}){1,2})\]\(#([^)]*)\)\]\s*/;
 const FIRST_LINK = /\[[^\]]*\]\(([^)]+)\)/;
 
-export function parseOutline(region: string): OutlineItem[] {
+function parseOutline(region: string): OutlineItem[] {
   const roots: OutlineItem[] = [];
   // stack[d] is the item most recently opened at depth d
   const stack: OutlineItem[] = [];
