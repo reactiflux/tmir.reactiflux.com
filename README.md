@@ -54,12 +54,14 @@ npm install
 npm run dev            # http://localhost:3000
 ```
 
-| Command          | Effect                                                   |
-| ---------------- | -------------------------------------------------------- |
-| `npm run build`  | prerenders every route, then the share images and search |
-| `npm run check`  | asserts the built output and prints its sizes            |
-| `npm test`       | unit tests                                               |
-| `npm run format` | Prettier                                                 |
+| Command             | Effect                                                   |
+| ------------------- | -------------------------------------------------------- |
+| `npm run build`     | prerenders every route, then the share images and search |
+| `npm run check`     | asserts the built output and prints its sizes            |
+| `npm test`          | unit tests                                               |
+| `npm run typecheck` | TypeScript 7 (native tsc) over src, scripts, tests       |
+| `npm run doctor`    | react-doctor; fails on warnings                          |
+| `npm run format`    | Prettier                                                 |
 
 Credentials and build variables share one gitignored `.env`; Vite reads the
 `VITE_`-prefixed ones and the npm scripts pass `--env-file-if-exists`. Netlify
