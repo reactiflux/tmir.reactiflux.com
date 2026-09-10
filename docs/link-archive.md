@@ -3,7 +3,7 @@
 The Links page helps developers follow subjects through the show's history.
 It opens with subjects and search, then shows dated resources with a compact
 link to the relevant episode discussion. Dates are episode dates, not source
-publication dates. Oldest-first is the default; readers can reverse it, filter
+publication dates. Results are grouped by discussion month, newest first by default. Readers can reverse the order, filter
 by year, and share their current filters through the URL.
 
 `src/content/link-subjects.ts` defines the initial subjects and their matching

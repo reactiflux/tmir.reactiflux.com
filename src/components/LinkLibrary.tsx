@@ -5,12 +5,12 @@ import { hms } from "../content/time.ts";
 export const LINK_LIBRARY_SCRIPT = `(function(){
 var root=document.querySelector('.link-library');if(!root)return;
 var input=document.getElementById('link-filter'),subject=document.getElementById('subject-filter'),year=document.getElementById('year-filter'),sort=document.getElementById('link-sort');
-var archive=document.getElementById('link-results'),list=document.getElementById('resource-list'),cards=[].slice.call(list.children);
+var archive=document.getElementById('link-results'),list=document.getElementById('resource-list'),cards=[].slice.call(list.querySelectorAll('.link-row'));
 var more=document.getElementById('load-links'),empty=document.getElementById('links-empty'),count=document.getElementById('link-count'),heading=document.getElementById('results-heading');
 var PAGE=24,limit=PAGE,all=false;
 function normalize(s){return s.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/\\brscs?\\b/g,'react server components').replace(/react forget/g,'react compiler')}
-function restore(){var p=new URLSearchParams(location.search);input.value=p.get('q')||'';subject.value=p.get('subject')||'';if(subject.selectedIndex<0)subject.value='';year.value=p.get('year')||'';if(year.selectedIndex<0)year.value='';sort.value=p.get('sort')==='newest'?'newest':'oldest';all=p.get('view')==='all';limit=PAGE}
-function url(push){var u=new URL(location.href);['q','subject','year','sort','view'].forEach(function(k){u.searchParams.delete(k)});if(input.value.trim())u.searchParams.set('q',input.value.trim());if(subject.value)u.searchParams.set('subject',subject.value);if(year.value)u.searchParams.set('year',year.value);if(sort.value!=='oldest')u.searchParams.set('sort',sort.value);if(all)u.searchParams.set('view','all');u.hash='';history[push?'pushState':'replaceState']({},'',u)}
+function restore(){var p=new URLSearchParams(location.search);input.value=p.get('q')||'';subject.value=p.get('subject')||'';if(subject.selectedIndex<0)subject.value='';year.value=p.get('year')||'';if(year.selectedIndex<0)year.value='';sort.value=p.get('sort')==='oldest'?'oldest':'newest';all=p.get('view')==='all';limit=PAGE}
+function url(push){var u=new URL(location.href);['q','subject','year','sort','view'].forEach(function(k){u.searchParams.delete(k)});if(input.value.trim())u.searchParams.set('q',input.value.trim());if(subject.value)u.searchParams.set('subject',subject.value);if(year.value)u.searchParams.set('year',year.value);if(sort.value!=='newest')u.searchParams.set('sort',sort.value);if(all)u.searchParams.set('view','all');u.hash='';history[push?'pushState':'replaceState']({},'',u)}
 function update(){
  var active=all||!!input.value.trim()||!!subject.value||!!year.value;
  root.classList.toggle('has-selection',active);document.getElementById('subject-browser').hidden=active;document.getElementById('archive-controls').hidden=!active;archive.open=active;
@@ -22,23 +22,29 @@ function update(){
   card.hidden=true;if(!visible.length)return;
   visible.sort(function(a,b){return a.dataset.date.localeCompare(b.dataset.date)});if(sort.value==='newest')visible.reverse();
   var primary=visible[0],link=primary.querySelector('a'),main=card.querySelector('.primary-discussion');main.href=link.href;main.textContent=link.textContent;main.title=link.title;
-  card.querySelector('h3 a').textContent=primary.dataset.title;
-  var when=card.querySelector('.resource-date');when.dateTime=primary.dataset.date;when.textContent=primary.dataset.month;
+  card.querySelector('.resource-title a').textContent=primary.dataset.title;
   mentions.forEach(function(m){m.hidden=m===primary||!visible.includes(m)});
   var extra=card.querySelector('.resource-discussions');extra.hidden=visible.length<2;extra.querySelector('summary').textContent=(visible.length-1)+' more discussion'+(visible.length===2?'':'s');
-  matched.push({card:card,date:primary.dataset.date});
+  matched.push({card:card,date:primary.dataset.date,month:primary.dataset.month});
  });
  matched.sort(function(a,b){var order=a.date.localeCompare(b.date);return(sort.value==='newest'?-order:order)||a.card.dataset.url.localeCompare(b.card.dataset.url)});
- matched.forEach(function(m,i){list.appendChild(m.card);m.card.hidden=i>=limit});
+ list.replaceChildren();var groups=new Map();
+ matched.slice(0,limit).forEach(function(m){
+  var key=m.date.slice(0,7),group=groups.get(key);
+  if(!group){var section=document.createElement('section');section.className='resource-month';section.dataset.month=key;
+   var title=document.createElement('h3');title.id='month-'+key;title.className='resource-month-heading';var time=document.createElement('time');time.dateTime=key;time.textContent=m.month;title.appendChild(time);section.appendChild(title);section.setAttribute('aria-labelledby',title.id);
+   group=document.createElement('ol');section.appendChild(group);groups.set(key,group);list.appendChild(section)}
+  m.card.hidden=false;group.appendChild(m.card);
+ });
  heading.textContent=subject.value?subject.options[subject.selectedIndex].text:'Explore the archive';
  count.textContent=matched.length?Math.min(limit,matched.length)+' of '+matched.length+' resources'+(year.value?' discussed in '+year.value:''):'No resources match these filters';
  empty.hidden=matched.length!==0;more.hidden=matched.length<=limit;more.textContent='Show '+Math.min(PAGE,matched.length-limit)+' more';
 }
 root.classList.add('links-enhanced');document.getElementById('archive-search').hidden=false;
-root.addEventListener('click',function(e){var topic=e.target.closest('[data-subject]');if(topic){e.preventDefault();subject.value=topic.dataset.subject;all=!subject.value;limit=PAGE;url(true);update();heading.focus();heading.scrollIntoView({block:"start"});return}var reset=e.target.closest('[data-reset]');if(reset){input.value='';subject.value='';year.value='';sort.value='oldest';all=false;limit=PAGE;url(true);update();document.getElementById('subjects-heading').focus()}});
+root.addEventListener('click',function(e){var topic=e.target.closest('[data-subject]');if(topic){e.preventDefault();subject.value=topic.dataset.subject;all=!subject.value;limit=PAGE;url(true);update();heading.focus();heading.scrollIntoView({block:"start"});return}var reset=e.target.closest('[data-reset]');if(reset){input.value='';subject.value='';year.value='';sort.value='newest';all=false;limit=PAGE;url(true);update();document.getElementById('subjects-heading').focus()}});
 input.addEventListener('input',function(){limit=PAGE;url(false);update()});
 [subject,year,sort].forEach(function(el){el.addEventListener('change',function(){all=true;limit=PAGE;url(true);update()})});
-more.addEventListener('click',function(){var before=limit;limit+=PAGE;update();var shown=[].slice.call(list.children).filter(function(c){return!c.hidden});if(shown[before])shown[before].querySelector('h3 a').focus()});
+more.addEventListener('click',function(){var before=limit;limit+=PAGE;update();var shown=list.querySelectorAll('.link-row:not([hidden])');if(shown[before])shown[before].querySelector('.resource-title a').focus()});
 window.addEventListener('popstate',function(){restore();update()});restore();update();
 })();`;
 
@@ -56,6 +62,17 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
     ...new Set(mentions.map((mention) => mention.date.slice(0, 4))),
   ].sort();
   const episodes = new Set(mentions.map((mention) => mention.episodeSlug)).size;
+  const monthGroups = new Map<string, LinkResource[]>();
+  for (const resource of [...resources].sort(
+    (a, b) =>
+      b.mentions.at(-1)!.date.localeCompare(a.mentions.at(-1)!.date) ||
+      a.url.localeCompare(b.url),
+  )) {
+    const key = resource.mentions.at(-1)!.date.slice(0, 7);
+    const group = monthGroups.get(key) ?? [];
+    group.push(resource);
+    monthGroups.set(key, group);
+  }
   return (
     <div className="link-library">
       <header className="links-intro">
@@ -146,8 +163,8 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
           <label>
             Order
             <select id="link-sort">
-              <option value="oldest">Oldest discussion first</option>
-              <option value="newest">Newest discussion first</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
             </select>
           </label>
         </div>
@@ -179,71 +196,84 @@ export function LinkLibrary({ resources }: { resources: LinkResource[] }) {
             Clear filters and explore subjects
           </button>
         </div>
-        <ol id="resource-list">
-          {resources.map((resource) => {
-            const first = resource.mentions[0];
-            const discussionLabel = (mention: typeof first) =>
-              `${mention.discussionUrl.includes("#") ? "Open discussion" : "Open episode"} · ${month(mention.date)}${mention.time !== undefined ? ` · ${hms(mention.time)}` : ""}`;
-            return (
-              <li
-                className="link-row"
-                key={resource.id}
-                id={resource.id}
-                data-url={resource.url}
-                data-text={resource.text}
-              >
-                <time className="resource-date" dateTime={first.date}>
-                  {month(first.date)}
-                </time>
-                <article className="resource-body">
-                  <p className="resource-host">{resource.host}</p>
-                  <h3>
-                    <a href={resource.url} rel="noreferrer">
-                      {resource.text}
-                    </a>
-                  </h3>
-                  <div className="resource-context">
-                    <a
-                      className="primary-discussion"
-                      href={first.discussionUrl}
-                      title={first.episodeTitle}
+        <div id="resource-list">
+          {[...monthGroups].map(([key, grouped]) => (
+            <section
+              key={key}
+              className="resource-month"
+              data-month={key}
+              aria-labelledby={`month-${key}`}
+            >
+              <h3 id={`month-${key}`} className="resource-month-heading">
+                <time dateTime={key}>{month(`${key}-01`)}</time>
+              </h3>
+              <ol>
+                {grouped.map((resource) => {
+                  const first = resource.mentions.at(-1)!;
+                  const discussionLabel = (mention: typeof first) =>
+                    `${mention.discussionUrl.includes("#") ? "Open discussion" : "Open episode"} · ${month(mention.date)}${mention.time !== undefined ? ` · ${hms(mention.time)}` : ""}`;
+                  return (
+                    <li
+                      className="link-row"
+                      key={resource.id}
+                      id={resource.id}
+                      data-url={resource.url}
+                      data-text={resource.text}
                     >
-                      {discussionLabel(first)}
-                    </a>
-                    <details className="resource-discussions">
-                      <summary>{resource.mentions.length} discussions</summary>
-                      <ul>
-                        {resource.mentions.map((mention, i) => (
-                          <li
-                            key={i}
-                            className="resource-mention"
-                            data-date={mention.date}
-                            data-month={month(mention.date)}
-                            data-title={mention.text}
-                            data-subjects={mention.subjects.join(" ")}
-                            data-text={[
-                              mention.text,
-                              mention.url,
-                              ...mention.context,
-                            ].join(" ")}
+                      <article className="resource-body">
+                        <p className="resource-host">{resource.host}</p>
+                        <h4 className="resource-title">
+                          <a href={resource.url} rel="noreferrer">
+                            {first.text}
+                          </a>
+                        </h4>
+                        <div className="resource-context">
+                          <a
+                            className="primary-discussion"
+                            href={first.discussionUrl}
+                            title={first.episodeTitle}
                           >
-                            <a
-                              href={mention.discussionUrl}
-                              title={mention.episodeTitle}
-                            >
-                              {discussionLabel(mention)}
-                            </a>
-                            <p>{mention.text}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  </div>
-                </article>
-              </li>
-            );
-          })}
-        </ol>
+                            {discussionLabel(first)}
+                          </a>
+                          <details className="resource-discussions">
+                            <summary>
+                              {resource.mentions.length} discussions
+                            </summary>
+                            <ul>
+                              {resource.mentions.map((mention, i) => (
+                                <li
+                                  key={i}
+                                  className="resource-mention"
+                                  data-date={mention.date}
+                                  data-month={month(mention.date)}
+                                  data-title={mention.text}
+                                  data-subjects={mention.subjects.join(" ")}
+                                  data-text={[
+                                    mention.text,
+                                    mention.url,
+                                    ...mention.context,
+                                  ].join(" ")}
+                                >
+                                  <a
+                                    href={mention.discussionUrl}
+                                    title={mention.episodeTitle}
+                                  >
+                                    {discussionLabel(mention)}
+                                  </a>
+                                  <p>{mention.text}</p>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          ))}
+        </div>
         <button id="load-links" type="button" hidden>
           Show more
         </button>

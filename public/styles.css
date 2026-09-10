@@ -1614,12 +1614,19 @@
     margin-block: 0.75rem 1.25rem;
   }
   .link-library #resource-list {
-    border-block-start: 1px solid var(--rule);
+    display: grid;
+    gap: 2.5rem;
+  }
+  .resource-month-heading {
+    font-size: 1.375rem;
+    margin: 0;
+    padding-block-end: 0.75rem;
+    border-block-end: 1px solid var(--rule);
   }
   .link-library .link-row {
     display: grid;
-    grid-template-columns: 9rem minmax(0, 1fr);
-    gap: 1rem 2rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
     padding-block: 1.5rem;
     border-block-end: 1px solid var(--rule);
   }
@@ -1634,17 +1641,17 @@
     color: var(--muted);
     overflow-wrap: anywhere;
   }
-  .resource-body h3 {
+  .resource-body .resource-title {
     font-size: 1.25rem;
     line-height: 1.4;
     margin-block: 0.35rem 0.65rem;
     overflow-wrap: anywhere;
   }
-  .resource-body h3 a {
+  .resource-body .resource-title a {
     color: var(--text);
     text-decoration: none;
   }
-  .resource-body h3 a:hover {
+  .resource-body .resource-title a:hover {
     text-decoration: underline;
     text-decoration-color: var(--accent);
   }
@@ -1733,7 +1740,7 @@
     .library-filters label {
       flex-basis: 100%;
     }
-    .resource-body h3 {
+    .resource-body .resource-title {
       font-size: 1.125rem;
     }
   }
