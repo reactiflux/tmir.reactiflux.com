@@ -44,11 +44,17 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     wellKnownPublication,
-    // RSC stays enabled for future supporting pages; the episode and links
-    // documents deliberately do not use it.
+    // RSC stays enabled for future supporting pages; the episode documents
+    // deliberately do not use it.
     tanstackStart({
       rsc: { enabled: true },
-      prerender: { enabled: true, crawlLinks: true },
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        // /links renders its own filter permutations as links. Prerendering
+        // them is unbounded and pointless — the Netlify function renders them.
+        filter: (page) => !page.path.includes("?"),
+      },
       pages,
     }),
     netlify(),
