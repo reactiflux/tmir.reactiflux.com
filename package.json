@@ -2,6 +2,9 @@
   "name": "tmir",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "imports": {
     "#/*": "./src/*"
   },
