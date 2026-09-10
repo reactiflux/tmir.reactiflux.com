@@ -21,7 +21,11 @@ export const Route = createFileRoute("/search")({
 function Search() {
   return (
     <section className="search-page" data-pagefind-ignore="">
-      <h1>Search transcripts</h1>
+      <header className="search-intro">
+        <p className="eyebrow">The conversation, searchable</p>
+        <h1>Search transcripts</h1>
+        <p>Find the idea you remember. Discover the discussion you missed.</p>
+      </header>
       <noscript>
         <p>
           Search needs JavaScript. Every transcript is on its episode page, and

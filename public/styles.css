@@ -1829,3 +1829,235 @@
     }
   }
 }
+
+@layer components {
+  .search-page {
+    inline-size: 100%;
+    max-inline-size: 58rem;
+    margin-inline: auto;
+  }
+  .search-intro {
+    margin-block: 1rem 1.75rem;
+  }
+  .search-intro h1 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+  }
+  .search-intro > p:last-child {
+    color: var(--muted);
+    margin-block-start: 0.5rem;
+  }
+  .search-help {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+  .search-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block: 0.75rem 1.25rem;
+    font-size: 0.8125rem;
+  }
+  .search-suggestions > span {
+    color: var(--muted);
+    margin-inline-end: 0.25rem;
+  }
+  .search-suggestions button {
+    padding: 0.5rem 0.75rem;
+    min-block-size: 2.75rem;
+    border: 1px solid var(--rule);
+    border-radius: 2rem;
+    background: var(--surface);
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .search-suggestions button:hover {
+    border-color: var(--accent);
+  }
+  .search-loading,
+  .search-error {
+    padding-block: 1.5rem;
+    color: var(--muted);
+  }
+  .search-error button {
+    border: 0;
+    padding: 0;
+    background: none;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+/* Pagefind's dynamically loaded stylesheet is unlayered. Keep these scoped
+   overrides unlayered too so loading order cannot undo the search design. */
+#pagefind-ui {
+  --pagefind-ui-primary: var(--accent);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 0.5rem;
+  margin-block-start: 1rem;
+}
+#pagefind-ui .pagefind-ui__search-input {
+  height: 3.5rem;
+  padding-inline: 2.75rem 4.5rem;
+  border-color: var(--control-border);
+  background: var(--surface);
+  font-size: 1rem;
+  font-weight: 400;
+}
+#pagefind-ui .pagefind-ui__search-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+#pagefind-ui .pagefind-ui__form::before {
+  top: 1.2rem;
+  left: 1rem;
+}
+#pagefind-ui .pagefind-ui__search-clear {
+  top: 0.25rem;
+  right: 0.25rem;
+  height: 3rem;
+  padding-inline: 0.75rem;
+  background: var(--surface);
+  color: var(--accent);
+  border: 0;
+}
+#pagefind-ui :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+#pagefind-ui .pagefind-ui__results-area {
+  min-width: 0;
+  margin-top: 0.5rem;
+}
+#pagefind-ui .pagefind-ui__message {
+  height: auto;
+  min-height: 1.5rem;
+  padding-block: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+#pagefind-ui .pagefind-ui__result {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+#pagefind-ui .pagefind-ui__result-inner {
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  gap: 0.875rem;
+}
+#pagefind-ui .pagefind-ui__result-title {
+  display: block;
+  font-size: 1.1875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+#pagefind-ui .pagefind-ui__result-link {
+  text-underline-offset: 0.2em;
+}
+#pagefind-ui .pagefind-ui__result-nested {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-inline-start: 2px solid var(--rule);
+  border-radius: 0 0.25rem 0.25rem 0;
+  gap: 0.25rem;
+}
+#pagefind-ui .pagefind-ui__result-nested:first-of-type {
+  padding-top: 0.625rem;
+}
+#pagefind-ui .pagefind-ui__result-nested:hover,
+#pagefind-ui .pagefind-ui__result-nested:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+#pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link {
+  color: var(--accent);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+#pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link::before {
+  content: none;
+}
+#pagefind-ui .pagefind-ui__result-nested .pagefind-ui__result-link::after {
+  content: " →";
+  white-space: nowrap;
+}
+#pagefind-ui .pagefind-ui__result-excerpt {
+  min-width: 0;
+  max-width: 75ch;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+#pagefind-ui mark {
+  background: light-dark(#f5dfa0, #514526);
+  color: var(--text);
+  border-radius: 0.125rem;
+  padding-inline: 0.1em;
+}
+#pagefind-ui .pagefind-ui__button {
+  margin-top: 1.25rem;
+  min-height: 2.75rem;
+  height: auto;
+  padding: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+#pagefind-ui .search-context [hidden] {
+  display: none;
+}
+
+/* The excerpt always occupies the same space. Extra context is
+   painted around them, with only the floating surface's clip animated. */
+#pagefind-ui .search-context {
+  display: block;
+  position: relative;
+  isolation: isolate;
+}
+#pagefind-ui .search-context[data-open] {
+  z-index: 6;
+}
+#pagefind-ui .search-context-short {
+  position: relative;
+  z-index: 2;
+}
+#pagefind-ui .search-context-full {
+  display: block;
+  position: absolute;
+  z-index: 1;
+  left: -12px;
+  right: -12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--rule),
+    0 12px 32px light-dark(#202a3526, #0006);
+  overflow: clip;
+}
+#pagefind-ui .search-context-before,
+#pagefind-ui .search-context-after,
+#pagefind-ui .search-context-anchor {
+  display: block;
+}
+#pagefind-ui .search-context-before,
+#pagefind-ui .search-context-after {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+#pagefind-ui .search-context-readable {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
