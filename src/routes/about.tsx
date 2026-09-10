@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { SITE_NAME, SITE_URL, ogMeta } from "../components/Document";
 
+import { PersonIdentity, ProfileLinks } from "../components/PersonIdentity";
+import { canonicalPersonName, personProfile } from "../content/people.ts";
+
 const BUTTONDOWN_USER = import.meta.env.VITE_BUTTONDOWN_USER;
 const BLUESKY_PROFILE_URL = import.meta.env.VITE_BLUESKY_PROFILE_URL;
 const TRANSISTOR_FEED = "https://feeds.transistor.fm/this-month-in-react";
@@ -40,17 +43,19 @@ const getAbout = createServerFn().handler(async () => {
   const byName = new Map<string, AboutPerson>();
   for (const episode of episodes) {
     for (const person of episode.people) {
-      const entry = byName.get(person.name) ?? {
-        name: person.name,
+      const name = canonicalPersonName(person.name);
+      const entry = byName.get(name) ?? {
+        name,
         role: "Guest",
       };
       entry.href ||= person.href;
       entry.img ||= person.img;
-      byName.set(person.name, entry);
+      byName.set(name, entry);
     }
     // Transistor tags no guests on the side series, so those names live in
     // front matter instead — carrying no link or photo, only a name.
-    for (const name of episode.guests) {
+    for (const guest of episode.guests) {
+      const name = canonicalPersonName(guest);
       if (!byName.has(name)) byName.set(name, { name, role: "Guest" });
     }
   }
@@ -94,24 +99,28 @@ function PersonList({ people }: { people: AboutPerson[] }) {
     <ul className="contributor-list">
       {people.map((person) => (
         <li key={person.name}>
-          {person.img && (
+          {person.img ? (
             <img
               src={person.img}
-              alt={person.name}
+              alt=""
               width="48"
               height="48"
               loading="lazy"
             />
+          ) : (
+            <span className="contributor-avatar" aria-hidden="true">
+              {person.name
+                .split(/\s+/)
+                .map((part) => part[0])
+                .slice(0, 2)
+                .join("")}
+            </span>
           )}
           <div>
-            {person.href ? (
-              <a href={person.href} rel="noreferrer">
-                {person.name}
-              </a>
-            ) : (
-              person.name
+            <PersonIdentity name={person.name} href={person.href} />
+            {person.role !== "Guest" && (
+              <span className="role">{person.role}</span>
             )}
-            <span className="role">{person.role}</span>
           </div>
         </li>
       ))}
@@ -161,12 +170,21 @@ function About() {
                 />
               )}
               <div className="host-bio">
-                <h3>{host.name}</h3>
+                <h3>
+                  <a
+                    className="person-name"
+                    href={personProfile(host.name).episodesUrl}
+                    title={`Hear ${host.name} on Transistor`}
+                  >
+                    {host.name}
+                  </a>
+                </h3>
+                <ProfileLinks
+                  name={host.name}
+                  profile={personProfile(host.name, host.href)}
+                />
                 <p className="role">{host.role}</p>
                 <p>{host.bio}</p>
-                {host.href && (
-                  <a href={host.href}>More from {firstName(host.name)} ↗</a>
-                )}
               </div>
             </article>
           ))}
@@ -198,7 +216,7 @@ function About() {
         <PersonList people={formerHosts} />
         {guests.length > 0 && (
           <>
-            <h3>Guests</h3>
+            <h3>Past Guests</h3>
             <PersonList people={guests} />
           </>
         )}

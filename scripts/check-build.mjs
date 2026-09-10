@@ -1,6 +1,9 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { join } from "node:path";
+import { parseEpisode } from "../src/content/parse.ts";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 const dist = "dist/client";
 let failures = 0;
@@ -74,7 +77,7 @@ if (newest) {
   contains(path, 'class="outline"');
   contains(path, "data-seconds=");
   contains(path, "<audio");
-  contains(path, 'class="player"');
+  contains(path, 'class="episode-controls"');
   contains(path, 'property="og:title"');
   const md = readFileSync(join("content/episodes", `${newest}.md`), "utf8");
 
@@ -302,9 +305,38 @@ for (const slug of allSlugs) {
     console.log(`  skip episodes/${slug}: no transcript in the source file`);
     continue;
   }
+  const episode = parseEpisode(
+    readFileSync(join("content/episodes", `${slug}.md`), "utf8"),
+    slug,
+  );
+  let previousSpeaker = "";
+  const labels = episode.sections.flatMap((section) =>
+    section.segments.map((segment) => {
+      const label =
+        segment.speaker && segment.speaker !== previousSpeaker
+          ? renderToStaticMarkup(
+              createElement("span", { className: "speaker" }, segment.speaker),
+            )
+          : "";
+      if (segment.speaker) previousSpeaker = segment.speaker;
+      return label;
+    }),
+  );
+  const renderedLabels = [
+    ...html.matchAll(
+      /<div class="segment"><div class="segment-meta">([\s\S]*?)<\/div><p>/g,
+    ),
+  ].map(
+    (match) =>
+      match[1].match(/<span class="speaker">[\s\S]*?<\/span>/)?.[0] || "",
+  );
+  check(
+    `episodes/${slug}: labels only the first paragraph of each speaker turn`,
+    JSON.stringify(labels) === JSON.stringify(renderedLabels),
+  );
   // The first transcript segment's text is the marker: it must appear exactly once.
   const m = html.match(
-    /<p class="segment">(?:<strong class="speaker">[^<]*<\/strong>)?([^<]{40,120})/,
+    /<div class="segment"><div class="segment-meta">[\s\S]*?<\/div><p>([^<]{40,120})/,
   );
   if (!m) {
     check(`episodes/${slug}: found a transcript segment to sample`, false);
