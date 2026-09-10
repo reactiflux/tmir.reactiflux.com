@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { SITE_NAME } from "../content/site.ts";
 
 export const Route = createFileRoute("/specimen")({
@@ -29,6 +28,9 @@ const COLORS = [
 // Only the specimen's presentation lives here. Examples use the production
 // classes and tokens so changes to the site's design remain visible here.
 const STYLES = `
+  /* The theme picker is CSS-only: unlayered, so it beats the tokens layer. */
+  :root:has(.specimen input[name="theme"][value="light"]:checked) { color-scheme: light; }
+  :root:has(.specimen input[name="theme"][value="dark"]:checked) { color-scheme: dark; }
   .specimen { display: grid; gap: 4rem; }
   .specimen > section { border-top: 1px solid var(--rule); padding-top: 2rem; }
   .specimen .specimen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1.5rem; }
@@ -53,16 +55,6 @@ const STYLES = `
 `;
 
 function Specimen() {
-  const [theme, setTheme] = useState("system");
-  useEffect(() => {
-    const root = document.documentElement;
-    const previous = root.style.colorScheme;
-    root.style.colorScheme = theme === "system" ? "light dark" : theme;
-    return () => {
-      root.style.colorScheme = previous;
-    };
-  }, [theme]);
-
   return (
     <div className="specimen" data-pagefind-ignore="">
       <style href="specimen" precedence="default">
@@ -83,8 +75,7 @@ function Specimen() {
                   type="radio"
                   name="theme"
                   value={value}
-                  checked={theme === value}
-                  onChange={() => setTheme(value)}
+                  defaultChecked={value === "system"}
                 />
                 {value[0].toUpperCase() + value.slice(1)}
               </label>
