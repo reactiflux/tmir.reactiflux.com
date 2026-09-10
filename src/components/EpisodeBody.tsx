@@ -248,6 +248,18 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
         <EpisodeSummary episode={episode} />
       </div>
     );
+  const chapterResources = new Map<string, OutlineItem[]>();
+  function collectResources(items: OutlineItem[]) {
+    for (const item of items) {
+      if (item.url) {
+        const resources = chapterResources.get(item.anchor) || [];
+        resources.push(item);
+        chapterResources.set(item.anchor, resources);
+      }
+      collectResources(item.children);
+    }
+  }
+  collectResources(episode.outline);
   let previousSpeaker = "";
   return (
     <div className="episode">
@@ -260,14 +272,21 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
       <div className="transcript" data-pagefind-body="">
         {episode.sections.map((section) => {
           const heading = splitTitleLink(section.title);
+          const resources = chapterResources.get(section.anchor) || [];
+          // Explicit heading links take precedence. Outline anchors also cover
+          // chapters whose wording differs from the linked resource's title.
+          const resourceUrl =
+            heading.url ||
+            resources.find((item) => item.title === heading.text)?.url ||
+            resources[0]?.url;
           const headingText = /^tmir-\d{4}-\d{2}$/.test(heading.text)
             ? "Introduction"
             : heading.text;
           return (
             <section key={section.anchor}>
               <h2 id={section.anchor}>
-                {heading.url ? (
-                  <a href={heading.url} rel="noreferrer">
+                {resourceUrl ? (
+                  <a href={resourceUrl} rel="noreferrer">
                     {headingText}
                   </a>
                 ) : (
