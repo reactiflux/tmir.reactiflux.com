@@ -1,0 +1,308 @@
+.link-library {
+  display: grid;
+  gap: 2.5rem;
+  padding-block: 0.75rem 2rem;
+  & #link-filter {
+    inline-size: 100%;
+    font-size: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--bg);
+  }
+  & #link-count {
+    margin: 0;
+    font: 0.75rem/1.5 var(--mono);
+  }
+  & #resource-list {
+    display: grid;
+    gap: 2.5rem;
+  }
+  & .link-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 1.5rem;
+    border-block-end: 1px solid var(--rule);
+  }
+}
+.links-intro {
+  max-inline-size: 48rem;
+  & h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    margin-block: 1rem;
+  }
+  & .lead {
+    font-size: 1.15rem;
+    line-height: 1.65;
+  }
+}
+.library-stats {
+  font: 0.75rem/1.6 var(--mono);
+  color: var(--muted);
+  margin-block-start: 1.25rem;
+}
+#archive-search {
+  max-inline-size: 48rem;
+  & label {
+    display: block;
+    font-size: 0.875rem;
+    margin-block-end: 0.5rem;
+  }
+}
+.search-hint,
+.archive-date-note {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+:is(.subject-heading, .library-results-heading) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  align-items: baseline;
+  justify-content: space-between;
+  & h2 {
+    font-size: 1.625rem;
+    margin: 0;
+  }
+}
+.subject-heading > a {
+  font-size: 0.8125rem;
+}
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block-start: 1.25rem;
+}
+.subject-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--rule);
+  color: var(--text);
+  text-decoration: none;
+  border-radius: var(--radius);
+  &:hover,
+  &:focus-visible {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  & h3 {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+  & p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+  /* The lead card keeps the feature palette, hover included. */
+  &:first-child {
+    background: var(--feature-bg);
+    color: var(--feature-text);
+    border-color: var(--feature-bg);
+    & p,
+    & .subject-count {
+      color: var(--feature-text);
+    }
+    &:hover {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+}
+.subject-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.subject-count {
+  margin-block-start: auto;
+  padding-block-start: 0.5rem;
+  font: 0.6875rem/1.5 var(--mono);
+  color: var(--muted);
+}
+.explore-subjects {
+  align-self: end;
+  background: none;
+  color: var(--accent);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block-start: 1.25rem;
+  padding-block-end: 1.5rem;
+  border-block-end: 1px solid var(--rule);
+  & label {
+    display: grid;
+    gap: 0.4rem;
+    flex: 1 1 12rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  & select {
+    inline-size: 100%;
+    min-inline-size: 0;
+    padding: 0.6rem 0.75rem;
+    font: 0.875rem var(--font);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+  }
+}
+.archive-date-note {
+  margin-block: 0.75rem 1.25rem;
+}
+.resource-month-heading {
+  font-size: 1.375rem;
+  margin: 0;
+  padding-block-end: 0.75rem;
+  border-block-end: 1px solid var(--rule);
+}
+.resource-date {
+  padding-block-start: 0.1rem;
+  font: 0.75rem/1.5 var(--mono);
+  color: var(--muted);
+}
+.resource-host {
+  margin: 0;
+  font: 0.6875rem/1.5 var(--mono);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.resource-body .resource-title {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-block: 0.35rem 0.65rem;
+  overflow-wrap: anywhere;
+  & a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  & a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+  }
+}
+.resource-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+}
+.primary-discussion {
+  text-decoration-color: var(--rule);
+}
+.resource-discussions {
+  min-inline-size: 0;
+  & summary {
+    cursor: pointer;
+    color: var(--muted);
+  }
+  &[open] {
+    flex-basis: 100%;
+  }
+  & ul {
+    margin-block-start: 0.75rem;
+    display: grid;
+    gap: 0.75rem;
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--rule);
+  }
+}
+.resource-mention p {
+  color: var(--muted);
+  margin-block-start: 0.25rem;
+}
+#load-links,
+#links-empty button {
+  display: inline-block;
+  margin-block-start: 1.5rem;
+  padding: 0.7rem 1.25rem;
+  cursor: pointer;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+}
+#load-links:hover,
+#links-empty button:hover {
+  background: var(--surface);
+}
+#links-empty {
+  padding-block: 2rem;
+}
+.link-library.has-selection {
+  gap: 1.75rem;
+  & .links-intro h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+  & .links-intro .lead,
+  & .library-stats {
+    display: none;
+  }
+}
+@media (width <= 56rem) {
+  .subject-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (width <= 40rem) {
+  .subject-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .subject-card {
+    padding: 1rem;
+    gap: 0.4rem;
+    & h3 {
+      font-size: 1.125rem;
+    }
+  }
+  .subject-count {
+    padding-block-start: 0.25rem;
+  }
+  .link-library .link-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .resource-body .resource-title {
+    font-size: 1.125rem;
+  }
+  .link-library.has-selection {
+    gap: 1.25rem;
+    & .links-intro .eyebrow {
+      display: none;
+    }
+    & .links-intro h1 {
+      font-size: 1.75rem;
+      margin: 0;
+    }
+  }
+  .library-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    & label {
+      flex-basis: 100%;
+    }
+    & label:first-child {
+      grid-column: 1 / -1;
+    }
+    & select {
+      padding-inline: 0.4rem;
+      font-size: 0.8125rem;
+    }
+  }
+}

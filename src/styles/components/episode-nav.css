@@ -1,0 +1,77 @@
+.episode-jumps-top,
+.episode-jumps-bottom {
+  position: fixed;
+  inset-inline-end: var(--episode-jumps-right, clamp(1.25rem, 4vw, 3rem));
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.episode-jumps-top {
+  inset-block-start: calc(var(--header-block-size, 4.5rem) + 1rem);
+}
+.episode-jumps-bottom {
+  inset-block-end: calc(var(--footer-block-size, 9rem) + 1rem);
+}
+.episode-jumps button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  padding: 0.625rem 0.6875rem;
+  border: 1px solid var(--rule);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 2px 10px light-dark(#202a3515, #0004);
+  cursor: pointer;
+}
+.episode-jumps button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.episode-jumps svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.episode-jumps button > span {
+  max-inline-size: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  transition:
+    max-inline-size 180ms ease,
+    opacity 180ms ease,
+    margin 180ms ease;
+}
+.episode-jumps button:focus-visible > span {
+  max-inline-size: 11rem;
+  margin-inline-end: 0.5rem;
+  opacity: 1;
+}
+@media (hover: hover) {
+  .episode-jumps button:hover:not(:disabled) > span {
+    max-inline-size: 11rem;
+    margin-inline-end: 0.5rem;
+    opacity: 1;
+  }
+}
+@media (max-width: 56rem) {
+  .episode-page .transcript {
+    padding-inline-end: 3rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .episode-jumps button > span {
+    transition: none;
+  }
+}

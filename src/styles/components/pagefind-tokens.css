@@ -1,0 +1,10 @@
+/* Pagefind ships its own CSS; only its documented custom properties are set. */
+#pagefind-ui {
+  --pagefind-ui-primary: var(--text);
+  --pagefind-ui-text: var(--text);
+  --pagefind-ui-background: var(--bg);
+  --pagefind-ui-border: var(--rule);
+  --pagefind-ui-tag: var(--surface);
+  --pagefind-ui-border-radius: var(--radius);
+  --pagefind-ui-font: var(--font);
+}

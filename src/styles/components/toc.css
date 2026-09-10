@@ -1,0 +1,29 @@
+.episode-page .toc {
+  max-block-size: calc(
+    100svh - var(--header-block-size) - var(--footer-block-size) - 2 *
+      var(--gap)
+  );
+}
+@container episode (inline-size <= 51.5rem) {
+  .episode-page .toc {
+    max-block-size: 35svh;
+  }
+}
+@media (width <= 700px) {
+  .footer-bar {
+    gap: 0.2rem;
+  }
+  .footer-brand {
+    inline-size: 100%;
+  }
+  .footer-links {
+    font-size: 0.6875rem;
+  }
+  .footer-discussion [data-reaction-count] {
+    display: block;
+    margin-inline-start: 1rem;
+    &:empty {
+      display: none;
+    }
+  }
+}

@@ -1,0 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+img,
+video,
+audio {
+  display: block;
+  max-inline-size: 100%;
+}
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+a {
+  color: inherit;
+  text-underline-offset: 0.15em;
+}

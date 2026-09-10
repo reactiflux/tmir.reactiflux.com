@@ -1,0 +1,119 @@
+.latest h1 a {
+  text-decoration: none;
+}
+.archive ul,
+.link-group ul,
+.people ul,
+.subscribe ul,
+.replies {
+  display: grid;
+  gap: 0.9rem;
+}
+.archive {
+  & li {
+    padding-block-end: 0.9rem;
+    border-block-end: 1px solid var(--rule);
+  }
+  & time {
+    display: block;
+    font-family: var(--mono);
+  }
+}
+.archive time,
+.from,
+.role,
+.count,
+.reply-date {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.count {
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+#link-filter,
+.newsletter input {
+  inline-size: min(100%, 24rem);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+#link-count {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.link-group {
+  margin-block-start: 1.5rem;
+  & ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  & > a {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+  & > a:first-child {
+    flex: 1 1 22rem;
+  }
+}
+.from {
+  text-decoration: none;
+  & .ts {
+    margin-inline-start: 0.4rem;
+  }
+}
+
+#comments {
+  margin-block-start: 2rem;
+  & .replies {
+    margin-block-start: 1rem;
+  }
+}
+.replies li {
+  border-inline-start: 2px solid var(--rule);
+  padding-inline-start: 0.8rem;
+}
+.reply-author {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+.reply-text {
+  max-inline-size: var(--measure);
+}
+
+.newsletter .form-status {
+  flex-basis: 100%;
+  margin-block-start: 0.5rem;
+  color: var(--muted);
+}
+.newsletter {
+  & form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-block-start: 0.7rem;
+  }
+  & input {
+    flex: 1 1 16rem;
+  }
+  & button {
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--bg);
+    cursor: pointer;
+  }
+  & label {
+    position: absolute;
+    clip-path: inset(50%);
+  }
+}

@@ -1,3 +1,4 @@
+import stylesHref from "#/styles/index.css?url";
 import { ogMeta, SITE_NAME, SITE_URL, type Og } from "../content/site.ts";
 
 /** The navy of the wordmark and of the generated OG cards. */
@@ -51,7 +52,7 @@ export function Document({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href={stylesHref} />
         <meta property="og:site_name" content={SITE_NAME} />
         {/* summary_large_image is what makes Discord render the card full-width. */}
         <meta name="twitter:card" content="summary_large_image" />
