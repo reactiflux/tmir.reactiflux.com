@@ -10,9 +10,10 @@
     "build": "vite build",
     "postbuild": "node scripts/og.ts && pagefind --site dist/client",
     "preview": "vite preview",
-    "check": "node scripts/check-build.mjs",
+    "check": "node --env-file-if-exists=.env scripts/check-build.mjs",
     "test": "node --test \"tests/**/*.test.ts\"",
     "format": "prettier --write .",
+    "publish": "node --env-file-if-exists=.env scripts/publish.ts",
     "ingest": "node --env-file-if-exists=.env scripts/ingest.ts",
     "publish-transcript": "node --env-file-if-exists=.env scripts/publish-transcript.ts",
     "publish-atproto": "node --env-file-if-exists=.env scripts/publish-atproto.ts"

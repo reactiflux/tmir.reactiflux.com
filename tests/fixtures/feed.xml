@@ -5,6 +5,7 @@
     <podcast:person role="Host" href="https://blog.isquaredsoftware.com" img="https://img.transistorcdn.com/channel.jpg">Mark Erikson</podcast:person>
     <item>
       <title>TMiR 2026-05: Who even is on the Core team anymore, TanStack got pwn&apos;d bad</title>
+      <pubDate>Tue, 27 May 2026 07:00:00 -0000</pubDate>
       <podcast:season>3</podcast:season>
       <podcast:episode>5</podcast:episode>
       <link>https://share.transistor.fm/s/dd8e79de</link>
@@ -16,6 +17,7 @@
     </item>
     <item>
       <title>This Month in React &#8211; September 2023</title>
+      <pubDate>Wed, 27 Sep 2023 07:00:00 -0000</pubDate>
       <podcast:season>1</podcast:season>
       <podcast:episode>9</podcast:episode>
       <link>https://share.transistor.fm/s/aa11bb22</link>
@@ -25,6 +27,7 @@
     </item>
     <item>
       <title>Office Hours &#8211; States of Burnout with Jenny Truong</title>
+      <pubDate>Mon, 17 Jul 2023 12:00:00 -0000</pubDate>
       <link>https://share.transistor.fm/s/99887766</link>
       <enclosure url="https://media.transistor.fm/99887766/eeff.mp3" length="40000000" type="audio/mpeg"/>
       <itunes:duration>3000</itunes:duration>

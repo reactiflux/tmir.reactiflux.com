@@ -1,4 +1,5 @@
 import YAML from "yaml";
+import type { TimedItem } from "./headings.ts";
 import {
   flattenLinks,
   normalizeTime,
@@ -40,6 +41,8 @@ export interface Episode {
   title: string;
   date: string;
   description: string;
+  /** The side series this belongs to; absent for the monthly show. */
+  series?: string;
   time?: string;
   location?: string;
   transistorId?: string;
@@ -48,6 +51,10 @@ export interface Episode {
   season?: number;
   episode?: number;
   people: Person[];
+  /** Names appearing only in the episode title; ingest never writes these. */
+  guests: string[];
+  /** The podcast's own chapter list, when `npm run publish` has written one. */
+  chapters: TimedItem[];
   outline: OutlineItem[];
   sections: Section[];
   bskyPostUrl?: string;
@@ -74,7 +81,7 @@ export function splitFile(text: string): {
 }
 
 const OUTLINE_LINE = /^(\s*)- (.+)$/;
-const OUTLINE_TIME = /^\[\[(\d{1,3}(?::\d{2}){1,2})\]\(#[^)]*\)\]\s*/;
+const OUTLINE_TIME = /^\[\[(\d{1,3}(?::\d{2}){1,2})\]\(#([^)]*)\)\]\s*/;
 const FIRST_LINK = /\[[^\]]*\]\(([^)]+)\)/;
 
 export function parseOutline(region: string): OutlineItem[] {
@@ -89,9 +96,14 @@ export function parseOutline(region: string): OutlineItem[] {
 
     let rest = m[2].trim();
     let time: string | undefined;
+    // The anchor `npm run publish` wrote is authoritative: it comes from the
+    // podcast's chapter title, which is also what the transcript heading is,
+    // and that is often not what the author's own line says.
+    let anchor: string | undefined;
     const t = OUTLINE_TIME.exec(rest);
     if (t) {
       time = normalizeTime(t[1]);
+      anchor = t[2] || undefined;
       rest = rest.slice(t[0].length);
     }
     const link = FIRST_LINK.exec(rest);
@@ -100,7 +112,7 @@ export function parseOutline(region: string): OutlineItem[] {
       title,
       url: link ? link[1] : undefined,
       time,
-      anchor: slug(title),
+      anchor: anchor ?? slug(title),
       children: [],
     };
 
@@ -192,7 +204,7 @@ function parseSections(region: string): Section[] {
 const ANCHOR_DRIFT_TOLERANCE_SEC = 120;
 
 /** Pre-order walk of the outline tree, in document order, at every depth. */
-function flattenOutline(items: OutlineItem[]): OutlineItem[] {
+export function flattenOutline(items: OutlineItem[]): OutlineItem[] {
   const out: OutlineItem[] = [];
   for (const item of items) {
     out.push(item);
@@ -208,9 +220,9 @@ function flattenOutline(items: OutlineItem[]): OutlineItem[] {
  * would otherwise produce an anchor that matches no section. Reconcile by
  * time, walking every outline item (any depth) in document order:
  *
- * 1. Claim: any item whose title-derived anchor already matches a section,
- *    or matches one on time exactly, claims that section — these are firm,
- *    unambiguous reference points and are never reassigned.
+ * 1. Claim: any item whose anchor already matches a section, or matches one
+ *    on time exactly, claims that section — these are firm, unambiguous
+ *    reference points and are never reassigned.
  * 2. Drift: each item still unresolved claims the nearest not-yet-claimed
  *    section within ANCHOR_DRIFT_TOLERANCE_SEC, but never one earlier than
  *    the section claimed by the nearest already-resolved item before it in
@@ -218,12 +230,15 @@ function flattenOutline(items: OutlineItem[]): OutlineItem[] {
  *    a later item can't reasonably drift-match an earlier moment). Ties go
  *    to the earlier section.
  *
- * An item with no eligible section keeps its title-derived anchor.
+ * An item whose anchor already names a section another item claimed is left
+ * alone: an outline sub-point deliberately points at the chapter heading it
+ * sits under. An item with no eligible section keeps the anchor it came in
+ * with.
  *
  * The claim step is what keeps a nested sub-point (e.g. "TS v7 beta" at
  * 00:01:51, no section of its own) from stealing its parent's section
  * (e.g. "New Releases" at 00:01:49) out from under it: the parent's own
- * outline entry claims that section first, so it's no longer available.
+ * outline entry claims that section first, so drift can't reassign it.
  * The forward-only floor is what stops that same sub-point from instead
  * drifting backward onto an unrelated earlier section (e.g. "Intro" at
  * 00:00:00, which sits within tolerance of 00:01:51 by raw distance alone).
@@ -269,6 +284,10 @@ function reconcileOutlineAnchors(
         floor = Math.max(floor, timestampToSeconds(resolved.time));
       continue;
     }
+    // The anchor already names a real section, one an earlier item claimed:
+    // an outline sub-point pointing at the chapter heading it sits under.
+    // Sharing is the intent, so leave it rather than drifting it elsewhere.
+    if (sectionByAnchor.has(item.anchor)) continue;
     if (!item.time) continue;
     const itemSec = timestampToSeconds(item.time);
     let best: Section | undefined;
@@ -324,6 +343,7 @@ export function parseEpisode(text: string, epSlug: string): Episode {
     title: String(fm.title ?? ""),
     date,
     description: String(fm.description ?? ""),
+    series: fm.series,
     time: fm.time,
     location: fm.location,
     transistorId: fm.transistorId,
@@ -332,6 +352,8 @@ export function parseEpisode(text: string, epSlug: string): Episode {
     season: fm.season,
     episode: fm.episode,
     people: Array.isArray(fm.people) ? (fm.people as Person[]) : [],
+    guests: Array.isArray(fm.guests) ? (fm.guests as string[]).map(String) : [],
+    chapters: Array.isArray(fm.chapters) ? (fm.chapters as TimedItem[]) : [],
     outline,
     sections,
     bskyPostUrl: fm.bskyPostUrl,

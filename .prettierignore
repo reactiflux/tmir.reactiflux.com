@@ -12,3 +12,6 @@ tests/fixtures
 assets/fonts
 
 package-lock.json
+
+# A separate clone lives here; it is not part of this project.
+design

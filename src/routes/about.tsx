@@ -48,6 +48,11 @@ const getAbout = createServerFn().handler(async () => {
       entry.img ||= person.img;
       byName.set(person.name, entry);
     }
+    // Transistor tags no guests on the side series, so those names live in
+    // front matter instead — carrying no link or photo, only a name.
+    for (const name of episode.guests) {
+      if (!byName.has(name)) byName.set(name, { name, role: "Guest" });
+    }
   }
 
   const hostKeys = new Set(

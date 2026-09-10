@@ -105,8 +105,8 @@ description: d
   // ("astro-45-astrodb"); the time match reconciles it.
   assert.equal(ep.outline[0].anchor, "astro-45-astrodb");
   assert.equal(ep.outline[0].anchor, ep.sections[1].anchor);
-  // No section shares this item's time, so it keeps its title-derived anchor.
-  assert.equal(ep.outline[1].anchor, "no-matching-section");
+  // No section shares this item's time, so it keeps the anchor written on it.
+  assert.equal(ep.outline[1].anchor, "no-match");
 });
 
 test("outline anchor reconciliation tolerates drift within 120s, not beyond", () => {
@@ -372,4 +372,14 @@ test("a missing or unparseable date fails at parse time, naming the episode", ()
   const badDate =
     "---\ntitle: t\ndate: nonsense\ndescription: d\n---\n\n# Transcript\n";
   assert.throws(() => parseEpisode(badDate, "2026-05"), /2026-05.*date/);
+});
+
+test("guests in front matter parse, and default to empty", () => {
+  const file = (fm: string) =>
+    `---\ntitle: t\ndate: 2023-01-26\n${fm}---\n\n- item\n\n# Transcript\n`;
+  assert.deepEqual(
+    parseEpisode(file("guests:\n  - Tom Raviv\n  - MapleLeaf\n"), "x").guests,
+    ["Tom Raviv", "MapleLeaf"],
+  );
+  assert.deepEqual(parseEpisode(file(""), "x").guests, []);
 });

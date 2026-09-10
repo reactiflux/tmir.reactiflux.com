@@ -85,6 +85,7 @@ const getHome = createServerFn().handler(async () => {
       slug: e.slug,
       title: e.title,
       date: e.date,
+      series: e.series,
       description: /^Join Carl, Mark/.test(e.description)
         ? e.outline
             .find((item) => /^main content$/i.test(item.title))
@@ -133,12 +134,13 @@ function ArchiveList({
         <li key={episode.slug}>
           <time dateTime={episode.date}>{formatDate(episode.date)}</time>
           <div className="archive-copy">
+            {episode.series && <p className="eyebrow">{episode.series}</p>}
             <h3>
               <a href={`/episodes/${episode.slug}`}>
                 {cardTitle(episode.title)}
               </a>
             </h3>
-            <p>{episode.description}</p>
+            {episode.description && <p>{episode.description}</p>}
           </div>
         </li>
       ))}

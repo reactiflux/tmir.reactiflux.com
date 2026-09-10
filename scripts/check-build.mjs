@@ -277,10 +277,31 @@ if (process.env.VITE_ATPROTO_PUBLICATION_URI) {
   console.log(`  skip  ${wellKnown} (VITE_ATPROTO_PUBLICATION_URI unset)`);
 }
 
+/**
+ * Whether the source file actually carries a transcript. The Office Hours and
+ * Spotlight archive imports never had one, so a page with no transcript is only
+ * a failure when the markdown behind it has transcript text — this condition is
+ * read from the source, not from the rendered page, so a transcript that
+ * silently failed to render still fails the check.
+ */
+function hasTranscript(slug) {
+  const md = readFileSync(join("content/episodes", `${slug}.md`), "utf8");
+  const marker = md.indexOf("\n# Transcript\n");
+  return marker !== -1 && md.slice(marker + "\n# Transcript\n".length).trim();
+}
+
 console.log("\nTranscript integrity");
 for (const slug of allSlugs) {
   const html = file(`episodes/${slug}/index.html`);
   if (html === null) continue;
+  check(
+    `episodes/${slug}: references zero /assets/*.js`,
+    !/\/assets\/[^"']*\.js/.test(html),
+  );
+  if (!hasTranscript(slug)) {
+    console.log(`  skip episodes/${slug}: no transcript in the source file`);
+    continue;
+  }
   // The first transcript segment's text is the marker: it must appear exactly once.
   const m = html.match(
     /<p class="segment">(?:<strong class="speaker">[^<]*<\/strong>)?([^<]{40,120})/,
@@ -295,10 +316,6 @@ for (const slug of allSlugs) {
     `episodes/${slug}: transcript marker appears exactly once`,
     count === 1,
     `appears ${count}x`,
-  );
-  check(
-    `episodes/${slug}: references zero /assets/*.js`,
-    !/\/assets\/[^"']*\.js/.test(html),
   );
 }
 

@@ -126,6 +126,87 @@ test("addOutlineHeadings gives a Descript body sections from the file's outline"
   );
 });
 
+test("addOutlineHeadings prefers the chapter titles over the outline's prose", () => {
+  const file = [
+    "---",
+    'title: "TMiR 2026-08: test"',
+    "date: 2026-08-28",
+    'description: "d"',
+    "chapters:",
+    '  - time: "00:00:00"',
+    "    title: Intro",
+    '  - time: "00:05:00"',
+    "    title: Lightning round",
+    "---",
+    "",
+    "- [[00:00:00](#intro)] Intro",
+    "- [[00:05:00](#lightning-round)] Short asides/lightning rounds",
+    "  - [[00:05:00](#lightning-round)] A sub point with no chapter",
+    "",
+    "# Transcript",
+    "",
+    "**Old Speaker:** stale [00:00:01]",
+    "",
+  ].join("\n");
+  const body = addOutlineHeadings(
+    file,
+    [
+      "**Carl Vitullo:** Hello everyone. [00:00:00]",
+      "",
+      "**Mark Erikson:** Quick ones now. [00:06:00]",
+    ].join("\n\n"),
+  );
+  // "Lightning round" is the chapter; "Short asides/lightning rounds" is what
+  // the author wrote. The heading — and so the anchor — is the chapter's.
+  assert.match(body, /^## Intro\n/);
+  assert.match(body, /\n## Lightning round\n/);
+
+  const ep = parseEpisode(replaceTranscript(file, body), "2026-08");
+  assert.deepEqual(
+    ep.sections.map((s) => s.anchor),
+    ["intro", "lightning-round"],
+  );
+  // Every outline item, nested one included, resolves to a real section.
+  const anchors = new Set(ep.sections.map((s) => s.anchor));
+  const flat = ep.outline.flatMap((i) => [i, ...i.children]);
+  assert.deepEqual(
+    flat.filter((i) => !anchors.has(i.anchor)),
+    [],
+  );
+  assert.equal(flat[2].anchor, "lightning-round");
+});
+
+test("without chapters, headings still come from the whole outline tree", () => {
+  const file = [
+    "---",
+    'title: "TMiR 2026-05: test"',
+    "date: 2026-05-28",
+    'description: "d"',
+    "---",
+    "",
+    "- [[00:00:00](#intro)] Intro",
+    "  - [[00:05:00](#a-nested-topic)] A nested topic",
+    "",
+    "# Transcript",
+    "",
+    "**Old Speaker:** stale [00:00:01]",
+    "",
+  ].join("\n");
+  const body = addOutlineHeadings(
+    file,
+    [
+      "**Carl Vitullo:** Hello everyone. [00:00:00]",
+      "",
+      "**Mark Erikson:** The nested bit. [00:06:00]",
+    ].join("\n\n"),
+  );
+  const ep = parseEpisode(replaceTranscript(file, body), "2026-05");
+  assert.deepEqual(
+    ep.sections.map((s) => s.anchor),
+    ["intro", "a-nested-topic"],
+  );
+});
+
 test("fetchDescriptTranscript refuses a degenerate 200 body", async () => {
   const real = globalThis.fetch;
   const stub = (body: string) => {
@@ -150,4 +231,20 @@ test("fetchDescriptTranscript refuses a degenerate 200 body", async () => {
   } finally {
     globalThis.fetch = real;
   }
+});
+
+test("descriptToCanonical drops a block that is only a timecode", () => {
+  const out = descriptToCanonical(
+    "[00:01] **1-vcarl:** real text\n\n[00:43:15]\n\n[00:44] **2-mark:** more",
+  );
+  assert.equal(out.includes(" [00:43:15]"), false);
+  assert.equal(out.split("\n\n").length, 2);
+});
+
+test("replaceTranscript leaves a blank line under the heading", () => {
+  const out = replaceTranscript(
+    "---\ntitle: t\n---\n\n- item\n\n# Transcript\n\nold\n",
+    "**Carl:** new [00:00:01]",
+  );
+  assert.ok(out.includes("# Transcript\n\n**Carl:**"));
 });

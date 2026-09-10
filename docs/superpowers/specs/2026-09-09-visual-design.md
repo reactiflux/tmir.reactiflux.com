@@ -39,19 +39,19 @@ Use the same semantic roles in both themes. These hex values are the
 implementation starting point. Brand assets retain blue `#123F8C`;
 interactive blue changes with the theme.
 
-| Role / token | Light | Dark | Use |
-| --- | --- | --- | --- |
-| Background / `--bg` | `#FAF7F0` | `#141C26` | Warm paper / blue charcoal canvas |
-| Surface / `--surface` | `#F0EADF` | `#1E2A38` | Panels, inputs, player surroundings |
-| Primary text / `--text` | `#202A35` | `#F3EEE5` | Headings and body |
-| Muted text / `--muted` | `#59616B` | `#B0BAC6` | Dates, durations, supporting labels |
-| Primary / CTA / `--accent` | `#123F8C` | `#9DBFFF` | Links, primary buttons, selection |
-| Subtle border / `--rule` | `#D8D1C5` | `#394757` | Decorative dividers |
-| Control border / `--control-border` | `#7A8086` | `#7F91A6` | Essential control boundaries |
-| Primary surface / `--feature-bg` | `#123F8C` | `#203F70` | Latest episode |
-| On-primary text / `--feature-text` | `#F3EEE5` | `#F3EEE5` | Text and links on blue |
-| Secondary surface / `--warm-bg` | `#F4D8C8` | `#3B2D2B` | Subscribe / participation |
-| Tertiary surface / `--cool-bg` | `#D9E9E4` | `#203936` | Community emphasis |
+| Role / token                        | Light     | Dark      | Use                                 |
+| ----------------------------------- | --------- | --------- | ----------------------------------- |
+| Background / `--bg`                 | `#FAF7F0` | `#141C26` | Warm paper / blue charcoal canvas   |
+| Surface / `--surface`               | `#F0EADF` | `#1E2A38` | Panels, inputs, player surroundings |
+| Primary text / `--text`             | `#202A35` | `#F3EEE5` | Headings and body                   |
+| Muted text / `--muted`              | `#59616B` | `#B0BAC6` | Dates, durations, supporting labels |
+| Primary / CTA / `--accent`          | `#123F8C` | `#9DBFFF` | Links, primary buttons, selection   |
+| Subtle border / `--rule`            | `#D8D1C5` | `#394757` | Decorative dividers                 |
+| Control border / `--control-border` | `#7A8086` | `#7F91A6` | Essential control boundaries        |
+| Primary surface / `--feature-bg`    | `#123F8C` | `#203F70` | Latest episode                      |
+| On-primary text / `--feature-text`  | `#F3EEE5` | `#F3EEE5` | Text and links on blue              |
+| Secondary surface / `--warm-bg`     | `#F4D8C8` | `#3B2D2B` | Subscribe / participation           |
+| Tertiary surface / `--cool-bg`      | `#D9E9E4` | `#203936` | Community emphasis                  |
 
 ### Light mode
 
@@ -84,13 +84,13 @@ cover through neutral framing and space rather than dimming or inversion.
 
 Calculated contrast for the proposed solid colors:
 
-| Pair | Light | Dark |
-| --- | --- | --- |
-| Primary text on page | 13.59:1 | 14.85:1 |
-| Secondary text on surface | 5.24:1 | 7.40:1 |
-| Accent on surface | 8.29:1 | 7.85:1 |
-| Control boundary on surface | 3.33:1 | 4.51:1 |
-| Feature text on feature background | 8.59:1 | 9.06:1 |
+| Pair                               | Light   | Dark    |
+| ---------------------------------- | ------- | ------- |
+| Primary text on page               | 13.59:1 | 14.85:1 |
+| Secondary text on surface          | 5.24:1  | 7.40:1  |
+| Accent on surface                  | 8.29:1  | 7.85:1  |
+| Control boundary on surface        | 3.33:1  | 4.51:1  |
+| Feature text on feature background | 8.59:1  | 9.06:1  |
 
 Target 4.5:1 for ordinary text and 3:1 for essential control boundaries and
 focus indicators. Recheck rendered states and any transparency during implementation.
@@ -110,13 +110,13 @@ pages and static documents.
 Start with the existing Inter regular and bold assets, self-hosted. Use
 system monospace for dates, durations, chapter times, and short labels.
 
-| Element | Starting size and treatment |
-| --- | --- |
-| Homepage headline | 48–76px desktop, 36–44px mobile; bold; 1.05–1.1 line height |
-| Page / feature title | 32–48px desktop, 28–36px mobile; bold |
-| Section heading | 24–32px |
-| Body | 17–18px; 1.55–1.7 line height; 60–70ch measure |
-| Metadata | 13–14px monospace |
+| Element              | Starting size and treatment                                 |
+| -------------------- | ----------------------------------------------------------- |
+| Homepage headline    | 48–76px desktop, 36–44px mobile; bold; 1.05–1.1 line height |
+| Page / feature title | 32–48px desktop, 28–36px mobile; bold                       |
+| Section heading      | 24–32px                                                     |
+| Body                 | 17–18px; 1.55–1.7 line height; 60–70ch measure              |
+| Metadata             | 13–14px monospace                                           |
 
 Use fluid sizing, left-aligned body copy, and uppercase only for short
 labels. Test headline wrapping with actual episode titles. Keep the
