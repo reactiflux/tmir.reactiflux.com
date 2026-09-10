@@ -40,7 +40,7 @@ const STYLES = `
   .specimen .theme-options { display: flex; flex-wrap: wrap; gap: 1.5rem; }
   .specimen .theme-options label { display: flex; align-items: center; gap: .5rem; }
   .specimen .type-samples { display: grid; gap: 1.5rem; }
-  .specimen .display-sample { font-size: clamp(2.25rem, 5.65vw, 4.75rem); font-weight: 700; line-height: 1.07; letter-spacing: -.06em; }
+  .specimen .display-sample { font-family: var(--font-title); font-synthesis: none; font-size: clamp(2.25rem, 5.65vw, 4.75rem); font-weight: 400; line-height: 1.07; letter-spacing: -.06em; }
   .specimen .sample-label { color: var(--muted); font: .8rem var(--mono); margin-bottom: .5rem; }
   .specimen .sample-input { display: block; width: min(100%, 24rem); padding: .65rem; background: var(--surface); border: 1px solid var(--control-border); border-radius: var(--radius); }
   .specimen .spacing { display: grid; gap: .75rem; }
@@ -114,7 +114,7 @@ function Specimen() {
         <h2 id="typography">Typography</h2>
         <div className="type-samples">
           <div>
-            <p className="sample-label">Display · Inter Bold</p>
+            <p className="sample-label">Display · Sk-Modernist Regular</p>
             <p className="display-sample">What's changing in React.</p>
           </div>
           <div className="home-page">

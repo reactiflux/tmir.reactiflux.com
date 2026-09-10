@@ -1,4 +1,5 @@
 import type { Episode, OutlineItem } from "./parse.ts";
+import { subjectsForLink, type SubjectId } from "./link-subjects.ts";
 import { toSeconds } from "./time.ts";
 
 export type LinkEntry = {
@@ -8,14 +9,25 @@ export type LinkEntry = {
   episodeSlug: string;
   episodeTitle: string;
   time?: number;
+  date: string;
+  context: string[];
+  discussionUrl: string;
+  subjects: SubjectId[];
 };
 
-function walk(items: OutlineItem[], episode: Episode, out: LinkEntry[]): void {
+function walk(
+  items: OutlineItem[],
+  episode: Episode,
+  out: LinkEntry[],
+  parents: OutlineItem[] = [],
+): void {
   for (const item of items) {
     if (item.url) {
       let host: string | undefined;
       try {
-        host = new URL(item.url).hostname.replace(/^www\./, "");
+        const url = new URL(item.url);
+        if (["https:", "http:"].includes(url.protocol))
+          host = url.hostname.replace(/^www\./, "");
       } catch {
         // Not an absolute URL (e.g. an in-page anchor like "#section") — no
         // external link to index.
@@ -28,9 +40,17 @@ function walk(items: OutlineItem[], episode: Episode, out: LinkEntry[]): void {
           episodeSlug: episode.slug,
           episodeTitle: episode.title,
           time: toSeconds(item.time),
+          date: episode.date,
+          context: parents.map((parent) => parent.title),
+          discussionUrl: discussionUrl(episode, item, parents),
+          subjects: subjectsForLink(
+            item.title,
+            item.url,
+            parents.map((parent) => parent.title),
+          ),
         });
     }
-    walk(item.children, episode, out);
+    walk(item.children, episode, out, [...parents, item]);
   }
 }
 
@@ -55,4 +75,116 @@ export function groupByHost(
       (a, b) =>
         b.entries.length - a.entries.length || a.host.localeCompare(b.host),
     );
+}
+
+/** Only link to anchors that actually exist in the transcript. */
+function discussionUrl(
+  episode: Episode,
+  item: OutlineItem,
+  parents: OutlineItem[],
+): string {
+  const base = `/episodes/${episode.slug}`;
+  const section = [item, ...[...parents].reverse()].find((candidate) =>
+    episode.sections.some((section) => section.anchor === candidate.anchor),
+  );
+  if (section) return `${base}#${section.anchor}`;
+  // Older notes use abbreviations such as “RSC Devtools” while transcript
+  // headings spell them out. Match only a unique, equivalent set of words.
+  const words = (title: string) =>
+    title
+      .toLowerCase()
+      .replace(/\brscs?\b/g, "react server components")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .sort()
+      .join(" ");
+  for (const candidate of [item, ...[...parents].reverse()]) {
+    const matches = episode.sections.filter(
+      (section) => words(section.title) === words(candidate.title),
+    );
+    if (matches.length === 1) return `${base}#${matches[0].anchor}`;
+  }
+  const seconds = toSeconds(item.time);
+  if (seconds !== undefined) {
+    const preceding = episode.sections
+      .filter((section) => {
+        const time = toSeconds(section.time);
+        return time !== undefined && time <= seconds;
+      })
+      .at(-1);
+    if (preceding) return `${base}#${preceding.anchor}`;
+  }
+  return base;
+}
+
+export interface LinkResource {
+  id: string;
+  url: string;
+  host: string;
+  text: string;
+  mentions: LinkEntry[];
+  subjects: SubjectId[];
+}
+
+// Keep meaningful query parameters and fragments; only discard known tracking.
+export function resourceKey(raw: string): string {
+  const url = new URL(raw);
+  for (const key of [...url.searchParams.keys()]) {
+    if (/^utm_/i.test(key) || ["fbclid", "gclid"].includes(key))
+      url.searchParams.delete(key);
+  }
+  return url.href;
+}
+
+export function buildLinkResources(entries: LinkEntry[]): LinkResource[] {
+  const resources = new Map<string, LinkResource>();
+  for (const entry of entries) {
+    const key = resourceKey(entry.url);
+    let resource = resources.get(key);
+    if (!resource) {
+      resource = {
+        id: `resource-${resources.size + 1}`,
+        url: key,
+        host: entry.host,
+        text: entry.text,
+        mentions: [],
+        subjects: [],
+      };
+      resources.set(key, resource);
+    }
+    // Repeated outline entries in the same discussion are one appearance.
+    const existing = resource.mentions.find(
+      (mention) =>
+        mention.episodeSlug === entry.episodeSlug &&
+        mention.discussionUrl === entry.discussionUrl &&
+        mention.time === entry.time,
+    );
+    if (existing) {
+      existing.context = [
+        ...new Set([...existing.context, ...entry.context, entry.text]),
+      ];
+      existing.subjects = [
+        ...new Set([...existing.subjects, ...entry.subjects]),
+      ];
+    } else {
+      resource.mentions.push({
+        ...entry,
+        context: [...entry.context],
+        subjects: [...entry.subjects],
+      });
+    }
+    resource.subjects = [...new Set([...resource.subjects, ...entry.subjects])];
+  }
+  for (const resource of resources.values()) {
+    resource.mentions.sort(
+      (a, b) => a.date.localeCompare(b.date) || (a.time ?? 0) - (b.time ?? 0),
+    );
+    resource.text = resource.mentions[0].text;
+  }
+  return [...resources.values()].sort(
+    (a, b) =>
+      a.mentions[0].date.localeCompare(b.mentions[0].date) ||
+      a.url.localeCompare(b.url),
+  );
 }

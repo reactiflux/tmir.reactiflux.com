@@ -1,6 +1,33 @@
+import { PersonIdentity } from "./PersonIdentity";
 import type { Episode, OutlineItem } from "../content/parse.ts";
 import { splitTitleLink } from "../content/slug.ts";
 import { hms, isoDuration, toSeconds } from "../content/time.ts";
+
+/** Progressive enhancement: native audio controls remain available without JS. */
+export const PLAYER_SCRIPT = `(function(){
+var a=document.querySelector(".episode-header audio"),ui=document.querySelector(".episode-controls");
+if(!a||!ui)return;
+var play=ui.querySelector(".episode-play"),seek=ui.querySelector("input"),speed=ui.querySelector(".episode-speed");
+var status=document.querySelector(".playback-status"),dragging=false;
+function time(n){n=Math.max(0,Math.floor(n||0));var h=Math.floor(n/3600),m=Math.floor(n/60)%60,s=n%60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0")}
+function state(){play.textContent=a.paused?"▶":"Ⅱ";play.setAttribute("aria-label",a.paused?"Play episode":"Pause episode")}
+function update(){
+ var d=a.duration;if(isFinite(d)&&d>0){seek.max=d;ui.querySelector("[data-duration]").textContent=time(d)}
+ if(!dragging)seek.value=a.currentTime;
+ seek.setAttribute("aria-valuetext",time(Number(seek.value)));
+ ui.querySelector("[data-elapsed]").textContent=time(a.currentTime);
+}
+function fail(){status.hidden=false;status.textContent="Audio could not play. Try again or open the audio link.";state()}
+play.addEventListener("click",function(){if(!a.paused){a.pause();return}status.hidden=true;var p=a.play();if(p&&p.catch)p.catch(fail)});
+seek.addEventListener("input",function(){dragging=true;seek.setAttribute("aria-valuetext",time(Number(seek.value)))});
+seek.addEventListener("change",function(){a.currentTime=Number(seek.value);dragging=false;update()});
+speed.addEventListener("click",function(){var rates=[1,1.25,1.5,1.75,2,.75];a.playbackRate=rates[(rates.indexOf(a.playbackRate)+1)%rates.length]});
+a.addEventListener("ratechange",function(){speed.textContent=a.playbackRate+"×";speed.setAttribute("aria-label","Playback speed: "+a.playbackRate+" times")});
+["play","pause","ended"].forEach(function(e){a.addEventListener(e,state)});
+["timeupdate","loadedmetadata","durationchange"].forEach(function(e){a.addEventListener(e,update)});
+a.addEventListener("error",fail);
+a.controls=false;a.hidden=true;ui.hidden=false;update();state();
+})();`;
 
 /** One delegated listener seeks the page's single <audio> from any [data-seconds]. */
 export const SEEK_SCRIPT = `document.addEventListener("click",function(e){
@@ -14,13 +41,17 @@ var p=a.play();if(p&&p.catch)p.catch(function(){})});`;
  * Marks the outline entries for the transcript sections currently on screen with
  * aria-current="true" and keeps that block centred in the outline's scroller
  * (unless the reader is pointing at or focused inside it). Also publishes the
- * sticky header's height as --header-block-size so scroll anchoring clears it.
+ * sticky player's height as --header-block-size so scroll anchoring clears it.
  */
 export const OUTLINE_SCRIPT = `(function(){
 var toc=document.querySelector(".toc");
 var head=document.querySelector(".episode-header");
 if(head&&window.ResizeObserver)new ResizeObserver(function(e){
   document.documentElement.style.setProperty("--header-block-size",e[0].target.offsetHeight+"px")}).observe(head);
+var disclosure=document.querySelector(".chapter-disclosure");
+if(disclosure){var narrow=window.matchMedia("(max-width: 56rem)");
+function size(){disclosure.open=!narrow.matches}size();narrow.addEventListener("change",size);
+toc.addEventListener("click",function(e){if(narrow.matches&&e.target.closest('a[href^="#"]'))disclosure.open=false});}
 if(!toc||!window.IntersectionObserver)return;
 var heads=[].slice.call(document.querySelectorAll(".transcript h2[id]"));
 if(!heads.length)return;
@@ -29,7 +60,7 @@ var vis={},hover=false;
 toc.addEventListener("mouseenter",function(){hover=true});
 toc.addEventListener("mouseleave",function(){hover=false});
 function update(){
-  var top=head?head.getBoundingClientRect().bottom:0,last=-1,first=-1,end=-1;
+  var top=head?Math.max(0,head.getBoundingClientRect().bottom):0,last=-1,first=-1,end=-1;
   for(var i=0;i<heads.length;i++)if(heads[i].getBoundingClientRect().top<=top)last=i;
   for(var i=0;i<heads.length;i++){
     var on=vis[heads[i].id]||i===last;
@@ -107,6 +138,8 @@ function counts(post){
   }
   if(!parts.length)return;
   var p=el.querySelector("p");if(!p)return;
+  var summary=document.querySelector("[data-reaction-count]");
+  if(summary){summary.textContent=parts.join(" · ");return}
   var span=document.createElement("span");span.className="count";
   span.textContent=" · "+parts.join(" · ");
   p.appendChild(span);
@@ -182,22 +215,6 @@ export function Outline({ items }: { items: OutlineItem[] }) {
 function EpisodeSummary({ episode }: { episode: Episode }) {
   return (
     <div>
-      {episode.description && <p className="lead">{episode.description}</p>}
-      <p className="episode-meta">
-        <time dateTime={episode.date}>
-          {new Date(`${episode.date}T12:00:00Z`).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            timeZone: "UTC",
-          })}
-        </time>
-        {episode.duration !== undefined && (
-          <time dateTime={isoDuration(episode.duration)}>
-            {hms(episode.duration)}
-          </time>
-        )}
-      </p>
       {episode.people.length > 0 && (
         <section className="people">
           <h2>People</h2>
@@ -214,13 +231,7 @@ function EpisodeSummary({ episode }: { episode: Episode }) {
                   />
                 )}
                 <div>
-                  {person.href ? (
-                    <a href={person.href} rel="noreferrer">
-                      {person.name}
-                    </a>
-                  ) : (
-                    person.name
-                  )}
+                  <PersonIdentity name={person.name} href={person.href} />
                   {person.role && <span className="role">{person.role}</span>}
                 </div>
               </li>
@@ -241,49 +252,61 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
         <EpisodeSummary episode={episode} />
       </div>
     );
+  let previousSpeaker = "";
   return (
     <div className="episode">
       <nav className="toc" aria-label="Episode outline" data-pagefind-ignore="">
-        <h2>Outline</h2>
-        <Outline items={episode.outline} />
+        <details className="chapter-disclosure" open>
+          <summary>In this episode</summary>
+          <Outline items={episode.outline} />
+        </details>
       </nav>
       <div className="transcript" data-pagefind-body="">
         {episode.sections.map((section) => {
           const heading = splitTitleLink(section.title);
+          const headingText = /^tmir-\d{4}-\d{2}$/.test(heading.text)
+            ? "Introduction"
+            : heading.text;
           return (
             <section key={section.anchor}>
               <h2 id={section.anchor}>
                 {heading.url ? (
                   <a href={heading.url} rel="noreferrer">
-                    {heading.text}
+                    {headingText}
                   </a>
                 ) : (
-                  heading.text
+                  headingText
                 )}
               </h2>
               {section.segments.map((segment, i) => {
                 const seconds = toSeconds(segment.time);
+                const showSpeaker =
+                  !!segment.speaker && segment.speaker !== previousSpeaker;
+                if (segment.speaker) previousSpeaker = segment.speaker;
                 return (
-                  <p className="segment" key={i}>
-                    {segment.speaker && (
-                      <strong className="speaker">{segment.speaker}: </strong>
-                    )}
-                    {segment.text}
-                    {seconds !== undefined && (
-                      <>
-                        {" "}
-                        <button
-                          type="button"
-                          className="ts"
-                          data-seconds={seconds}
-                        >
-                          <time dateTime={isoDuration(seconds)}>
-                            {hms(seconds)}
-                          </time>
-                        </button>
-                      </>
-                    )}
-                  </p>
+                  <div className="segment" key={i}>
+                    <div className="segment-meta">
+                      {showSpeaker && (
+                        <span className="speaker">{segment.speaker}</span>
+                      )}
+                      {seconds !== undefined && (
+                        <>
+                          {" "}
+                          <button
+                            type="button"
+                            className="ts"
+                            data-seconds={seconds}
+                            aria-label={`Play from ${hms(seconds)}`}
+                          >
+                            <time dateTime={isoDuration(seconds)}>
+                              {hms(seconds)}
+                            </time>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <p>{segment.text}</p>
+                  </div>
                 );
               })}
             </section>

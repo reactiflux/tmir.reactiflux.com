@@ -79,6 +79,17 @@ export function OgTags(props: Og) {
   );
 }
 
+/** Reserve the actual footer height, including wrapped links and open discussion. */
+const FOOTER_SCRIPT = `(function(){
+var footer=document.querySelector(".site-footer");if(!footer)return;
+function size(){document.documentElement.style.setProperty("--footer-block-size",footer.offsetHeight+"px")}
+size();if(window.ResizeObserver)new ResizeObserver(size).observe(footer);
+var details=footer.querySelector("details");
+function openHash(){if(details&&location.hash==="#comments")details.open=true}
+openHash();window.addEventListener("hashchange",openHash);
+if(details){details.addEventListener("toggle",size);details.addEventListener("keydown",function(e){if(e.key==="Escape"&&details.open){details.open=false;details.querySelector("summary").focus()}})}
+})();`;
+
 /**
  * Renders no <title> itself. The router shell passes <HeadContent/> here and the
  * static handlers pass their own <title>/<meta>/<link rel="canonical">. If the
@@ -89,11 +100,13 @@ export function Document({
   head,
   scripts,
   bodyClass,
+  footerDiscussion,
   children,
 }: {
   head: React.ReactNode;
   scripts?: React.ReactNode;
   bodyClass?: string;
+  footerDiscussion?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -140,18 +153,32 @@ export function Document({
           {children}
         </main>
         <footer className="site-footer" data-pagefind-ignore="">
-          <div className="footer-brand">
-            <strong>{SITE_NAME}</strong>
-            <p>React, the web, and the work of building software.</p>
-          </div>
-          <div className="footer-links">
-            <a href="/about#live">Recorded in Reactiflux</a>
-            <a href="https://feeds.transistor.fm/this-month-in-react">
-              Podcast RSS
-            </a>
-            <a href="/feed.xml">Show notes RSS</a>
+          <div className="footer-inner">
+            {footerDiscussion && (
+              <details className="footer-discussion">
+                <summary>
+                  Bluesky discussion <span data-reaction-count="" />
+                </summary>
+                <div className="footer-discussion-content">
+                  {footerDiscussion}
+                </div>
+              </details>
+            )}
+            <div className="footer-bar">
+              <div className="footer-brand">
+                <strong>{SITE_NAME}</strong>
+              </div>
+              <div className="footer-links">
+                <a href="/about#live">Recorded in Reactiflux</a>
+                <a href="https://feeds.transistor.fm/this-month-in-react">
+                  Podcast RSS
+                </a>
+                <a href="/feed.xml">Show notes RSS</a>
+              </div>
+            </div>
           </div>
         </footer>
+        <script dangerouslySetInnerHTML={{ __html: FOOTER_SCRIPT }} />
         {scripts}
       </body>
     </html>
