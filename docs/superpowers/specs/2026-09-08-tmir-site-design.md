@@ -300,7 +300,8 @@ script converts it to a record reference.
 The site emits:
 
 - `/.well-known/site.standard.publication` containing the publication AT
-  URI, read from `VITE_ATPROTO_PUBLICATION_URI` at build time.
+  URI. It is a committed file under `public/`; the URI is public and
+  changes only if the publication record is recreated.
 - On each episode page, `<link rel="site.standard.document" href="at://…">`
   when `atUri` is set.
 - A "Reply on Bluesky" link and a comments section that fetches the
