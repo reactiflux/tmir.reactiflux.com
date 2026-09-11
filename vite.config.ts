@@ -1,4 +1,4 @@
-import { globSync, mkdirSync, writeFileSync } from "node:fs";
+import { globSync, writeFileSync } from "node:fs";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -33,8 +33,7 @@ const pages = [
 
 /**
  * Files that depend on the environment, written into public/ so Vite's normal
- * public copy emits them: robots.txt (its Sitemap line carries the site URL)
- * and the standard.site discovery file.
+ * public copy emits them: robots.txt (its Sitemap line carries the site URL).
  */
 const generatedPublicFiles = (env: Record<string, string>) =>
   ({
@@ -45,10 +44,6 @@ const generatedPublicFiles = (env: Record<string, string>) =>
         "public/robots.txt",
         `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
       );
-      const uri = env.VITE_ATPROTO_PUBLICATION_URI;
-      if (!uri) return;
-      mkdirSync("public/.well-known", { recursive: true });
-      writeFileSync("public/.well-known/site.standard.publication", `${uri}\n`);
     },
   }) satisfies Plugin;
 

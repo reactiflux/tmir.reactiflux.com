@@ -308,10 +308,8 @@ test("Prerender coverage", () => {
   );
 });
 
-test("standard.site discovery", (t) => {
+test("standard.site discovery", () => {
   const wellKnown = ".well-known/site.standard.publication";
-  if (!process.env.VITE_ATPROTO_PUBLICATION_URI)
-    return t.skip("VITE_ATPROTO_PUBLICATION_URI unset");
   hasFile(wellKnown);
   assert.ok(
     (file(wellKnown) || "").trim().startsWith("at://"),

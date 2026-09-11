@@ -280,10 +280,12 @@ it is a layer on top.
 Records, written to the publishing account's PDS by the
 `publish-atproto` script:
 
-- One `site.standard.publication` record at key `self`: `url`, `name`,
-  `description`.
-- One `site.standard.document` record per episode, keyed by the episode
-  slug so reruns overwrite rather than duplicate: `site` (the publication
+- One `site.standard.publication` record: `url`, `name`, `description`.
+  Both lexicons require TID keys, so the PDS assigns them; a rerun reuses
+  the account's existing publication record.
+- One `site.standard.document` record per episode. Reruns overwrite rather
+  than duplicate by using the `atUri` in front matter, or failing that
+  the existing record with the same `path`: `site` (the publication
   AT URI), `title`, `publishedAt` from `date`, `path`, `description`,
   `textContent` (the outline as plain text with URLs), `tags` from link
   hostnames, `contributors` from `people`, and `bskyPostRef` when the
@@ -298,7 +300,8 @@ script converts it to a record reference.
 The site emits:
 
 - `/.well-known/site.standard.publication` containing the publication AT
-  URI, read from `VITE_ATPROTO_PUBLICATION_URI` at build time.
+  URI. It is a committed file under `public/`; the URI is public and
+  changes only if the publication record is recreated.
 - On each episode page, `<link rel="site.standard.document" href="at://…">`
   when `atUri` is set.
 - A "Reply on Bluesky" link and a comments section that fetches the

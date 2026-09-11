@@ -9,7 +9,6 @@ import { requireEnv } from "./env.ts";
 
 export const PUBLICATION_COLLECTION = "site.standard.publication";
 export const DOCUMENT_COLLECTION = "site.standard.document";
-export const PUBLICATION_RKEY = "self";
 export const PUBLICATION_NAME = "This Month in React";
 export const PUBLICATION_DESCRIPTION =
   "A monthly news podcast about React and its ecosystem, hosted by Carl Vitullo and Mark Erikson.";
@@ -62,6 +61,65 @@ export function buildDocumentRecord(
   return record;
 }
 
+/** at://did/collection/rkey -> rkey. */
+export function rkeyOf(uri: string): string {
+  return uri.slice(uri.lastIndexOf("/") + 1);
+}
+
+/**
+ * Every record in a collection. Both standard.site lexicons use TID keys, so
+ * the PDS assigns rkeys and idempotency comes from looking records up.
+ */
+async function listAll(
+  agent: AtpAgent,
+  repo: string,
+  collection: string,
+): Promise<{ uri: string; value: Record<string, unknown> }[]> {
+  const out: { uri: string; value: Record<string, unknown> }[] = [];
+  let cursor: string | undefined;
+  do {
+    const res = await agent.com.atproto.repo.listRecords({
+      repo,
+      collection,
+      limit: 100,
+      cursor,
+    });
+    out.push(
+      ...res.data.records.map((r) => ({
+        uri: r.uri,
+        value: r.value as Record<string, unknown>,
+      })),
+    );
+    cursor = res.data.cursor;
+  } while (cursor);
+  return out;
+}
+
+/** putRecord at an existing rkey, or createRecord and let the PDS pick a TID. */
+async function upsert(
+  agent: AtpAgent,
+  repo: string,
+  collection: string,
+  existingUri: string | undefined,
+  record: Record<string, unknown>,
+): Promise<string> {
+  if (existingUri) {
+    const res = await agent.com.atproto.repo.putRecord({
+      repo,
+      collection,
+      rkey: rkeyOf(existingUri),
+      record,
+    });
+    return res.data.uri;
+  }
+  const res = await agent.com.atproto.repo.createRecord({
+    repo,
+    collection,
+    record,
+  });
+  return res.data.uri;
+}
+
 /** bsky.app post URL -> the strong ref the document record needs. */
 async function resolvePostRef(
   agent: AtpAgent,
@@ -99,19 +157,33 @@ async function main() {
   });
   const repo = agent.session!.did;
 
-  const publication = await agent.com.atproto.repo.putRecord({
+  // One publication per account: reuse whichever exists, else create.
+  const [existingPublication] = await listAll(
+    agent,
     repo,
-    collection: PUBLICATION_COLLECTION,
-    rkey: PUBLICATION_RKEY,
-    record: {
+    PUBLICATION_COLLECTION,
+  );
+  const siteUri = await upsert(
+    agent,
+    repo,
+    PUBLICATION_COLLECTION,
+    existingPublication?.uri,
+    {
       $type: PUBLICATION_COLLECTION,
       url: siteUrl,
       name: PUBLICATION_NAME,
       description: PUBLICATION_DESCRIPTION,
     },
-  });
-  const siteUri = publication.data.uri;
+  );
   console.log(`publication ${siteUri}`);
+
+  // Fallback identity when front matter lost its atUri: match on path.
+  const uriByPath = new Map(
+    (await listAll(agent, repo, DOCUMENT_COLLECTION)).map((r) => [
+      r.value.path as string,
+      r.uri,
+    ]),
+  );
 
   const names = globSync("*.md", { cwd: EPISODE_DIR })
     .filter((n) => !only || n === `${only}.md`)
@@ -129,20 +201,25 @@ async function main() {
       ? await resolvePostRef(agent, episode.bskyPostUrl)
       : undefined;
 
-    const res = await agent.com.atproto.repo.putRecord({
-      repo,
-      collection: DOCUMENT_COLLECTION,
-      rkey: epSlug,
-      record: buildDocumentRecord(episode, { siteUri, bskyPostRef }),
-    });
-
+    const record = buildDocumentRecord(episode, { siteUri, bskyPostRef });
     const { frontMatter, body } = splitFile(fileText);
-    if (frontMatter.atUri !== res.data.uri) {
-      frontMatter.atUri = res.data.uri;
+    const existing =
+      (frontMatter.atUri as string | undefined) ??
+      uriByPath.get(record.path as string);
+    const uri = await upsert(
+      agent,
+      repo,
+      DOCUMENT_COLLECTION,
+      existing,
+      record,
+    );
+
+    if (frontMatter.atUri !== uri) {
+      frontMatter.atUri = uri;
       writeFileSync(path, serializeEpisodeFile(frontMatter, body));
-      console.log(`${epSlug} -> ${res.data.uri} (atUri written)`);
+      console.log(`${epSlug} -> ${uri} (atUri written)`);
     } else {
-      console.log(`${epSlug} -> ${res.data.uri}`);
+      console.log(`${epSlug} -> ${uri}`);
     }
   }
 }

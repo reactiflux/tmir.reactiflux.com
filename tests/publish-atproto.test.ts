@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   outlineToText,
   buildDocumentRecord,
+  rkeyOf,
 } from "../scripts/publish-atproto.ts";
 import { bskyUrlToParts } from "../src/content/atproto.ts";
 import { parseEpisode } from "../src/content/parse.ts";
@@ -80,4 +81,11 @@ test("buildDocumentRecord omits bskyPostRef when there is no announcement post",
     siteUri: "at://did:plc:show/site.standard.publication/self",
   });
   assert.equal("bskyPostRef" in record, false);
+});
+
+test("rkeyOf takes the last segment of an AT URI", () => {
+  assert.equal(
+    rkeyOf("at://did:plc:abc123/site.standard.document/3lqz7abcd2k2x"),
+    "3lqz7abcd2k2x",
+  );
 });
