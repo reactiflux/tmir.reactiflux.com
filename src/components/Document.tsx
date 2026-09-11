@@ -15,6 +15,14 @@ export function OgTags(props: Og) {
   );
 }
 
+/**
+ * Episode pages sit outside the router, so its intent-based preload never
+ * reaches them; this gives links to them the same hover prefetch.
+ */
+const SPECULATION_RULES = JSON.stringify({
+  prefetch: [{ where: { href_matches: "/episodes/*" }, eagerness: "moderate" }],
+});
+
 /** Reserve the actual footer height, including wrapped links and open discussion. */
 const FOOTER_SCRIPT = `(()=>{
 const footer=document.querySelector(".site-footer");if(!footer)return;
@@ -65,6 +73,10 @@ export function Document({
           type="application/rss+xml"
           title={SITE_NAME}
           href={`${SITE_URL}/feed.xml`}
+        />
+        <script
+          type="speculationrules"
+          dangerouslySetInnerHTML={{ __html: SPECULATION_RULES }}
         />
         {head}
       </head>

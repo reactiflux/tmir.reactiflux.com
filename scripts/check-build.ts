@@ -125,7 +125,13 @@ test("Links document", () => {
 test("Feed and chapters", () => {
   hasFile("feed.xml");
   contains("feed.xml", '<rss version="2.0"');
+  contains(
+    "feed.xml",
+    'xmlns:podcast="https://podcastindex.org/namespace/1.0"',
+  );
   contains("feed.xml", "<item>");
+  contains("feed.xml", "<podcast:chapters ");
+  contains("feed.xml", "<podcast:transcript ");
   for (const slug of allSlugs) {
     const body = file(`episodes/${slug}/chapters.json`);
     const json: unknown = body === null ? null : JSON.parse(body);
@@ -135,6 +141,13 @@ test("Feed and chapters", () => {
         (json as Record<string, unknown>).version === "1.2.0" &&
         Array.isArray((json as Record<string, unknown>).chapters),
       `episodes/${slug}/chapters.json is valid Podcasting 2.0`,
+    );
+    const srt = file(`episodes/${slug}/transcript.srt`);
+    assert.ok(srt !== null, `episodes/${slug}/transcript.srt exists`);
+    assert.equal(
+      srt!.trim().length > 0,
+      hasTranscript(slug),
+      `episodes/${slug}/transcript.srt is non-empty iff the episode has a transcript`,
     );
   }
   const xml = file("feed.xml") || "";
@@ -284,6 +297,7 @@ test("Prerender coverage", () => {
     ...allSlugs.flatMap((s) => [
       `episodes/${s}/index.html`,
       `episodes/${s}/chapters.json`,
+      `episodes/${s}/transcript.srt`,
     ]),
   ];
   const missing = expected.filter((p) => file(p) === null);

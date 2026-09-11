@@ -1,5 +1,5 @@
 import { globSync, mkdirSync, writeFileSync } from "node:fs";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
@@ -20,32 +20,43 @@ const pages = [
   { path: "/feed.xml", prerender: { enabled: true } },
   { path: "/sitemap.xml", prerender: { enabled: true } },
   { path: "/specimen", prerender: { enabled: true } },
+  { path: "/about", prerender: { enabled: true } },
   ...slugs.map((slug) => ({
     path: `/episodes/${slug}/chapters.json`,
+    prerender: { enabled: true },
+  })),
+  ...slugs.map((slug) => ({
+    path: `/episodes/${slug}/transcript.srt`,
     prerender: { enabled: true },
   })),
 ];
 
 /**
- * standard.site discovery file. Written into public/ so Vite's normal public
- * copy puts it at dist/client/.well-known/site.standard.publication.
+ * Files that depend on the environment, written into public/ so Vite's normal
+ * public copy emits them: robots.txt (its Sitemap line carries the site URL)
+ * and the standard.site discovery file.
  */
-const wellKnownPublication = {
-  name: "well-known-publication",
-  buildStart() {
-    const uri = process.env.VITE_ATPROTO_PUBLICATION_URI;
-    if (!uri) return;
-    mkdirSync("public/.well-known", { recursive: true });
-    writeFileSync("public/.well-known/site.standard.publication", `${uri}\n`);
-  },
-} satisfies Plugin;
+const generatedPublicFiles = (env: Record<string, string>) =>
+  ({
+    name: "generated-public-files",
+    buildStart() {
+      const siteUrl = env.VITE_SITE_URL || "https://thismonthinreact.com";
+      writeFileSync(
+        "public/robots.txt",
+        `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
+      );
+      const uri = env.VITE_ATPROTO_PUBLICATION_URI;
+      if (!uri) return;
+      mkdirSync("public/.well-known", { recursive: true });
+      writeFileSync("public/.well-known/site.standard.publication", `${uri}\n`);
+    },
+  }) satisfies Plugin;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   plugins: [
-    wellKnownPublication,
-    // RSC stays enabled for future supporting pages; the episode documents
-    // deliberately do not use it.
+    generatedPublicFiles(loadEnv(mode, process.cwd(), "VITE_")),
+    // RSC is on for /links; the episode documents deliberately do not use it.
     tanstackStart({
       rsc: { enabled: true },
       prerender: {
@@ -61,4 +72,4 @@ export default defineConfig({
     rsc(),
     viteReact({ compiler: true }),
   ],
-});
+}));
