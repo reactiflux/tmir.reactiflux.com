@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Document, OgTags } from "../components/Document";
+import { SITE_NAME, SITE_URL } from "../content/site.ts";
 
 import { NewsletterForm } from "../components/NewsletterForm";
 import { PersonIdentity, ProfileLinks } from "../components/PersonIdentity";
@@ -37,7 +38,7 @@ const firstName = (name: string) => name.split(" ")[0];
 
 const ABOUT_DESCRIPTION = `Meet Carl Vitullo and Mark Erikson, the hosts of ${SITE_NAME}: a monthly conversation about React, the web, and the work of building software.`;
 
-const getAbout = createServerFn().handler(async () => {
+async function getAbout() {
   const { loadEpisodes } = await import("../content/load.ts");
   const episodes = await loadEpisodes();
 
@@ -76,23 +77,31 @@ const getAbout = createServerFn().handler(async () => {
   const guests = people.filter((p) => !hostKeys.has(firstName(p.name)));
 
   return { hosts, formerHosts, guests };
-});
+}
+
+const TITLE = `About — ${SITE_NAME}`;
+const URL = `${SITE_URL}/about`;
 
 export const Route = createFileRoute("/about")({
-  loader: () => getAbout(),
-  head: () => ({
-    meta: [
-      { title: `About — ${SITE_NAME}` },
-      { name: "description", content: ABOUT_DESCRIPTION },
-      ...ogMeta({
-        title: `About — ${SITE_NAME}`,
-        description: ABOUT_DESCRIPTION,
-        url: `${SITE_URL}/about`,
-      }),
-    ],
-    links: [{ rel: "canonical", href: `${SITE_URL}/about` }],
-  }),
-  component: About,
+  server: {
+    handlers: {
+      GET: async () => {
+        const html = renderToStaticMarkup(
+          <Document>
+            {/* React 19 hoists these into <head> during server rendering. */}
+            <title>{TITLE}</title>
+            <meta name="description" content={ABOUT_DESCRIPTION} />
+            <link rel="canonical" href={URL} />
+            <OgTags title={TITLE} description={ABOUT_DESCRIPTION} url={URL} />
+            <About {...await getAbout()} />
+          </Document>,
+        );
+        return new Response(`<!DOCTYPE html>${html}`, {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      },
+    },
+  },
 });
 
 function PersonList({ people }: { people: AboutPerson[] }) {
@@ -129,8 +138,11 @@ function PersonList({ people }: { people: AboutPerson[] }) {
   );
 }
 
-function About() {
-  const { hosts, formerHosts, guests } = Route.useLoaderData();
+function About({
+  hosts,
+  formerHosts,
+  guests,
+}: Awaited<ReturnType<typeof getAbout>>) {
   return (
     <div className="about-page">
       <header className="about-intro">
