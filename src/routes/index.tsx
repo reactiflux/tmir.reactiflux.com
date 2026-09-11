@@ -185,13 +185,25 @@ function Home() {
           </div>
         </div>
         <div className="hero-artwork">
-          <img
-            src="/artwork.jpg"
-            alt="This Month in React cover artwork"
-            width="600"
-            height="600"
-            fetchPriority="high"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcSet="/artwork-600.avif 600w, /artwork-1200.avif 1200w"
+              sizes="(max-width: 640px) 100vw, 600px"
+            />
+            <source
+              type="image/webp"
+              srcSet="/artwork-600.webp 600w, /artwork-1200.webp 1200w"
+              sizes="(max-width: 640px) 100vw, 600px"
+            />
+            <img
+              src="/artwork.jpg"
+              alt="This Month in React cover artwork"
+              width="600"
+              height="600"
+              fetchPriority="high"
+            />
+          </picture>
         </div>
       </section>
 
