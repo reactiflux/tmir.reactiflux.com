@@ -18,7 +18,7 @@
     "test": "node --test \"tests/**/*.test.ts\"",
     "format": "prettier --write .",
     "doctor": "react-doctor --no-telemetry --blocking warning",
-    "typecheck": "node node_modules/typescript-native/bin/tsc --noEmit",
+    "typecheck": "node $(node -p \"require.resolve('typescript-native/package.json').replace(/package\\.json$/, 'bin/tsc')\") --noEmit",
     "publish": "node --env-file-if-exists=.env scripts/publish.ts",
     "ingest": "node --env-file-if-exists=.env scripts/ingest.ts",
     "publish-transcript": "node --env-file-if-exists=.env scripts/publish-transcript.ts",
