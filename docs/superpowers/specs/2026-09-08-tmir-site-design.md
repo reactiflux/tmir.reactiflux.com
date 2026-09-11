@@ -225,8 +225,9 @@ transcript can still be pushed.
 
 Two rendering paths coexist in one TanStack Start build.
 
-**Static documents** for content-heavy pages: `/episodes/<yyyy-mm>` and
-`/links`. A server route handler renders a complete HTML document with
+**Static documents** for content-heavy pages: `/episodes/<yyyy-mm>`,
+`/links`, and `/about`. A server route handler renders a complete HTML
+document with
 `renderToStaticMarkup` and the prerender step writes it to a file. The
 content appears once in the HTML, there is no hydration, and the only
 JavaScript is a small inline script: on episode pages it seeks the native
@@ -234,7 +235,11 @@ JavaScript is a small inline script: on episode pages it seeks the native
 filters the already-rendered list by text. These pages sit outside the
 router, so navigating into them is a full document load.
 
-**Router pages** for `/`, `/about`, and `/search`. These are ordinary
+`/about` carries no interactivity beyond a progressively enhanced
+newsletter form that posts to Buttondown directly, so it renders as a
+static document too rather than shipping the router runtime for it.
+
+**Router pages** for `/` and `/search`. These are ordinary
 TanStack Start routes, prerendered, with the framework runtime and
 hydration. `/links` renders through RSC; the episode documents do not.
 The player on `/` is a client component.
