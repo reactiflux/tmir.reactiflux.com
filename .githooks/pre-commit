@@ -1,0 +1,9 @@
+#!/bin/sh
+# Format only what is staged, then re-stage exactly those paths.
+# ponytail: a partially staged file gets its unstaged hunks formatted and
+# staged too; switch to lint-staged's stash dance if that ever bites.
+set -e
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -n "$files" ] || exit 0
+printf '%s\n' "$files" | xargs npx prettier --write --ignore-unknown --log-level warn
+printf '%s\n' "$files" | xargs git add --

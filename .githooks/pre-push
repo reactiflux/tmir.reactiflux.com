@@ -1,0 +1,7 @@
+#!/bin/sh
+# Style and quality gate before anything leaves the machine.
+set -e
+npx prettier --check .
+npm run typecheck
+npm run doctor
+npm test
