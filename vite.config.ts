@@ -24,6 +24,10 @@ const pages = [
     path: `/episodes/${slug}/chapters.json`,
     prerender: { enabled: true },
   })),
+  ...slugs.map((slug) => ({
+    path: `/episodes/${slug}/transcript.srt`,
+    prerender: { enabled: true },
+  })),
 ];
 
 /**

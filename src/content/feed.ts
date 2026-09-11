@@ -1,4 +1,5 @@
 import type { Episode, OutlineItem } from "./parse.ts";
+import { toSrt } from "./srt.ts";
 import { toSeconds } from "./time.ts";
 
 function escapeHtml(text: string): string {
@@ -65,6 +66,14 @@ export function renderFeed(
         episode.duration !== undefined
           ? `<itunes:duration>${episode.duration}</itunes:duration>`
           : "";
+      const chapters =
+        outlineToChapters(episode.outline).length > 0
+          ? `<podcast:chapters url="${escapeHtml(url)}/chapters.json" type="application/json+chapters"/>`
+          : "";
+      const transcript =
+        toSrt(episode).length > 0
+          ? `<podcast:transcript url="${escapeHtml(url)}/transcript.srt" type="application/x-subrip"/>`
+          : "";
       return [
         "<item>",
         `<title>${escapeHtml(episode.title)}</title>`,
@@ -74,6 +83,8 @@ export function renderFeed(
         `<description>${cdata(body)}</description>`,
         enclosure,
         duration,
+        chapters,
+        transcript,
         "</item>",
       ].join("");
     })
@@ -81,7 +92,7 @@ export function renderFeed(
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0"><channel>',
     `<title>${escapeHtml(siteName)}</title>`,
     `<link>${escapeHtml(siteUrl)}</link>`,
     `<description>${escapeHtml(siteName)} episodes, outlines and links.</description>`,

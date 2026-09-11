@@ -58,6 +58,42 @@ test("enclosure carries no length, duration stays on itunes:duration", async () 
   assert.match(xml, /<itunes:duration>\d+<\/itunes:duration>/);
 });
 
+test("podcast:chapters tag present for an episode with timed outline items, absent otherwise", async () => {
+  const [episode] = await loadEpisodes();
+  const bare = { ...episode, slug: "no-chapters", outline: [] };
+  const xml = renderFeed([episode, bare], "TMiR", "https://example.com");
+  assert.ok(
+    xml.includes(
+      '<podcast:chapters url="https://example.com/episodes/2026-05/chapters.json" type="application/json+chapters"/>',
+    ),
+  );
+  assert.ok(
+    !xml.includes("https://example.com/episodes/no-chapters/chapters.json"),
+  );
+});
+
+test("podcast:transcript tag present for an episode with a transcript, absent otherwise", async () => {
+  const [episode] = await loadEpisodes();
+  const bare = { ...episode, slug: "no-transcript", sections: [] };
+  const xml = renderFeed([episode, bare], "TMiR", "https://example.com");
+  assert.ok(
+    xml.includes(
+      '<podcast:transcript url="https://example.com/episodes/2026-05/transcript.srt" type="application/x-subrip"/>',
+    ),
+  );
+  assert.ok(
+    !xml.includes("https://example.com/episodes/no-transcript/transcript.srt"),
+  );
+});
+
+test("rss element declares the podcast namespace", async () => {
+  const xml = renderFeed(await loadEpisodes(), "TMiR", "https://example.com");
+  assert.match(
+    xml,
+    /<rss[^>]*xmlns:podcast="https:\/\/podcastindex\.org\/namespace\/1\.0"/,
+  );
+});
+
 test("cdata splits a ]]> so content cannot terminate the section early", () => {
   assert.equal(cdata("plain"), "<![CDATA[plain]]>");
   assert.equal(
