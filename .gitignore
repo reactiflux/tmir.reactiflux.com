@@ -11,3 +11,4 @@ dist
 .output
 src/routeTree.gen.ts
 public/.well-known/site.standard.publication
+public/robots.txt

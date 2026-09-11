@@ -236,8 +236,8 @@ router, so navigating into them is a full document load.
 
 **Router pages** for `/`, `/about`, and `/search`. These are ordinary
 TanStack Start routes, prerendered, with the framework runtime and
-hydration. RSC stays enabled in the build so future supporting pages can
-use server components. The player on `/` is a client component.
+hydration. `/links` renders through RSC; the episode documents do not.
+The player on `/` is a client component.
 
 Both paths share one `Document` component for the head, stylesheet, and
 navigation so the two kinds of page look identical.
