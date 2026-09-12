@@ -324,7 +324,9 @@ job:
   documents and router pages animates the same way.
 - Native light and dark color scheme through `light-dark()` with colors
   in oklch.
-- Anchor positioning to pin the player relative to the transcript column.
+- Anchor positioning to hang the floating chapter jumps off the transcript
+  column's edge.
+- A scroll-driven animation to reveal "Back to top" after the first 160px.
 - `text-wrap: balance` on headings and `text-wrap: pretty` on body copy.
 
 No preprocessor, no utility framework, no CSS-in-JS.
