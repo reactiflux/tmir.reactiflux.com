@@ -234,6 +234,7 @@ function About({
             >
               Follow on Bluesky ↗
             </a>
+            {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- This page uses renderToStaticMarkup without a router provider. */}
             <a href="/links">Explore the source library ↗</a>
           </div>
         </div>

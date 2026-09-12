@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Player } from "../components/Player";
 import {
@@ -114,6 +114,7 @@ function Home() {
             <br />
             <strong>Mark Erikson</strong> · Redux maintainer
             <br />
+            {/* react-doctor-disable-next-line react-doctor/tanstack-start-no-anchor-element -- /about renders a static document outside the router. */}
             <a href="/about">
               Meet the hosts <span aria-hidden="true">↗</span>
             </a>
@@ -162,8 +163,8 @@ function Home() {
           </details>
         )}
         <div className="archive-tools">
-          <a href="/links">Explore the source library ↗</a>
-          <a href="/search">Search the show ↗</a>
+          <Link to="/links">Explore the source library ↗</Link>
+          <Link to="/search">Search the show ↗</Link>
         </div>
       </section>
     </div>
