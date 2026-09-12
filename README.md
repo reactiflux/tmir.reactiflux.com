@@ -85,7 +85,8 @@ beside the title, month, hosts and runtime — so links unfurl properly in
 Discord and Slack, alongside the usual `og:`/`twitter:` tags and podcast
 JSON-LD.
 
-The site is also a standard.site publication: episodes carry a
+The site is also a standard.site publication (state and runbook in
+`docs/standard-site.md`): episodes carry a
 `site.standard.document` link, and one with an announcement post gets a "Reply
 on Bluesky" link and its reply thread fetched from the public API. That fetch is
 the only external request an episode page makes, and the page reads fine

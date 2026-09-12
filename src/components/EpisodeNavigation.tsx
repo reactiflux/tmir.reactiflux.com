@@ -8,7 +8,7 @@ export function EpisodeNavigation() {
       hidden
     >
       <div className="episode-jumps-top">
-        <button type="button" data-jump="top" aria-label="Back to top" hidden>
+        <button type="button" data-jump="top" aria-label="Back to top">
           <span>Back to top</span>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 4h14M12 20V8m-6 6 6-6 6 6" />
@@ -47,16 +47,13 @@ export const EPISODE_NAVIGATION_SCRIPT = `(function(){
 var nav=document.querySelector(".episode-jumps");
 var heads=[].slice.call(document.querySelectorAll(".transcript h2[id]"));
 if(!nav||!heads.length)return;
-var top=nav.querySelector('[data-jump="top"]'),prev=nav.querySelector('[data-jump="previous"]'),next=nav.querySelector('[data-jump="next"]');
+var prev=nav.querySelector('[data-jump="previous"]'),next=nav.querySelector('[data-jump="next"]');
 var current=-1,queued=false;
 function update(){
  queued=false;
- var episode=document.querySelector(".episode");
- if(episode)nav.style.setProperty("--episode-jumps-right",Math.max(0,document.documentElement.clientWidth-episode.getBoundingClientRect().right)+"px");
  var line=parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||0;
  current=-1;
  for(var i=0;i<heads.length;i++)if(heads[i].getBoundingClientRect().top<=line+2)current=i;
- top.hidden=window.scrollY<160;
  prev.disabled=current<=0;
  next.disabled=current>=heads.length-1;
  prev.setAttribute("aria-label","Previous chapter"+(current>0?": "+heads[current-1].textContent:""));
