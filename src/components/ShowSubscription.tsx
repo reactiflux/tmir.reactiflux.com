@@ -48,9 +48,6 @@ export function EmailSubscription({ inputId }: { inputId: string }) {
           row
         />
       )}
-      <a className="show-notes-feed" href="/feed.xml">
-        Show notes RSS <span aria-hidden="true">↗</span>
-      </a>
     </section>
   );
 }

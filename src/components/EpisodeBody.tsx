@@ -3,33 +3,6 @@ import type { Episode, OutlineItem } from "../content/parse.ts";
 import { splitTitleLink } from "../content/slug.ts";
 import { hms, isoDuration, toSeconds } from "../content/time.ts";
 
-/** Progressive enhancement: native audio controls remain available without JS. */
-export const PLAYER_SCRIPT = `(()=>{
-const a=document.querySelector(".episode-header audio"),ui=document.querySelector(".episode-controls");
-if(!a||!ui)return;
-const play=ui.querySelector(".episode-play"),seek=ui.querySelector("input"),speed=ui.querySelector(".episode-speed");
-const status=document.querySelector(".playback-status");let dragging=false;
-const time=v=>{const n=Math.max(0,Math.floor(v||0)),h=Math.floor(n/3600),m=Math.floor(n/60)%60,s=n%60;
- return\`\${h?\`\${h}:\${String(m).padStart(2,"0")}\`:m}:\${String(s).padStart(2,"0")}\`};
-const state=()=>{play.textContent=a.paused?"▶":"Ⅱ";play.setAttribute("aria-label",a.paused?"Play episode":"Pause episode")};
-const update=()=>{
- const d=a.duration;if(Number.isFinite(d)&&d>0){seek.max=d;ui.querySelector("[data-duration]").textContent=time(d)}
- if(!dragging)seek.value=a.currentTime;
- seek.setAttribute("aria-valuetext",time(Number(seek.value)));
- ui.querySelector("[data-elapsed]").textContent=time(a.currentTime);
-};
-const fail=()=>{status.hidden=false;status.textContent="Audio could not play. Try again or open the audio link.";state()};
-play.addEventListener("click",async()=>{if(!a.paused){a.pause();return}status.hidden=true;try{await a.play()}catch{fail()}});
-seek.addEventListener("input",()=>{dragging=true;seek.setAttribute("aria-valuetext",time(Number(seek.value)))});
-seek.addEventListener("change",()=>{a.currentTime=Number(seek.value);dragging=false;update()});
-speed.addEventListener("click",()=>{const rates=[1,1.25,1.5,1.75,2,.75];a.playbackRate=rates[(rates.indexOf(a.playbackRate)+1)%rates.length]});
-a.addEventListener("ratechange",()=>{speed.textContent=\`\${a.playbackRate}×\`;speed.setAttribute("aria-label",\`Playback speed: \${a.playbackRate} times\`)});
-for(const e of["play","pause","ended"])a.addEventListener(e,state);
-for(const e of["timeupdate","loadedmetadata","durationchange"])a.addEventListener(e,update);
-a.addEventListener("error",fail);
-a.controls=false;a.hidden=true;ui.hidden=false;update();state();
-})();`;
-
 /** One delegated listener seeks the page's single <audio> from any [data-seconds]. */
 export const SEEK_SCRIPT = `document.addEventListener("click",async e=>{
 const t=e.target.closest("[data-seconds]");if(!t)return;

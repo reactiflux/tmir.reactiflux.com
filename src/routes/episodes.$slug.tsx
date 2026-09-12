@@ -1,3 +1,4 @@
+import { EpisodeHeader, PLAYER_SCRIPT } from "../components/EpisodeHeader";
 import {
   EpisodeNavigation,
   EPISODE_NAVIGATION_SCRIPT,
@@ -9,14 +10,13 @@ import {
   COMMENTS_SCRIPT,
   EpisodeBody,
   OUTLINE_SCRIPT,
-  PLAYER_SCRIPT,
   SEEK_SCRIPT,
 } from "../components/EpisodeBody";
 import { bskyPostToAtUri } from "../content/atproto.ts";
 import { jsonLd } from "../content/jsonld.ts";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../content/site.ts";
 import { cardTitle } from "../content/slug.ts";
-import { hms, isoDuration, longDate, monthYear } from "../content/time.ts";
+import { isoDuration, longDate, monthYear } from "../content/time.ts";
 
 const ATPROTO_DID = import.meta.env.VITE_ATPROTO_DID;
 
@@ -149,53 +149,11 @@ export const Route = createFileRoute("/episodes/$slug")({
                 )}
               </p>
             </header>
-            {episode.audioUrl && (
-              <div className="episode-header" data-pagefind-ignore="">
-                <audio
-                  controls
-                  preload="none"
-                  src={episode.audioUrl}
-                  aria-label={`Listen to ${name}`}
-                />
-                <div className="episode-controls" hidden>
-                  <button
-                    type="button"
-                    className="episode-play"
-                    aria-label="Play episode"
-                  >
-                    ▶
-                  </button>
-                  <span className="playback-time">
-                    <span data-elapsed="">0:00</span> /{" "}
-                    <span data-duration="">
-                      {episode.duration !== undefined
-                        ? hms(episode.duration)
-                        : "—"}
-                    </span>
-                  </span>
-                  <input
-                    className="episode-progress"
-                    type="range"
-                    min="0"
-                    max={episode.duration || 0}
-                    step="1"
-                    defaultValue="0"
-                    aria-label="Playback position"
-                  />
-                  <button
-                    type="button"
-                    className="episode-speed"
-                    aria-label="Playback speed: 1 times"
-                  >
-                    1×
-                  </button>
-                  <a className="audio-download" href={episode.audioUrl}>
-                    Audio ↗
-                  </a>
-                </div>
-                <p className="playback-status" role="status" hidden />
-              </div>
-            )}
+            <EpisodeHeader
+              audioUrl={episode.audioUrl}
+              title={name}
+              duration={episode.duration}
+            />
             <EpisodeBody episode={episode} />
             {episode.sections.length > 0 && <EpisodeNavigation />}
           </Document>,
