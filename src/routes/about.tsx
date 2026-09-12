@@ -3,13 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Document, OgTags } from "../components/Document";
 import { SITE_NAME, SITE_URL } from "../content/site.ts";
 
-import { NewsletterForm } from "../components/NewsletterForm";
+import {
+  EmailSubscription,
+  LiveRecording,
+  PodcastLinks,
+} from "../components/ShowSubscription";
 import { PersonIdentity, ProfileLinks } from "../components/PersonIdentity";
 import { canonicalPersonName, personProfile } from "../content/people.ts";
-import { BUTTONDOWN_URL } from "../content/newsletter.ts";
-
-const BLUESKY_PROFILE_URL = import.meta.env.VITE_BLUESKY_PROFILE_URL;
-const TRANSISTOR_FEED = "https://feeds.transistor.fm/this-month-in-react";
 
 interface AboutPerson {
   name: string;
@@ -144,141 +144,111 @@ function About({
   guests,
 }: Awaited<ReturnType<typeof getAbout>>) {
   return (
-    <div className="about-page">
-      <header className="about-intro">
-        <p className="eyebrow">About the show</p>
-        <h1>A conversation worth keeping up with.</h1>
-        <p className="lead">
-          React and the web keep changing. {SITE_NAME} is a place to work
-          through those changes together.
-        </p>
-        <p>
-          Each month, Carl Vitullo and Mark Erikson bring the releases,
-          projects, posts, and debates they’ve been following into a
-          conversation recorded live in Reactiflux. We connect new developments
-          to the history behind them and the practical questions they raise—with
-          room for disagreement and things we haven’t figured out yet.
-        </p>
-        <p>
-          Bring your own experience and judgment. Chapters, transcripts, and
-          source links let you follow a thread further and draw your own
-          conclusions.
-        </p>
-      </header>
-
-      <section className="hosts-section" aria-labelledby="hosts-heading">
-        <div className="section-heading">
-          <h2 id="hosts-heading">Your hosts</h2>
-        </div>
-        <div className="host-grid">
-          {hosts.map((host) => (
-            <article className="host-profile" key={host.name}>
-              {host.img && (
-                <img
-                  src={host.img}
-                  alt={host.name}
-                  width="320"
-                  height="320"
-                  loading="lazy"
-                />
-              )}
-              <div className="host-bio">
-                <h3>
-                  <a
-                    className="person-name"
-                    href={personProfile(host.name).episodesUrl}
-                    title={`Hear ${host.name} on Transistor`}
-                  >
-                    {host.name}
-                  </a>
-                </h3>
-                <ProfileLinks
-                  name={host.name}
-                  profile={personProfile(host.name, host.href)}
-                />
-                <p className="role">{host.role}</p>
-                <p>{host.bio}</p>
+    <div className="evergreen-page">
+      <div className="people-intro">
+        <header>
+          <p className="eyebrow">About {SITE_NAME}</p>
+          <h1>
+            React, with
+            <br />
+            <em>some perspective.</em>
+          </h1>
+          <p className="lead">
+            A monthly conversation with a Redux maintainer and a Reactiflux
+            community leader. Technical details, practical experience, and
+            questions worth talking through.
+          </p>
+          <EmailSubscription inputId="bd-email" />
+        </header>
+        <section className="people-portraits" aria-labelledby="hosts-heading">
+          <h2 className="sr-only" id="hosts-heading">
+            Your hosts
+          </h2>
+          {hosts.toReversed().map((host) => (
+            <article key={host.name}>
+              <div className="people-portrait">
+                {host.img && (
+                  <img
+                    src={host.img}
+                    alt={host.name}
+                    width="320"
+                    height="320"
+                  />
+                )}
+                <span className="role">{host.role}</span>
               </div>
+              <h2>
+                <a
+                  className="person-name"
+                  href={personProfile(host.name).episodesUrl}
+                  title={`Hear ${host.name} on Transistor`}
+                >
+                  {host.name}
+                </a>
+              </h2>
+              <ProfileLinks
+                name={host.name}
+                profile={personProfile(host.name, host.href)}
+              />
+              <p>{host.bio}</p>
             </article>
           ))}
+        </section>
+      </div>
+      <div className="show-subscriptions">
+        <section aria-labelledby="podcast-heading">
+          <p className="eyebrow">Take the conversation with you</p>
+          <h2 id="podcast-heading">Follow in your podcast app.</h2>
+          <PodcastLinks />
+        </section>
+        <LiveRecording />
+      </div>
+      <section className="about-context" aria-labelledby="conversation-heading">
+        <div>
+          <h2 id="conversation-heading">
+            A conversation worth keeping up with.
+          </h2>
+          <p>
+            Each month, Carl Vitullo and Mark Erikson bring the releases,
+            projects, posts, and debates they’ve been following into a
+            conversation recorded live in Reactiflux. We connect new
+            developments to the history behind them and the practical questions
+            they raise—with room for disagreement and things we haven’t figured
+            out yet.
+          </p>
+          <p>
+            Bring your own experience and judgment. Chapters, transcripts, and
+            source links let you follow a thread further and draw your own
+            conclusions.
+          </p>
+        </div>
+        <div className="about-contact">
+          <h2>Keep in touch.</h2>
+          <p>
+            Have a topic, a useful link, or feedback? Write to{" "}
+            <a href="mailto:hello@reactiflux.com">hello@reactiflux.com</a>.
+          </p>
+          <div className="about-community-links">
+            <a
+              href={`https://bsky.app/profile/${new globalThis.URL(SITE_URL).hostname}`}
+            >
+              Follow on Bluesky ↗
+            </a>
+            <a href="/links">Explore the source library ↗</a>
+          </div>
         </div>
       </section>
-
-      <section
-        className="community-panel"
-        id="live"
-        aria-labelledby="live-heading"
-      >
-        <p className="eyebrow">Recorded in Reactiflux</p>
-        <h2 id="live-heading">Be part of the conversation.</h2>
-        <p>
-          We record live in the Reactiflux Discord community. Join us there for
-          upcoming recording announcements and conversations with other
-          developers working in React.
-        </p>
-        <a href="https://www.reactiflux.com/">Join Reactiflux ↗</a>
-        <p>
-          Have a topic, a useful link, or feedback? Write to{" "}
-          <a href="mailto:hello@reactiflux.com">hello@reactiflux.com</a>.
-        </p>
-      </section>
-
       <section className="contributors" aria-labelledby="contributors-heading">
         <h2 id="contributors-heading">More voices from the show</h2>
         <h3>Former hosts</h3>
         <PersonList people={formerHosts} />
         {guests.length > 0 && (
           <>
-            <h3>Past Guests</h3>
+            <h3>Past guests</h3>
             <PersonList people={guests} />
           </>
         )}
       </section>
-
-      <section
-        className="subscribe-panel"
-        id="subscribe"
-        aria-labelledby="subscribe-heading"
-      >
-        <h2 id="subscribe-heading">See you next month.</h2>
-        <p>
-          Listen wherever you get podcasts, or follow the show notes for every
-          episode’s outline and links.
-        </p>
-        <div className="action-row">
-          <a
-            className="button"
-            href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH"
-          >
-            Spotify
-          </a>
-          <a
-            className="button button-secondary"
-            href="https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526"
-          >
-            Apple Podcasts
-          </a>
-          <a className="button button-secondary" href={TRANSISTOR_FEED}>
-            Podcast RSS
-          </a>
-          <a className="button button-secondary" href="/feed.xml">
-            Show notes RSS
-          </a>
-          {BLUESKY_PROFILE_URL && (
-            <a className="button button-secondary" href={BLUESKY_PROFILE_URL}>
-              Follow on Bluesky
-            </a>
-          )}
-        </div>
-      </section>
-
-      {BUTTONDOWN_URL && (
-        <section className="newsletter">
-          <h2>Newsletter</h2>
-          <p>Every episode&rsquo;s outline and links, in your inbox.</p>
-          <NewsletterForm id="bd-email" label="Email" submitLabel="Subscribe" />
-        </section>
-      )}
     </div>
   );
 }

@@ -1,0 +1,351 @@
+/* The home and about introductions are evergreen; episode content lives below. */
+main:has(> .evergreen-page) {
+  container: evergreen / inline-size;
+}
+.evergreen-page {
+  padding-top: 12px;
+}
+.evergreen-page .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.evergreen-page h1 {
+  font-size: clamp(40px, 5.7cqw, 75px);
+  line-height: 1.02;
+  letter-spacing: -0.065em;
+  text-wrap: initial;
+  margin: 0 0 24px;
+}
+.evergreen-page h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+.evergreen-page h2 {
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  margin: 0 0 14px;
+  text-wrap: initial;
+}
+.evergreen-page .eyebrow {
+  font-size: 10px;
+  margin-bottom: 20px;
+}
+.evergreen-page .lead {
+  font-size: 18px;
+  line-height: 1.65;
+  max-width: 510px;
+  margin: 0 0 24px;
+}
+.show-intro,
+.people-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 38px 8%;
+  align-items: start;
+}
+.show-byline {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.85;
+}
+.show-byline strong {
+  color: var(--text);
+}
+.show-byline a {
+  display: inline-block;
+  margin-top: 8px;
+}
+.follow-show {
+  margin-top: 28px;
+}
+.follow-show h2 {
+  font-size: 23px;
+  margin-bottom: 16px;
+}
+.podcast-destinations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  font-size: 12px;
+}
+.podcast-destinations a {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  min-height: 45px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  text-decoration: none;
+}
+.podcast-destinations a:hover {
+  text-decoration: underline;
+}
+.show-artwork {
+  width: min(100%, 418px);
+  justify-self: center;
+  padding: 24px;
+  background: var(--surface);
+}
+.show-artwork picture {
+  display: block;
+}
+.show-artwork img {
+  width: 100%;
+  height: auto;
+}
+.show-subscriptions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 8%;
+  border-top: 1px solid var(--rule);
+  padding-top: 28px;
+  margin-top: 38px;
+}
+.show-subscriptions > section + section {
+  border-left: 1px solid var(--rule);
+  padding-left: 30px;
+}
+.evergreen-page :is(.email-subscription, .live-recording) .eyebrow {
+  margin-bottom: 13px;
+}
+:is(.email-subscription, .live-recording) > p:not(.eyebrow) {
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0 0 21px;
+  color: var(--muted);
+}
+.live-recording > a {
+  display: inline-block;
+  font-size: 13px;
+}
+.subscription-form label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.subscription-form .action-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+}
+.subscription-form input {
+  width: 100%;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--control-border);
+  padding: 12px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+.subscription-form button {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  padding: 13px 17px;
+  font: 700 12px/1.5 var(--font);
+  border-radius: 2px;
+  cursor: pointer;
+  min-height: 46px;
+}
+.subscription-form button:disabled {
+  cursor: wait;
+}
+.subscription-form .form-status {
+  font-size: 13px;
+}
+.show-notes-feed {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 11px;
+}
+.evergreen-page .archive {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.evergreen-page .archive .player {
+  margin-top: 18px;
+  max-width: 500px;
+}
+.archive-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 24px;
+  font-size: 13px;
+}
+.people-intro .email-subscription {
+  border-top: 1px solid var(--rule);
+  margin-top: 28px;
+  padding-top: 25px;
+}
+.people-portraits {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+}
+.people-portraits article:nth-of-type(2) {
+  margin-top: 46px;
+}
+.people-portrait {
+  position: relative;
+  background: var(--cool-bg);
+}
+.people-portrait img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 0.9;
+  object-fit: cover;
+  filter: grayscale(1);
+}
+.people-portrait .role {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  font: 9px/1.4 var(--mono);
+  color: var(--text);
+  background: var(--cool-bg);
+}
+.people-portraits article:nth-of-type(2) .people-portrait .role {
+  background: var(--warm-bg);
+}
+.people-portraits h2 {
+  font-size: 25px;
+  margin: 17px 0 10px;
+}
+.people-portraits article > p {
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.people-portraits .profile-links {
+  gap: 0;
+  margin: 7px 0;
+}
+.about-context {
+  border-top: 1px solid var(--rule);
+  margin-top: 40px;
+  padding-top: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 8%;
+  font-size: 15px;
+}
+.about-contact {
+  padding-left: 30px;
+}
+.about-contact a {
+  display: inline-block;
+}
+.about-community-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 20px;
+  font-size: 13px;
+}
+.evergreen-page .contributors {
+  margin-top: 38px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.evergreen-page .contributors > h3 {
+  font-size: 18px;
+}
+.evergreen-page .contributor-list {
+  margin-top: 16px;
+}
+/* Intro pages have a normal footer, freeing the first view for subscription. */
+body:has(.evergreen-page) {
+  padding-block-end: 0;
+}
+body:has(.evergreen-page) .site-footer {
+  position: static;
+  padding-inline: 0;
+  max-inline-size: 75rem;
+  margin: 32px auto 0;
+}
+html:has(.evergreen-page) {
+  scroll-padding-block: 24px;
+}
+@container evergreen (width < 950px) {
+  .subscription-form .action-row {
+    flex-direction: column;
+  }
+  .show-intro,
+  .people-intro {
+    column-gap: 5%;
+  }
+  .people-portraits {
+    gap: 16px;
+  }
+}
+@container evergreen (width < 700px) {
+  .evergreen-page {
+    padding-top: 0;
+  }
+  .evergreen-page h1 {
+    font-size: 47px;
+  }
+  .evergreen-page .lead {
+    font-size: 15px;
+  }
+  .evergreen-page .eyebrow {
+    font-size: 9px;
+  }
+  .show-intro,
+  .people-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .show-artwork {
+    width: min(100%, 300px);
+    padding: 20px;
+  }
+  .follow-show {
+    margin-top: 24px;
+  }
+  .show-subscriptions,
+  .about-context {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+  .show-subscriptions > section + section,
+  .about-contact {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+    padding: 25px 0 0;
+  }
+  .people-portraits h2 {
+    font-size: 21px;
+  }
+  .people-portraits article > p {
+    font-size: 11px;
+  }
+  .people-portrait .role {
+    font-size: 8px;
+    padding: 8px;
+  }
+  .people-portraits article:nth-of-type(2) {
+    margin-top: 30px;
+  }
+  .evergreen-page .archive {
+    margin-top: 36px;
+  }
+}
