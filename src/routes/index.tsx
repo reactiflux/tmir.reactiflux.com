@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { Player } from "../components/Player";
+import { EpisodeHeader } from "../components/EpisodeHeader";
 import {
   EmailSubscription,
   LiveRecording,
@@ -15,7 +15,7 @@ import { cardTitle } from "../content/slug.ts";
 const HOME_DESCRIPTION =
   "A monthly conversation about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson. Follow the podcast, get new episodes by email, or listen live in Reactiflux.";
 
-// The archive uses published metadata only. The introduction needs no episode selections.
+const STARTER_EPISODES = ["2026-05", "2025-09", "2024-12"];
 const getHome = createServerFn().handler(async () => {
   const { loadEpisodes } = await import("../content/load.ts");
   const episodes = await loadEpisodes();
@@ -26,6 +26,7 @@ const getHome = createServerFn().handler(async () => {
     series: episode.series,
     description: episode.description,
     audioUrl: episode.audioUrl,
+    duration: episode.duration,
   }));
 });
 
@@ -48,18 +49,13 @@ export const Route = createFileRoute("/")({
 
 function ArchiveList({
   episodes,
-  latest = false,
 }: {
   episodes: Awaited<ReturnType<typeof getHome>>;
-  latest?: boolean;
 }) {
   return (
     <ul className="archive-list">
-      {episodes.map((episode, index) => (
-        <li
-          key={episode.slug}
-          id={latest && index === 0 ? "latest" : undefined}
-        >
+      {episodes.map((episode) => (
+        <li key={episode.slug}>
           <time dateTime={episode.date}>{shortDate(episode.date)}</time>
           <div className="archive-copy">
             {episode.series && <p className="eyebrow">{episode.series}</p>}
@@ -69,9 +65,6 @@ function ArchiveList({
               </a>
             </h3>
             {episode.description && <p>{episode.description}</p>}
-            {latest && index === 0 && (
-              <Player audioUrl={episode.audioUrl} title={episode.title} />
-            )}
           </div>
         </li>
       ))}
@@ -81,6 +74,11 @@ function ArchiveList({
 
 function Home() {
   const archive = Route.useLoaderData();
+  const [latest, ...recent] = archive;
+  const starters = STARTER_EPISODES.flatMap((slug) => {
+    const episode = archive.find((entry) => entry.slug === slug);
+    return episode ? [episode] : [];
+  });
   return (
     <div className="evergreen-page">
       <script
@@ -146,20 +144,63 @@ function Home() {
           </picture>
         </figure>
       </section>
+      {latest && (
+        <section
+          className="home-latest"
+          id="latest"
+          aria-labelledby="latest-title"
+        >
+          <p className="eyebrow">Latest episode</p>
+          <time dateTime={latest.date}>{shortDate(latest.date)}</time>
+          <h2 id="latest-title">
+            <a href={`/episodes/${latest.slug}`}>{cardTitle(latest.title)}</a>
+          </h2>
+          {latest.description && (
+            <p className="latest-description">{latest.description}</p>
+          )}
+          <EpisodeHeader
+            key={latest.slug}
+            audioUrl={latest.audioUrl}
+            title={latest.title}
+            duration={latest.duration}
+          />
+          <a href={`/episodes/${latest.slug}`}>
+            Notes, sources, and transcript ↗
+          </a>
+        </section>
+      )}
       <div className="show-subscriptions">
         <EmailSubscription inputId="home-email" />
         <LiveRecording />
       </div>
+      <section className="home-starters" aria-labelledby="starter-title">
+        <p className="eyebrow">Start here</p>
+        <h2 id="starter-title">A few good places to start.</h2>
+        <p>Three episodes to get to know the show.</p>
+        <div className="conversation-grid">
+          {starters.map((episode) => (
+            <article key={episode.slug}>
+              <time dateTime={episode.date}>{shortDate(episode.date)}</time>
+              <h3>
+                <a href={`/episodes/${episode.slug}`}>
+                  {cardTitle(episode.title)}
+                </a>
+              </h3>
+              <a href={`/episodes/${episode.slug}`}>Listen to the episode ↗</a>
+            </article>
+          ))}
+        </div>
+      </section>
       <section className="archive" id="archive" aria-labelledby="archive-title">
         <div className="section-heading">
           <h2 id="archive-title">Recent episodes</h2>
           <p>{archive.length} conversations and counting.</p>
         </div>
-        <ArchiveList episodes={archive.slice(0, 6)} latest />
-        {archive.length > 6 && (
+        <ArchiveList episodes={recent.slice(0, 6)} />
+        {recent.length > 6 && (
           <details className="archive-more">
-            <summary>Explore all {archive.length} episodes</summary>
-            <ArchiveList episodes={archive.slice(6)} />
+            <summary>Explore {recent.length - 6} more episodes</summary>
+            <ArchiveList episodes={recent.slice(6)} />
           </details>
         )}
         <div className="archive-tools">
