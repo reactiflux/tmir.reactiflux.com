@@ -36,6 +36,9 @@
   padding-block: 1rem;
   border-block: 1px solid var(--rule);
 }
+.episode-header {
+  container: episode-player / inline-size;
+}
 .episode-header audio {
   inline-size: 100%;
 }
@@ -112,6 +115,42 @@
 .playback-status {
   font-size: 0.875rem;
   color: var(--muted);
+}
+@container episode-player (inline-size <= 40.25rem) {
+  .episode-controls {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .episode-progress {
+    order: 1;
+    flex: 0 0 100%;
+    inline-size: 100%;
+  }
+  .episode-speed {
+    margin-inline-start: auto;
+    font-size: 0.6875rem;
+    padding: 0.25rem;
+  }
+  .playback-time,
+  .audio-download {
+    font-size: 0.625rem;
+  }
+}
+@container episode-player (inline-size <= 18rem) {
+  .episode-controls {
+    column-gap: 0.25rem;
+  }
+  .episode-play {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+  }
+  .playback-time,
+  .audio-download {
+    font-size: 0.5625rem;
+  }
+  .episode-speed {
+    font-size: 0.625rem;
+  }
 }
 .episode-page {
   & .episode {
@@ -245,18 +284,6 @@
     & .episode {
       gap: 1.5rem;
     }
-  }
-  .episode-controls {
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .playback-time,
-  .audio-download {
-    font-size: 0.625rem;
-  }
-  .episode-speed {
-    font-size: 0.6875rem;
-    padding: 0.25rem;
   }
   .episode-intro .lead {
     font-size: 1.125rem;
