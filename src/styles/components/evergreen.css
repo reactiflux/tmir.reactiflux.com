@@ -398,3 +398,43 @@ html:has(.evergreen-page) {
   color: var(--muted);
   font-size: 14px;
 }
+.home-starters {
+  padding: clamp(20px, 4cqw, 36px);
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--cool-bg);
+}
+.evergreen-page .home-starters > .eyebrow {
+  display: inline-block;
+  padding: 6px 10px;
+  margin-bottom: 16px;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 700;
+}
+.home-starters .conversation-grid {
+  gap: 16px;
+  margin-top: 24px;
+}
+.home-starters .conversation-grid article {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.home-starters .conversation-grid h3 {
+  margin-block: 0 16px;
+}
+.home-starters .conversation-grid article > a {
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  margin-top: auto;
+  font-weight: 700;
+}
