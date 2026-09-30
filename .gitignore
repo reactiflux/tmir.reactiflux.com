@@ -11,3 +11,4 @@ dist
 .output
 src/routeTree.gen.ts
 public/robots.txt
+public/justify.js

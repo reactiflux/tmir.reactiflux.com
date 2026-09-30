@@ -1,5 +1,5 @@
 import { globSync, writeFileSync } from "node:fs";
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { build, defineConfig, loadEnv, type Plugin } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
@@ -33,12 +33,30 @@ const pages = [
 
 /**
  * Files that depend on the environment, written into public/ so Vite's normal
- * public copy emits them: robots.txt (its Sitemap line carries the site URL).
+ * public copy emits them: robots.txt (its Sitemap line carries the site URL),
+ * and justify.js, the transcript justifier bundled for pages that don't hydrate.
  */
+let justifyBuilt: Promise<unknown> | undefined;
 const generatedPublicFiles = (env: Record<string, string>) =>
   ({
     name: "generated-public-files",
-    buildStart() {
+    async buildStart() {
+      // buildStart runs once per environment; bundle once.
+      await (justifyBuilt ??= build({
+        configFile: false,
+        logLevel: "warn",
+        publicDir: false,
+        build: {
+          lib: {
+            entry: "src/client/justify-transcript.ts",
+            formats: ["iife"],
+            name: "justify",
+            fileName: () => "justify.js",
+          },
+          outDir: "public",
+          emptyOutDir: false,
+        },
+      }));
       const siteUrl = env.VITE_SITE_URL || "https://thismonthinreact.com";
       writeFileSync(
         "public/robots.txt",
