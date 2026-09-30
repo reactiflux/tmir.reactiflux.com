@@ -96,6 +96,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 />
                 <script dangerouslySetInnerHTML={{ __html: PLAYER_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: SEEK_SCRIPT }} />
+                <script defer src="/justify.js" />
                 <script dangerouslySetInnerHTML={{ __html: OUTLINE_SCRIPT }} />
                 <script
                   dangerouslySetInnerHTML={{
