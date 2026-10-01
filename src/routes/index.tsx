@@ -74,7 +74,7 @@ function ArchiveList({
 
 function Home() {
   const archive = Route.useLoaderData();
-  const [latest, ...recent] = archive;
+  const latest = archive[0];
   const starters = STARTER_EPISODES.flatMap((slug) => {
     const episode = archive.find((entry) => entry.slug === slug);
     return episode ? [episode] : [];
@@ -196,11 +196,11 @@ function Home() {
           <h2 id="archive-title">Recent episodes</h2>
           <p>{archive.length} conversations and counting.</p>
         </div>
-        <ArchiveList episodes={recent.slice(0, 6)} />
-        {recent.length > 6 && (
+        <ArchiveList episodes={archive.slice(0, 6)} />
+        {archive.length > 6 && (
           <details className="archive-more">
-            <summary>Explore {recent.length - 6} more episodes</summary>
-            <ArchiveList episodes={recent.slice(6)} />
+            <summary>Explore {archive.length - 6} more episodes</summary>
+            <ArchiveList episodes={archive.slice(6)} />
           </details>
         )}
         <div className="archive-tools">

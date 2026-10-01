@@ -68,7 +68,15 @@ test("Shell", () => {
   contains("index.html", 'id="archive"');
   contains("index.html", "Carl Vitullo");
   contains("index.html", "Mark Erikson");
-  for (const slug of allSlugs) contains("index.html", `/episodes/${slug}`);
+  // The archive itself must list every episode — the Latest block linking one
+  // elsewhere on the page doesn't count.
+  const home = file("index.html") || "";
+  const archive = home.slice(home.indexOf('id="archive"'));
+  for (const slug of allSlugs)
+    assert.ok(
+      archive.includes(`href="/episodes/${slug}"`),
+      `index.html #archive lists ${slug}`,
+    );
 });
 
 test("Episode documents", () => {
