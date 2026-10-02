@@ -1,7 +1,7 @@
 ---
 title: Behind the React Documentary
 date: 2023-02-24
-description: ""
+description: "Reactiflux Spotlight: behind the scenes of the React documentary."
 series: Reactiflux Spotlight
 transistorId: 8ac572c9
 audioUrl: https://op3.dev/e/media.transistor.fm/8ac572c9/80184476.mp3

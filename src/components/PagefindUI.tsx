@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { enhanceSearchContext, prepareSearchResult } from "./search-results";
+import { withPageUrls } from "./search-url";
 
 interface SearchUI {
   triggerSearch: (term: string) => void;
@@ -77,7 +78,7 @@ export function PagefindUI() {
         showImages: false,
         resetStyles: false,
         excerptLength: 160,
-        processResult: prepareSearchResult,
+        processResult: (result) => prepareSearchResult(withPageUrls(result)),
         translations: {
           placeholder: "Search topics, tools, or people…",
           search_label: "Search transcripts",

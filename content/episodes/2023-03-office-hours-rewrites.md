@@ -1,7 +1,7 @@
 ---
 title: Office Hours – Rewrites, with Sunil Pai and Mark Erikson
 date: 2023-03-23
-description: ""
+description: "Reactiflux Office Hours: Sunil Pai and Mark Erikson on rewrites: when to rewrite software, when not to, and how to do it well."
 series: Reactiflux Office Hours
 transistorId: adb44850
 audioUrl: https://op3.dev/e/media.transistor.fm/adb44850/c888e135.mp3

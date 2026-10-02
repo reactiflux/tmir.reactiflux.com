@@ -1,7 +1,7 @@
 ---
 title: Office Hours with Retsam19 and MapleLeaf
 date: 2022-12-22
-description: ""
+description: "Reactiflux Office Hours: Carl Vitullo with Reactiflux regulars Retsam19 and MapleLeaf, answering questions from the community."
 series: Reactiflux Office Hours
 transistorId: 45cd9da0
 audioUrl: https://op3.dev/e/media.transistor.fm/45cd9da0/9dc461d0.mp3

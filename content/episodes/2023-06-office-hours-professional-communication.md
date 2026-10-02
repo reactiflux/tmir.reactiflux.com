@@ -1,7 +1,7 @@
 ---
 title: Office Hours – Professional Communication with Elizabeth Woolf
 date: 2023-06-06
-description: ""
+description: "Reactiflux Office Hours: Elizabeth Woolf on professional communication for software developers."
 series: Reactiflux Office Hours
 transistorId: 1d256264
 audioUrl: https://op3.dev/e/media.transistor.fm/1d256264/fe02a9d1.mp3

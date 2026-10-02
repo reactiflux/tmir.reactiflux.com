@@ -1,7 +1,7 @@
 ---
 title: Office Hours with Matt Pocock and MapleLeaf
 date: 2023-01-11
-description: ""
+description: "Reactiflux Office Hours: Carl Vitullo, Matt Pocock, and MapleLeaf answer questions from the Reactiflux community."
 series: Reactiflux Office Hours
 transistorId: 5296d467
 audioUrl: https://op3.dev/e/media.transistor.fm/5296d467/85f64008.mp3

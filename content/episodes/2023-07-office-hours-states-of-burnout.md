@@ -1,7 +1,7 @@
 ---
 title: Office Hours – States of Burnout with Jenny Truong
 date: 2023-07-17
-description: ""
+description: "Reactiflux Office Hours: Jenny Truong on the states of burnout, recognizing them, and recovering as a developer."
 series: Reactiflux Office Hours
 transistorId: "51775473"
 audioUrl: https://op3.dev/e/media.transistor.fm/51775473/fe8af9b6.mp3

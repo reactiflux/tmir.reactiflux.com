@@ -53,7 +53,7 @@ test("Shell", () => {
   contains("index.html", 'rel="icon" href="/favicon.png"');
   // The skip link must precede the header on both rendering paths — the router
   // shell and the static document handlers build their own markup.
-  for (const path of ["index.html", "links/index.html"]) {
+  for (const path of ["index.html", "links.html"]) {
     const html = file(path) || "";
     assert.ok(
       html.includes('class="skip-link" href="#main"') &&
@@ -73,9 +73,9 @@ test("Shell", () => {
 
 test("Episode documents", () => {
   assert.ok(allSlugs.length > 0, "content/episodes has at least one episode");
-  for (const slug of allSlugs) hasFile(`episodes/${slug}/index.html`);
+  for (const slug of allSlugs) hasFile(`episodes/${slug}.html`);
   if (!newest) return;
-  const path = `episodes/${newest}/index.html`;
+  const path = `episodes/${newest}.html`;
   contains(path, "data-pagefind-body");
   contains(path, 'class="outline"');
   contains(path, "data-seconds=");
@@ -106,19 +106,19 @@ test("Episode documents", () => {
 const LINKS_MAX_BYTES = 75_000;
 
 test("Links document", () => {
-  hasFile("links/index.html");
-  const html = file("links/index.html")!;
+  hasFile("links.html");
+  const html = file("links.html")!;
   assert.ok(
     html.length < LINKS_MAX_BYTES,
-    `links/index.html is ${html.length} B, under the ${LINKS_MAX_BYTES} B cap`,
+    `links.html is ${html.length} B, under the ${LINKS_MAX_BYTES} B cap`,
   );
-  contains("links/index.html", 'id="subject-browser"');
-  contains("links/index.html", 'class="link-row"');
-  contains("links/index.html", 'id="link-filter"');
+  contains("links.html", 'id="subject-browser"');
+  contains("links.html", 'class="link-row"');
+  contains("links.html", 'id="link-filter"');
   // With no JavaScript the filters still work, as a plain GET form.
   assert.ok(
     /<form[^>]*method="get"[^>]*>/.test(html),
-    "links/index.html filters submit as a GET form without JavaScript",
+    "links.html filters submit as a GET form without JavaScript",
   );
 });
 
@@ -168,21 +168,18 @@ test("Feed and chapters", () => {
 });
 
 test("Search", () => {
-  hasFile("search/index.html");
-  contains("search/index.html", 'id="pagefind-ui"');
+  hasFile("search.html");
+  contains("search.html", 'id="pagefind-ui"');
   assert.ok(
     existsSync(join(dist, "pagefind", "pagefind-ui.js")),
     "pagefind index built — run: npx pagefind --site dist/client",
   );
   // PagefindUI injects the <script src="/pagefind/pagefind-ui.js"> at runtime,
   // so it never appears literally in the prerendered HTML. Instead confirm
-  // search/index.html loads a JS chunk that references the pagefind asset.
-  const html = file("search/index.html") || "";
+  // search.html loads a JS chunk that references the pagefind asset.
+  const html = file("search.html") || "";
   const chunkSrc = /href="(\/assets\/search-[^"]+\.js)"/.exec(html)?.[1];
-  assert.ok(
-    chunkSrc,
-    "search/index.html references a /assets/search-*.js chunk",
-  );
+  assert.ok(chunkSrc, "search.html references a /assets/search-*.js chunk");
   const chunk = readFileSync(join(dist, chunkSrc.slice(1)), "utf8");
   assert.ok(
     chunk.includes("pagefind-ui.js"),
@@ -191,27 +188,24 @@ test("Search", () => {
 });
 
 test("About", () => {
-  hasFile("about/index.html");
-  contains("about/index.html", 'id="hosts-heading"');
-  contains("about/index.html", 'id="live"');
-  contains("about/index.html", 'id="subscribe"');
+  hasFile("about.html");
+  contains("about.html", 'id="hosts-heading"');
+  contains("about.html", 'id="live"');
+  contains("about.html", 'id="subscribe"');
   contains(
-    "about/index.html",
+    "about.html",
     "https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH",
   );
   contains(
-    "about/index.html",
+    "about.html",
     "https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526",
   );
-  contains(
-    "about/index.html",
-    "https://feeds.transistor.fm/this-month-in-react",
-  );
-  contains("about/index.html", "mailto:hello@reactiflux.com");
+  contains("about.html", "https://feeds.transistor.fm/this-month-in-react");
+  contains("about.html", "mailto:hello@reactiflux.com");
   if (process.env.VITE_BLUESKY_PROFILE_URL)
-    contains("about/index.html", "Follow on Bluesky");
+    contains("about.html", "Follow on Bluesky");
 
-  const about = file("about/index.html") || "";
+  const about = file("about.html") || "";
   const bdUser = process.env.VITE_BUTTONDOWN_USER;
   if (bdUser) {
     assert.ok(
@@ -229,19 +223,19 @@ test("About", () => {
 });
 
 test("Design specimen", () => {
-  hasFile("specimen/index.html");
-  const html = file("specimen/index.html") || "";
+  hasFile("specimen.html");
+  const html = file("specimen.html") || "";
   assert.match(
     html,
     /<h1\b[^>]*>Design specimen<\/h1>/,
-    "specimen/index.html has a Design specimen heading",
+    "specimen.html has a Design specimen heading",
   );
   assert.match(
     html,
     /<meta\b(?=[^>]*\bname="robots")(?=[^>]*\bcontent="[^"]*\bnoindex\b)[^>]*>/i,
-    "specimen/index.html is noindex",
+    "specimen.html is noindex",
   );
-  for (const path of ["index.html", "about/index.html"]) {
+  for (const path of ["index.html", "about.html"]) {
     assert.doesNotMatch(
       file(path) || "",
       /\bhref=["']\/specimen(?:[/#?][^"']*)?["']/,
@@ -289,13 +283,13 @@ test("Stylesheet", () => {
 test("Prerender coverage", () => {
   const expected = [
     "index.html",
-    "links/index.html",
-    "search/index.html",
-    "about/index.html",
-    "specimen/index.html",
+    "links.html",
+    "search.html",
+    "about.html",
+    "specimen.html",
     "feed.xml",
     ...allSlugs.flatMap((s) => [
-      `episodes/${s}/index.html`,
+      `episodes/${s}.html`,
       `episodes/${s}/chapters.json`,
       `episodes/${s}/transcript.srt`,
     ]),
@@ -335,7 +329,7 @@ function hasTranscript(slug: string): boolean {
 
 test("Transcript integrity", () => {
   for (const slug of allSlugs) {
-    const html = file(`episodes/${slug}/index.html`);
+    const html = file(`episodes/${slug}.html`);
     if (html === null) continue;
     assert.doesNotMatch(
       html,
@@ -392,7 +386,7 @@ test("Transcript integrity", () => {
 
 test("Episode header and outline state", () => {
   for (const slug of allSlugs) {
-    const path = `episodes/${slug}/index.html`;
+    const path = `episodes/${slug}.html`;
     const html = file(path);
     if (html === null) continue;
     contains(path, 'class="episode-header"');
@@ -423,8 +417,8 @@ test("Link previews", () => {
   ).replace(/\/$/, "");
   for (const [path, slug] of [
     ["index.html", "default"],
-    ["about/index.html", "default"],
-    [`episodes/${newest}/index.html`, newest],
+    ["about.html", "default"],
+    [`episodes/${newest}.html`, newest],
   ]) {
     contains(path!, `content="${origin}/og/${slug}.jpg"`);
     contains(path!, 'content="summary_large_image"');
@@ -432,7 +426,7 @@ test("Link previews", () => {
     contains(path!, 'property="og:image:width" content="1200"');
     contains(path!, 'name="theme-color"');
   }
-  const path = `episodes/${newest}/index.html`;
+  const path = `episodes/${newest}.html`;
   contains(path, 'property="og:type" content="article"');
   contains(path, 'property="article:published_time"');
   const title = /<title>([^<]*)<\/title>/.exec(file(path) || "")?.[1] || "";
@@ -467,7 +461,7 @@ test("Robots, sitemap, JSON-LD", () => {
     "PodcastSeries",
     "index.html has PodcastSeries JSON-LD",
   );
-  const path = `episodes/${newest}/index.html`;
+  const path = `episodes/${newest}.html`;
   const ld = ldJson(path);
   assert.equal(
     ld?.["@type"],
@@ -498,17 +492,17 @@ test("Sizes", () => {
     `  router-page JS (${jsFiles.length} files): ${rawTotal} B raw / ${gzipTotal} B gzip`,
   ];
   if (newest) {
-    const html = readFileSync(join(dist, "episodes", newest, "index.html"));
+    const html = readFileSync(join(dist, "episodes", `${newest}.html`));
     lines.push(
-      `  episode document ${newest}/index.html: ${html.length} B raw / ${gzipSync(html).length} B gzip, 0 external scripts`,
+      `  episode document ${newest}.html: ${html.length} B raw / ${gzipSync(html).length} B gzip, 0 external scripts`,
     );
   }
-  const linksHtml = readFileSync(join(dist, "links", "index.html"));
+  const linksHtml = readFileSync(join(dist, "links.html"));
   const linksJs = [
     ...new Set(linksHtml.toString().match(/\/assets\/[^"']*\.js/g) ?? []),
   ].map((href) => readFileSync(join(dist, href.slice(1))));
   lines.push(
-    `  links document links/index.html: ${linksHtml.length} B raw / ${gzipSync(linksHtml).length} B gzip (cap ${LINKS_MAX_BYTES} B)`,
+    `  links document links.html: ${linksHtml.length} B raw / ${gzipSync(linksHtml).length} B gzip (cap ${LINKS_MAX_BYTES} B)`,
     `  links page JS (${linksJs.length} files): ${linksJs.reduce((n, b) => n + b.length, 0)} B raw / ${linksJs.reduce((n, b) => n + gzipSync(b).length, 0)} B gzip`,
   );
   lines.push(

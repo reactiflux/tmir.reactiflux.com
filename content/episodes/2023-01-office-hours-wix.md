@@ -1,7 +1,7 @@
 ---
 title: "Office Hours with Wix: Tom Raviv, Omer Kenet, & Peter Shershov"
 date: 2023-01-26
-description: ""
+description: "Reactiflux Office Hours with Wix engineers Tom Raviv, Omer Kenet, and Peter Shershov answering questions from the Reactiflux community."
 series: Reactiflux Office Hours
 transistorId: 002daf8d
 audioUrl: https://op3.dev/e/media.transistor.fm/002daf8d/e742d464.mp3

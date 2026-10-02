@@ -1,7 +1,7 @@
 ---
 title: Community Spotlight – React Miami with Michelle Bakels
 date: 2023-04-12
-description: ""
+description: "Reactiflux Spotlight: Michelle Bakels on organizing React Miami and building a developer conference."
 series: Reactiflux Spotlight
 transistorId: 46a0b9a8
 audioUrl: https://op3.dev/e/media.transistor.fm/46a0b9a8/6d8180e7.mp3
