@@ -25,6 +25,22 @@ export { scaffoldEpisode };
 /** An outline entry that already carries a timestamp — i.e. not a raw draft. */
 const OUTLINE_TIMESTAMP = /\[\[\d{1,3}(?::\d{2}){1,2}\]\(#/;
 
+const FILL_IN = `fill in:
+  description        one sentence; the episode lead, meta description and newsletter intro
+  descriptProjectId  the Descript project id, for pulling the transcript
+  outline            your show notes, between the front matter and "# Transcript",
+                     as a nested bullet list. No timestamps; the next run adds them.
+                     A plain (non-bullet) line starts a new section. Word each
+                     topic like its Transistor chapter title so the two pair up:
+
+    Releases
+    - [React 19.3](https://react.dev/blog/...)
+      - a sub-point, in prose or with its own links
+    - [TanStack Start 1.168](https://...)
+
+The run after that pairs the list against the episode's chapter marks in
+Transistor, so add those there before re-running.`;
+
 /** The feed item for this episode, or undefined if it isn't published yet. */
 async function feedItem(epSlug: string): Promise<FeedItem | undefined> {
   try {
@@ -60,9 +76,7 @@ async function main() {
         ? `created ${path} from the feed: ${item.title}`
         : `created ${path}. ${epSlug} is not in the Transistor feed yet, so the title and date are placeholders; ingest fills the title in once it is.`,
     );
-    console.log(
-      `\nnext: add the outline and descriptProjectId, then re-run the same command.`,
-    );
+    console.log(`\nnext: ${FILL_IN}\n\nthen re-run the same command.`);
     return;
   }
 
@@ -76,7 +90,7 @@ async function main() {
   if (!OUTLINE_TIMESTAMP.test(region)) {
     const draft = parseDraft(region);
     if (draft.length === 0)
-      throw new Error(`write the outline in ${path} first`);
+      throw new Error(`no outline in ${path} yet. ${FILL_IN}`);
     const chapters = await fetchChapters(epSlug);
     if (chapters.length === 0)
       throw new Error(
@@ -105,7 +119,7 @@ async function main() {
     splitFile(fileText).frontMatter.descriptProjectId ?? "",
   );
   if (episode.outline.length === 0)
-    throw new Error(`write the outline in ${path} first`);
+    throw new Error(`no outline in ${path} yet. ${FILL_IN}`);
   if (!projectId) throw new Error(`set descriptProjectId in ${path} first`);
 
   // Ingest first: the SRT push needs the transistorId it writes, and an
