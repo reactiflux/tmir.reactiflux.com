@@ -1,7 +1,7 @@
 ---
 title: Community Spotlight – Joy of React, with Josh Comeau
 date: 2023-02-14
-description: ""
+description: "Reactiflux Spotlight: Josh Comeau talks with Carl Vitullo about Joy of React, his interactive course for learning React."
 series: Reactiflux Spotlight
 transistorId: "5e101416"
 audioUrl: https://op3.dev/e/media.transistor.fm/5e101416/c11d832d.mp3

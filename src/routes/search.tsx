@@ -13,7 +13,7 @@ export const Route = createFileRoute("/search")({
         url: `${SITE_URL}/search`,
       }),
     ],
-    links: [{ rel: "canonical", href: `${SITE_URL}/search` }],
+    // No canonical: the page is noindex, and a canonical asks for the opposite.
   }),
   component: Search,
 });

@@ -75,6 +75,10 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         enabled: true,
         crawlLinks: true,
+        // Write /about as about.html, not about/index.html. Netlify answers a
+        // directory index with a 301 to the trailing-slash URL, which would
+        // contradict every canonical, sitemap entry and internal link.
+        autoSubfolderIndex: false,
         // /links renders its own filter permutations as links. Prerendering
         // them is unbounded and pointless — the Netlify function renders them.
         filter: (page) => !page.path.includes("?"),

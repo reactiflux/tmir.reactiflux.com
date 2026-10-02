@@ -1,7 +1,7 @@
 ---
 title: Office Hours – Becoming a leader with Ankita Kulkarni
 date: 2023-03-14
-description: ""
+description: "Reactiflux Office Hours: Ankita Kulkarni joins Carl Vitullo and Mark Erikson to talk about becoming a leader as a software engineer."
 series: Reactiflux Office Hours
 transistorId: 61a03382
 audioUrl: https://op3.dev/e/media.transistor.fm/61a03382/c4e94863.mp3

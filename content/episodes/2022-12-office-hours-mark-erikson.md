@@ -1,7 +1,7 @@
 ---
 title: Office Hours with Mark Erikson and Lenz Weber-Tronic
 date: 2022-12-16
-description: ""
+description: "Reactiflux Office Hours: Carl Vitullo, Mark Erikson, and Lenz Weber-Tronic of the Redux maintainer team answer questions from the Reactiflux community."
 series: Reactiflux Office Hours
 transistorId: 5b283b32
 audioUrl: https://op3.dev/e/media.transistor.fm/5b283b32/16b5380d.mp3

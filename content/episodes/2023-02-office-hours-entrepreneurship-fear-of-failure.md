@@ -1,7 +1,7 @@
 ---
 title: Office Hours – Entrepreneurship, fear of failure, investing, tRPC, and Qwik with Tejas Kumar
 date: 2023-02-02
-description: ""
+description: "Reactiflux Office Hours: Tejas Kumar joins Carl Vitullo to talk entrepreneurship, fear of failure, investing, tRPC, and Qwik."
 series: Reactiflux Office Hours
 transistorId: 64de3bad
 audioUrl: https://op3.dev/e/media.transistor.fm/64de3bad/b62d110c.mp3

@@ -35,9 +35,19 @@ export const Route = createFileRoute("/episodes/$slug")({
 
         // episode.title already carries the site name or a "TMiR <yyyy-mm>: "
         // prefix, so strip it before appending the site name.
-        const name = cardTitle(episode.title);
-        const title = `${name} — ${SITE_NAME}`;
-        const description = episode.description || SITE_DESCRIPTION;
+        // A title that reduces to just the show name ("This Month in React
+        // (March 2023)") would give every such episode the same <title>, so
+        // name it by its month instead.
+        const stripped = cardTitle(episode.title);
+        const generic = stripped === SITE_NAME;
+        const name = generic
+          ? `${SITE_NAME}, ${monthYear(episode.date)}`
+          : stripped;
+        const title = generic ? name : `${name} — ${SITE_NAME}`;
+        // Without a written description, lead with the episode's own name so
+        // no two pages share a meta description.
+        const description =
+          episode.description || `${name}. ${SITE_DESCRIPTION}`;
         const url = `${SITE_URL}/episodes/${episode.slug}`;
         const published = new Date(
           `${episode.date.slice(0, 10)}T00:00:00Z`,
@@ -50,7 +60,17 @@ export const Route = createFileRoute("/episodes/$slug")({
           description,
           url,
           datePublished: published,
+          inLanguage: "en",
           image: `${SITE_URL}/og/${episode.slug}.jpg`,
+          ...(episode.people.length > 0
+            ? {
+                actor: episode.people.map((p) => ({
+                  "@type": "Person",
+                  name: p.name,
+                  ...(p.href ? { url: p.href } : {}),
+                })),
+              }
+            : {}),
           partOfSeries: {
             "@type": "PodcastSeries",
             name: SITE_NAME,

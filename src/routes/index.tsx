@@ -15,6 +15,9 @@ import { cardTitle } from "../content/slug.ts";
 const HOME_DESCRIPTION =
   "A monthly conversation about React, the web, and the work of building software, with Carl Vitullo and Mark Erikson. Follow the podcast, get new episodes by email, or listen live in Reactiflux.";
 
+// The show's name alone doesn't say what it is; searchers look for "React podcast".
+const HOME_TITLE = `${SITE_NAME} — a monthly React podcast`;
+
 const STARTER_EPISODES = ["2026-05", "2025-09", "2024-12"];
 const getHome = createServerFn().handler(async () => {
   const { loadEpisodes } = await import("../content/load.ts");
@@ -34,10 +37,10 @@ export const Route = createFileRoute("/")({
   loader: () => getHome(),
   head: () => ({
     meta: [
-      { title: SITE_NAME },
+      { title: HOME_TITLE },
       { name: "description", content: HOME_DESCRIPTION },
       ...ogMeta({
-        title: SITE_NAME,
+        title: HOME_TITLE,
         description: HOME_DESCRIPTION,
         url: `${SITE_URL}/`,
       }),
