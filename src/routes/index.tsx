@@ -167,8 +167,8 @@ function Home() {
             title={latest.title}
             duration={latest.duration}
           />
-          <a href={`/episodes/${latest.slug}`}>
-            Notes, sources, and transcript ↗
+          <a className="button" href={`/episodes/${latest.slug}`}>
+            Show notes &amp; transcript →
           </a>
         </section>
       )}
