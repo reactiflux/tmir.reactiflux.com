@@ -184,6 +184,15 @@
     & h2 a {
       color: inherit;
       text-decoration-color: var(--rule);
+      text-decoration-thickness: 0.06em;
+      text-underline-offset: 0.18em;
+      &:hover {
+        text-decoration-color: var(--accent);
+      }
+    }
+    & h2 code {
+      font-family: var(--mono);
+      font-size: 0.8em;
     }
     /* Long documents: skip rendering the sections nobody is looking at.
        45rem is the median section height; `auto` replaces the guess with the

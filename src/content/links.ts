@@ -1,5 +1,6 @@
 import type { Episode, OutlineItem } from "./parse.ts";
 import { subjectsForLink, type SubjectId } from "./link-subjects.ts";
+import { flattenLinks } from "./slug.ts";
 import { toSeconds } from "./time.ts";
 
 export type LinkEntry = {
@@ -93,7 +94,8 @@ function discussionUrl(
       .join(" ");
   for (const candidate of [item, ...[...parents].reverse()]) {
     const matches = episode.sections.filter(
-      (section) => words(section.title) === words(candidate.title),
+      (section) =>
+        words(flattenLinks(section.title)) === words(candidate.title),
     );
     if (matches.length === 1) return `${base}#${matches[0].anchor}`;
   }

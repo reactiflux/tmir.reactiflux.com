@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import { PersonIdentity } from "./PersonIdentity";
 import type { Episode, OutlineItem } from "../content/parse.ts";
-import { splitTitleLink } from "../content/slug.ts";
+import { flattenLinks, unescapeBackslashes } from "../content/slug.ts";
 import { hms, isoDuration, toSeconds } from "../content/time.ts";
 
 /** One delegated listener seeks the page's single <audio> from any [data-seconds]. */
@@ -178,6 +179,44 @@ export function Outline({ items }: { items: OutlineItem[] }) {
   );
 }
 
+const INLINE_LINK = /\[((?:\\.|[^\]\\])*)\]\(([^)\s]+)\)/g;
+
+/** Backslash escapes undone, `code` spans as <code>. */
+function inlineCode(text: string, offset: number): ReactNode[] {
+  const plain = unescapeBackslashes(text);
+  const out: ReactNode[] = [];
+  let last = 0;
+  for (const m of plain.matchAll(/`([^`\n]*)`/g)) {
+    out.push(
+      plain.slice(last, m.index),
+      <code key={`c${offset + m.index}`}>{m[1]}</code>,
+    );
+    last = m.index + m[0].length;
+  }
+  out.push(plain.slice(last));
+  return out;
+}
+
+/**
+ * The inline markdown a heading or outline line carries: any number of
+ * `[text](url)` links, escapes and code spans. Nothing block-level.
+ */
+function InlineMarkdown({ text }: { text: string }) {
+  const out: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(INLINE_LINK)) {
+    out.push(...inlineCode(text.slice(last, m.index), last));
+    out.push(
+      <a key={`a${m.index}`} href={m[2]} rel="noreferrer">
+        {inlineCode(m[1], m.index)}
+      </a>,
+    );
+    last = m.index + m[0].length;
+  }
+  out.push(...inlineCode(text.slice(last), last));
+  return <>{out}</>;
+}
+
 /**
  * What an episode page has to say when there is no outline and no transcript —
  * the Office Hours and Spotlight archive imports, which never had either.
@@ -246,26 +285,29 @@ export function EpisodeBody({ episode }: { episode: Episode }) {
       </nav>
       <div className="transcript" data-pagefind-body="">
         {episode.sections.map((section) => {
-          const heading = splitTitleLink(section.title);
+          const text = flattenLinks(section.title).trim();
+          const linked = section.title.includes("](");
           const resources = chapterResources.get(section.anchor) || [];
-          // Explicit heading links take precedence. Outline anchors also cover
-          // chapters whose wording differs from the linked resource's title.
-          const resourceUrl =
-            heading.url ||
-            resources.find((item) => item.title === heading.text)?.url ||
-            resources[0]?.url;
-          const headingText = /^tmir-\d{4}-\d{2}$/.test(heading.text)
-            ? "Introduction"
-            : heading.text;
+          // A heading carrying its own links renders them. Otherwise the outline
+          // supplies the link, matched by anchor since the wording may differ.
+          const resourceUrl = linked
+            ? undefined
+            : resources.find((item) => item.title === text)?.url ||
+              resources[0]?.url;
+          const content = /^tmir-\d{4}-\d{2}$/.test(text) ? (
+            "Introduction"
+          ) : (
+            <InlineMarkdown text={section.title} />
+          );
           return (
             <section key={section.anchor}>
               <h2 id={section.anchor}>
                 {resourceUrl ? (
                   <a href={resourceUrl} rel="noreferrer">
-                    {headingText}
+                    {content}
                   </a>
                 ) : (
-                  headingText
+                  content
                 )}
               </h2>
               {section.segments.map((segment) => {
