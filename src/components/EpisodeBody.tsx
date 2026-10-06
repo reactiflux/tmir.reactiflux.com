@@ -154,20 +154,22 @@ export function Outline({ items }: { items: OutlineItem[] }) {
                 </button>{" "}
               </>
             )}
-            <a href={`#${item.anchor}`}>{item.title}</a>
-            {item.url && (
-              <>
-                {" "}
-                <a
-                  className="outbound"
-                  href={item.url}
-                  rel="noreferrer"
-                  aria-label={`${item.title} (external link)`}
-                >
-                  &#8599;
-                </a>
-              </>
-            )}
+            <span className="entry">
+              <a href={`#${item.anchor}`}>{item.title}</a>
+              {item.url && (
+                <>
+                  {" "}
+                  <a
+                    className="outbound"
+                    href={item.url}
+                    rel="noreferrer"
+                    aria-label={`${item.title} (external link)`}
+                  >
+                    &#8599;
+                  </a>
+                </>
+              )}
+            </span>
             {item.children.length > 0 && <Outline items={item.children} />}
           </li>
         );
