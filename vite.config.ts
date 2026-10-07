@@ -65,9 +65,24 @@ const generatedPublicFiles = (env: Record<string, string>) =>
     },
   }) satisfies Plugin;
 
+/**
+ * Episode pages read content/ with fs, so Vite has no module to hot-update when
+ * an episode file changes. Reload the page instead; load.ts skips its cache in dev.
+ */
+const contentReload = {
+  name: "content-reload",
+  configureServer(server) {
+    server.watcher.on("all", (_event, file) => {
+      if (/content\/episodes\/[^/]+\.md$/.test(file))
+        server.ws.send({ type: "full-reload" });
+    });
+  },
+} satisfies Plugin;
+
 export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   plugins: [
+    contentReload,
     generatedPublicFiles(loadEnv(mode, process.cwd(), "VITE_")),
     // RSC is on for /links; the episode documents deliberately do not use it.
     tanstackStart({

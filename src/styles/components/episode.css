@@ -170,37 +170,6 @@
   padding-block: 0.5rem 1.25rem;
 }
 .episode-page {
-  & .outline {
-    gap: 0;
-    & > li {
-      padding-block: 0.6rem;
-      border-block-end: 1px solid var(--rule);
-      line-height: 1.5;
-    }
-    & ol {
-      margin-block-start: 0.5rem;
-    }
-    & ol > li:last-child {
-      border-block-end: 0;
-    }
-    & a {
-      color: var(--text);
-      text-decoration: none;
-    }
-    & a:hover {
-      text-decoration: underline;
-    }
-    & a[aria-current="true"] {
-      color: var(--accent);
-    }
-    & .ts,
-    & .outbound {
-      color: var(--muted);
-    }
-    & .ts {
-      margin-inline-end: 0.35rem;
-    }
-  }
   & .transcript {
     max-inline-size: 48rem;
     & h2 {
@@ -215,6 +184,15 @@
     & h2 a {
       color: inherit;
       text-decoration-color: var(--rule);
+      text-decoration-thickness: 0.06em;
+      text-underline-offset: 0.18em;
+      &:hover {
+        text-decoration-color: var(--accent);
+      }
+    }
+    & h2 code {
+      font-family: var(--mono);
+      font-size: 0.8em;
     }
     /* Long documents: skip rendering the sections nobody is looking at.
        45rem is the median section height; `auto` replaces the guess with the
@@ -260,7 +238,7 @@
    viewport breakpoints minus body's padding-inline at that width. */
 @container episode (inline-size > 56rem) {
   .episode-page .episode {
-    grid-template-columns: 15.625rem minmax(0, 1fr);
+    grid-template-columns: 17.5rem minmax(0, 1fr);
   }
 }
 @container episode (inline-size <= 51.5rem) {

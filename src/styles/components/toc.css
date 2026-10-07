@@ -27,3 +27,119 @@
     }
   }
 }
+
+/* The episode outline: one shared timestamp column (subgrid, so mm:ss and
+   h:mm:ss right-align at every depth and wrapped titles hang clear of it),
+   titles indented by depth with a hairline guide per level, and the current
+   entry marked on its own row only — never as a fill over a whole subtree.
+   Nested lists render with the .outline class too. */
+.outline {
+  --indent: 0.75rem;
+  --row-pad: 0.3125rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  & li,
+  & ol {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+  & li {
+    isolation: isolate;
+  }
+  & ol {
+    --depth: 1;
+  }
+  & ol ol {
+    --depth: 2;
+  }
+  & ol ol ol {
+    --depth: 3;
+  }
+  & .ts {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: baseline;
+    justify-self: end;
+    padding-block: var(--row-pad);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  & .entry {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: baseline;
+    padding-block: var(--row-pad);
+    text-wrap: balance;
+  }
+  /* One hairline per level, drawn down the indent so siblings join up. */
+  & ol .entry {
+    padding-inline-start: calc(var(--depth) * var(--indent));
+    background: repeating-linear-gradient(
+        to right,
+        var(--rule) 0 1px,
+        transparent 1px var(--indent)
+      )
+      0 0 / calc(var(--depth) * var(--indent)) 100% no-repeat;
+  }
+  & a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  & a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-underline-offset: 0.2em;
+  }
+  /* External links stay out of the way until the row is pointed at. */
+  & .outbound {
+    color: var(--muted);
+    opacity: 0;
+    &:hover {
+      color: var(--accent);
+    }
+  }
+  & li:hover > .entry > .outbound,
+  & .outbound:focus-visible {
+    opacity: 1;
+  }
+  /* The row highlight: a pseudo-element on grid row 1 only. */
+  & li::before {
+    content: "";
+    grid-column: 1 / -1;
+    grid-row: 1;
+    z-index: -1;
+    margin-inline-start: -0.5rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  /* Set by the outline script as sections enter the viewport. */
+  & li:has(> .entry > a[aria-current="true"]) {
+    &::before {
+      background: color-mix(in oklch, var(--accent) 12%, transparent);
+      box-shadow: inset 2px 0 var(--accent);
+    }
+    & > .ts,
+    & > .entry > a {
+      color: var(--accent);
+    }
+  }
+  /* Ancestors of the current entry: accent text only. */
+  & li:has(ol a[aria-current="true"]) > .entry > a:not(.outbound) {
+    color: var(--accent);
+  }
+}
+/* Top-level entries are the episode's segments, set apart by space alone. */
+.chapter-disclosure > .outline {
+  padding-inline-start: 0.5rem;
+  & > li + li {
+    margin-block-start: 0.75rem;
+  }
+}
+@media (hover: none) {
+  .outline .outbound {
+    opacity: 0.6;
+  }
+}

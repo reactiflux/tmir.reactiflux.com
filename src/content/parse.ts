@@ -167,6 +167,8 @@ function parseSegment(paragraph: string, lastSpeaker: string): Segment {
   return { speaker, time, text: unescapeMarkdown(text.trim()) };
 }
 
+const HEADING_ID = /\s*\{#([^\s{}]+)\}$/;
+
 function parseSections(region: string): Section[] {
   const sections: Section[] = [];
   // The synthetic lead-in section, kept only if paragraphs actually precede
@@ -185,8 +187,12 @@ function parseSections(region: string): Section[] {
       // A heading with no paragraphs under it still gets a section, so the
       // anchor it publishes keeps resolving.
       if (fromHeading || current.segments.length > 0) sections.push(current);
-      const title = trimmed.slice(3).trim();
-      current = { title, anchor: slug(title), segments: [] };
+      // `## Text {#id}` pins the anchor, so a heading's wording can change
+      // without breaking links already published to it.
+      const raw = trimmed.slice(3).trim();
+      const id = HEADING_ID.exec(raw);
+      const title = id ? raw.slice(0, id.index) : raw;
+      current = { title, anchor: id ? id[1] : slug(title), segments: [] };
       fromHeading = true;
       lastSpeaker = "";
       continue;

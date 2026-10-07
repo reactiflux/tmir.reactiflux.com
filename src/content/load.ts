@@ -26,6 +26,9 @@ export function episodeOrder(
 }
 
 export function loadEpisodes(): Promise<Episode[]> {
+  // Cache only in production builds: Vite doesn't watch files read via fs, so
+  // in dev a module-level cache would pin the content as of server start.
+  if (process.env.NODE_ENV !== "production") cache = undefined;
   cache ??= (async () => {
     const dir = contentDir();
     const files = globSync("*.md", { cwd: dir }).sort();

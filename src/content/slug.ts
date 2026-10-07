@@ -4,24 +4,17 @@
  * backslash run is stripped wholesale rather than one level at a time.
  */
 export function unescapeMarkdown(text: string): string {
-  return text
-    .replace(/\\+([!-\/:-@\[-`{-~])/g, "$1")
-    .replace(/`([^`\n]*)`/g, "$1");
+  return unescapeBackslashes(text).replace(/`([^`\n]*)`/g, "$1");
+}
+
+/** Just the backslash half of unescapeMarkdown: code spans stay delimited. */
+export function unescapeBackslashes(text: string): string {
+  return text.replace(/\\+([!-\/:-@\[-`{-~])/g, "$1");
 }
 
 /** Reduce `[text](url)` to `text`, and unescape what's left. */
 export function flattenLinks(text: string): string {
   return unescapeMarkdown(text.replace(/\[(.*?)\]\(.*?\)/g, "$1"));
-}
-
-/**
- * Split a heading/title into its plain text and its first `[text](url)` target,
- * so a heading written as a markdown link can render as a real anchor instead
- * of leaking brackets. `text` is the whole title with every link flattened.
- */
-export function splitTitleLink(title: string): { text: string; url?: string } {
-  const m = /\[[^\]]*\]\(([^)]+)\)/.exec(title);
-  return { text: flattenLinks(title).trim(), url: m?.[1] };
 }
 
 /**

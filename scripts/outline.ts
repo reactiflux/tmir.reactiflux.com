@@ -154,14 +154,14 @@ export function pairOutline(
   const walk = (node: DraftNode, depth: number) => {
     const draftTokens = tokens(node.text);
     let best = -1;
-    let bestScore = MATCH_THRESHOLD;
+    let bestScore = 0;
     for (let i = cursor; i < chapters.length; i++) {
       const chapterTokens = tokens(chapters[i].title);
       const score = Math.max(
         contained(chapterTokens, draftTokens),
         contained(draftTokens, chapterTokens),
       );
-      if (score > bestScore) {
+      if (score >= MATCH_THRESHOLD && score > bestScore) {
         best = i;
         bestScore = score;
       }

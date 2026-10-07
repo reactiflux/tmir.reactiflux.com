@@ -366,6 +366,27 @@ test("a body that begins with the transcript marker still parses its sections", 
   assert.equal(parsed.sections[0].segments[0].text, "hello");
 });
 
+test("an explicit {#id} sets a heading's anchor and leaves its title", () => {
+  const parsed = parseEpisode(
+    withFrontMatter(
+      [
+        "# Transcript",
+        "",
+        "## [Vidact](https://vidact.dev/) and more {#vidact}",
+        "",
+        "**Carl:** hi [00:00:01]",
+        "",
+      ].join("\n"),
+    ),
+    "x",
+  );
+  assert.equal(parsed.sections[0].anchor, "vidact");
+  assert.equal(
+    parsed.sections[0].title,
+    "[Vidact](https://vidact.dev/) and more",
+  );
+});
+
 test("a missing or unparseable date fails at parse time, naming the episode", () => {
   const noDate = "---\ntitle: t\ndescription: d\n---\n\n# Transcript\n";
   assert.throws(() => parseEpisode(noDate, "2026-05"), /2026-05.*date/);

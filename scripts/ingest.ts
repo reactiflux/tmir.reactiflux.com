@@ -298,7 +298,7 @@ export function scaffoldEpisode(
     },
     item.series
       ? ""
-      : "\n<!-- Outline goes here: a nested list of topics, each a link with a [[00:00:00](#anchor)] timestamp. -->\n\n# Transcript\n",
+      : "\n<!-- Outline goes here: your show notes as a nested bullet list of links and prose, no timestamps. Re-run publish for the format. -->\n\n# Transcript\n",
   );
 }
 

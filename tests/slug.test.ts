@@ -1,11 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  slug,
-  flattenLinks,
-  splitTitleLink,
-  unescapeMarkdown,
-} from "../src/content/slug.ts";
+import { slug, flattenLinks, unescapeMarkdown } from "../src/content/slug.ts";
 import {
   normalizeTime,
   secondsToTimestamp,
@@ -58,26 +53,6 @@ test("seconds and timestamps round-trip", () => {
   assert.equal(secondsToTimestamp(0), "00:00:00");
 });
 
-test("splitTitleLink separates a heading's plain text from its first URL", () => {
-  assert.deepEqual(
-    splitTitleLink(
-      "[Vite+ Beta](https://voidzero.dev/posts/announcing-vite-plus-beta)",
-    ),
-    {
-      text: "Vite+ Beta",
-      url: "https://voidzero.dev/posts/announcing-vite-plus-beta",
-    },
-  );
-  assert.deepEqual(
-    splitTitleLink("Johnson Chu made [a bridge](https://example.com/b) for it"),
-    { text: "Johnson Chu made a bridge for it", url: "https://example.com/b" },
-  );
-  assert.deepEqual(splitTitleLink("New releases"), {
-    text: "New releases",
-    url: undefined,
-  });
-});
-
 test("unescapeMarkdown drops backslash escapes and unwraps code spans", () => {
   assert.equal(unescapeMarkdown("Redux \\\\\\+ signals"), "Redux + signals");
   assert.equal(
@@ -107,8 +82,8 @@ test("flattenLinks and slug unescape too", () => {
     slug("Mark's React-Redux \\\\\\+ signals draft"),
     "marks-react-redux-signals-draft",
   );
-  assert.deepEqual(
-    splitTitleLink("[React Native \\\\\\<\\\\\\> Imgui](https://x.example/1)"),
-    { text: "React Native <> Imgui", url: "https://x.example/1" },
+  assert.equal(
+    flattenLinks("[React Native \\\\\\<\\\\\\> Imgui](https://x.example/1)"),
+    "React Native <> Imgui",
   );
 });

@@ -34,28 +34,6 @@
   }
 }
 
-.outline {
-  display: grid;
-  gap: 0.35rem;
-  /* Set by the outline script as sections enter the viewport. */
-  & li:has(> a[aria-current="true"]) {
-    border-inline-start: 2px solid var(--accent);
-    background: var(--surface);
-    margin-inline-start: -0.5rem;
-    padding-inline-start: 0.5rem;
-  }
-  & ol {
-    padding-inline-start: 1rem;
-    margin-block-start: 0.35rem;
-  }
-  & a {
-    text-decoration-color: var(--rule);
-  }
-}
-.outbound {
-  color: var(--muted);
-  text-decoration: none;
-}
 .toc h2 {
   font-size: 0.8rem;
   text-transform: uppercase;
