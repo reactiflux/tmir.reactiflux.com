@@ -78,3 +78,27 @@ test("installListeners is exported for both client surfaces", async () => {
   const analytics = await import("../src/lib/analytics.ts");
   assert.equal(typeof analytics.installListeners, "function");
 });
+
+test("the podcast platforms are the three clickEvent reports", () => {
+  for (const platform of ["apple", "spotify", "rss"]) {
+    assert.deepEqual(clickEvent("https://example.com/show", platform, HOST), {
+      event: "subscribe_link_clicked",
+      props: { platform },
+    });
+  }
+});
+
+test("the newsletter form and the podcast links carry their attributes", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const form = await readFile("src/components/NewsletterForm.tsx", "utf8");
+  assert.match(form, /data-analytics-form="newsletter"/);
+  const subscription = await readFile(
+    "src/components/ShowSubscription.tsx",
+    "utf8",
+  );
+  for (const platform of ["apple", "spotify", "rss"])
+    assert.match(
+      subscription,
+      new RegExp(`data-analytics-platform="${platform}"`),
+    );
+});
