@@ -24,6 +24,24 @@ declare global {
 let ph: typeof import("posthog-js").default | null = null;
 let ready: Promise<void> | null = null;
 
+/**
+ * Exported so a test can assert on it directly. `persistence: "memory"` is what
+ * makes this cookieless. `mask_personal_data_properties` + `custom_personal_data_properties`
+ * mask query params on $current_url (and $initial_current_url) before every capture —
+ * verified against node_modules/@posthog/types' posthog-config.d.ts, since the option
+ * isn't textually present in posthog-js/dist/module.d.ts (it only imports the type).
+ * Both search surfaces put the query in `?q=`, hence "q".
+ */
+export const INIT_OPTIONS = {
+  persistence: "memory",
+  capture_pageview: false,
+  capture_pageleave: false,
+  autocapture: false,
+  disable_session_recording: true,
+  mask_personal_data_properties: true,
+  custom_personal_data_properties: ["q"],
+} satisfies Partial<import("posthog-js").PostHogConfig>;
+
 async function load(): Promise<void> {
   // import.meta.env is undefined under `node --test`, hence the optional chain.
   const key = import.meta.env?.VITE_POSTHOG_KEY;
@@ -33,11 +51,7 @@ async function load(): Promise<void> {
     const { default: posthog } = await import("posthog-js");
     posthog.init(key, {
       ...(host ? { api_host: host } : {}),
-      persistence: "memory",
-      capture_pageview: false,
-      capture_pageleave: false,
-      autocapture: false,
-      disable_session_recording: true,
+      ...INIT_OPTIONS,
     });
     ph = posthog;
   } catch {
@@ -77,10 +91,7 @@ export function episodeSlug(path: string): string | undefined {
 
 export function trackPageview(path: string): void {
   const slug = episodeSlug(path);
-  track("$pageview", {
-    $current_url: location.href,
-    ...(slug ? { episode: slug } : {}),
-  });
+  track("$pageview", slug ? { episode: slug } : {});
 }
 
 /**
@@ -126,9 +137,14 @@ export function clickEvent(
  * client at all. Delegation means one implementation covers both, and the
  * static pages need no event handlers in their markup.
  *
- * Returns a cleanup function.
+ * Returns a cleanup function. Idempotent: a second call while listeners are
+ * already installed registers nothing and returns a no-op remover.
  */
+let installed = false;
+
 export function installListeners(): () => void {
+  if (installed) return () => {};
+  installed = true;
   function onClick(event: MouseEvent) {
     const anchor = (event.target as Element | null)?.closest?.("a");
     if (!anchor) return;
@@ -153,11 +169,12 @@ export function installListeners(): () => void {
   for (const entry of queue.splice(0)) track(...entry);
   queue.push = (...entries: AnalyticsEntry[]) => {
     for (const entry of entries) track(...entry);
-    return 0;
+    return queue.length;
   };
   return () => {
     document.removeEventListener("click", onClick);
     document.removeEventListener("submit", onSubmit);
+    installed = false;
   };
 }
 

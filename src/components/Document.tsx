@@ -18,6 +18,9 @@ export function OgTags(props: Og) {
 /**
  * Episode pages sit outside the router, so its intent-based preload never
  * reaches them; this gives links to them the same hover prefetch.
+ *
+ * Must stay `prefetch`, not `prerender`: prerender executes /analytics.js on
+ * pages the visitor never opened, inflating episode pageview counts.
  */
 const SPECULATION_RULES = JSON.stringify({
   prefetch: [{ where: { href_matches: "/episodes/*" }, eagerness: "moderate" }],

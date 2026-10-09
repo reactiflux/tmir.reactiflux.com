@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   clickEvent,
   episodeSlug,
+  INIT_OPTIONS,
   isOutboundLink,
   track,
 } from "../src/lib/analytics.ts";
@@ -14,6 +15,12 @@ test("track without a PostHog key is a silent no-op", () => {
   // nothing is imported, nothing is captured, nothing throws.
   assert.equal(track("newsletter_signup_submitted"), undefined);
   assert.equal(track("search_performed", { surface: "site" }), undefined);
+});
+
+test("INIT_OPTIONS keeps persistence cookieless and masks the search query", () => {
+  assert.equal(INIT_OPTIONS.persistence, "memory");
+  assert.equal(INIT_OPTIONS.mask_personal_data_properties, true);
+  assert.ok(INIT_OPTIONS.custom_personal_data_properties.includes("q"));
 });
 
 test("isOutboundLink treats relative, same-host and non-http hrefs as internal", () => {
@@ -72,11 +79,6 @@ test("clickEvent reports an outbound host and ignores internal links", () => {
   assert.equal(clickEvent("/about", null, HOST), null);
   assert.equal(clickEvent("#comments", null, HOST), null);
   assert.equal(clickEvent(null, null, HOST), null);
-});
-
-test("installListeners is exported for both client surfaces", async () => {
-  const analytics = await import("../src/lib/analytics.ts");
-  assert.equal(typeof analytics.installListeners, "function");
 });
 
 test("the podcast platforms are the three clickEvent reports", () => {
@@ -157,12 +159,44 @@ test("installListeners drains window.tmirAnalytics, before and after", async () 
     window: { tmirAnalytics: queue },
     location: {},
   });
-  const stop = installListeners();
-  assert.equal(queue.length, 0, "the queued entry was drained");
-  queue.push(["late_event"]);
-  assert.equal(queue.length, 0, "a later push is captured, not kept");
-  assert.equal(listeners.length, 2, "click and submit are delegated");
-  stop();
+  try {
+    const stop = installListeners();
+    assert.equal(queue.length, 0, "the queued entry was drained");
+    queue.push(["late_event"]);
+    assert.equal(queue.length, 0, "a later push is captured, not kept");
+    assert.equal(listeners.length, 2, "click and submit are delegated");
+    stop();
+  } finally {
+    delete (globalThis as any).document;
+    delete (globalThis as any).window;
+    delete (globalThis as any).location;
+  }
+});
+
+test("installListeners is idempotent: a second call adds no listeners", async () => {
+  const { installListeners } = await import("../src/lib/analytics.ts");
+  const listeners: unknown[] = [];
+  const doc = {
+    addEventListener: (...a: unknown[]) => listeners.push(a),
+    removeEventListener: () => {},
+  };
+  Object.assign(globalThis, {
+    document: doc,
+    window: {},
+    location: {},
+  });
+  try {
+    const stopFirst = installListeners();
+    assert.equal(listeners.length, 2, "first call delegates click and submit");
+    const stopSecond = installListeners();
+    assert.equal(listeners.length, 2, "second call registers nothing");
+    assert.doesNotThrow(() => stopSecond());
+    stopFirst();
+  } finally {
+    delete (globalThis as any).document;
+    delete (globalThis as any).window;
+    delete (globalThis as any).location;
+  }
 });
 
 // node --test strips types but not JSX, so a .tsx module cannot be imported
