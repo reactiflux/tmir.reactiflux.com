@@ -65,3 +65,17 @@ Analytics must never break the site. `initAnalytics` and `track` swallow their o
 ## Out of scope
 
 Dashboards and insights (built in the PostHog UI, not code), session recording, feature flags, A/B tests, server-side capture, a consent banner.
+
+## Amendments (as shipped, 2026-10-09)
+
+Found during implementation; each is recorded with its reason in the plan's Deviations section and in a code comment at the site.
+
+- **Two surfaces, not one.** `/about` and `/episodes/:slug` are `renderToStaticMarkup` server handlers with no hydration, so the root layout never runs there. A second entry, `src/client/analytics-page.ts`, is bundled to `public/analytics.js` by the existing `generated-public-files` Vite plugin (same mechanism as `justify.js`) and loaded by those pages. Both surfaces share `installListeners()` from `src/lib/analytics.ts`. The two surfaces are mutually exclusive per page, so no event double-fires.
+- **Static-page bundle cost.** The IIFE build inlines `posthog-js`: ~309 KB raw (~100 KB gzip), deferred and cacheable, on `/about` and every episode page; ~1 KB when `VITE_POSTHOG_KEY` is unset. Accepted for v1. Upgrade path: build the entry as an ES module so PostHog splits into a lazy chunk.
+- **`transcript_downloaded` / `chapters_downloaded` dropped.** Nothing on any page links to those endpoints; they exist only as podcast-feed targets. The real download affordance (Transistor audio) is already reported as `outbound_link_clicked {host: "media.transistor.fm"}`.
+- **Newsletter and subscribe events via `data-analytics-*` attributes and the delegated listener**, not React handlers — `NewsletterForm` renders as static markup on `/about` where no handler could run. Known ceiling: an `/about` submit navigates cross-document, so that capture is best-effort.
+- **`search_performed` on `/links` fires from an effect on the debounced `q` search param**, not `onSubmit` (the box navigates as you type). It also fires on direct navigation to `/links?q=…` and when a filter changes `result_count`; read the metric as "result sets observed", not "submits".
+- **`comments_load_failed` comes from the inline `COMMENTS_SCRIPT`** via a `window.tmirAnalytics` queue that `installListeners()` drains and then replaces `push` on.
+- **Vendor-attached properties.** PostHog adds `$current_url` to every capture, which would carry `?q=<query>` from both search surfaces. Init sets `mask_personal_data_properties: true` + `custom_personal_data_properties: ["q"]` so the query is masked in URL properties. Lesson for future vendor specs: list what the vendor attaches by default, not only what the code sends.
+- **Build-time config.** `VITE_*` vars are inlined at build; without a key the bundles contain no PostHog code at all. Netlify's build environment must carry `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` (README already says so for all `VITE_` vars).
+- **Post-deploy checklist additions:** enable "Discard client IP data" in PostHog project settings (the cookieless stance isn't complete without it); filter every saved insight on `$host` since the project is shared with mod-bot.
