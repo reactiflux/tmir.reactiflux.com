@@ -164,3 +164,16 @@ test("installListeners drains window.tmirAnalytics, before and after", async () 
   assert.equal(listeners.length, 2, "click and submit are delegated");
   stop();
 });
+
+// node --test strips types but not JSX, so a .tsx module cannot be imported
+// here — "Unknown file extension .tsx". These read the source as text, as the
+// earlier attribute tests do.
+test("a rejected comments thread read is queued for analytics", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const body = await readFile("src/components/EpisodeBody.tsx", "utf8");
+  assert.match(body, /comments_load_failed/);
+  assert.match(body, /tmirAnalytics/);
+  assert.match(body, /main\.status==="rejected"/);
+  const route = await readFile("src/routes/episodes.$slug.tsx", "utf8");
+  assert.match(route, /data-episode=\{episode\.slug\}/);
+});

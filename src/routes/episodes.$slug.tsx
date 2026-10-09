@@ -96,6 +96,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 <section
                   id="comments"
                   data-thread={threadUri}
+                  data-episode={episode.slug}
                   data-pagefind-ignore=""
                 >
                   <h2>Comments</h2>
