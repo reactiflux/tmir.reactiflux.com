@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { LINK_SUBJECTS, type SubjectId } from "../content/link-subjects.ts";
 import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
+import { track } from "../lib/analytics.ts";
 
 const PAGE = 24;
 const DESCRIPTION =
@@ -114,6 +115,19 @@ function Links() {
     );
     return () => clearTimeout(timer);
   }, [q, search.q, navigate]);
+
+  // One event per settled query, keyed on the query and its match count. The
+  // search box navigates on a debounce as the visitor types and the Filter
+  // button is rarely used, so reporting from onSubmit would see almost
+  // nothing. Paging does not change `total`, so it does not re-report.
+  useEffect(() => {
+    if (!search.q) return;
+    track("search_performed", {
+      surface: "links",
+      query_length: search.q.length,
+      result_count: data.total,
+    });
+  }, [search.q, data.total]);
 
   // Move focus to the results after a deliberate filter change — but not while
   // typing in the search box, which would take focus away from the input.

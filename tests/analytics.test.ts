@@ -102,3 +102,25 @@ test("the newsletter form and the podcast links carry their attributes", async (
       new RegExp(`data-analytics-platform="${platform}"`),
     );
 });
+
+test("searchResultCount reads Pagefind's rendered message", async () => {
+  const { searchResultCount } = await import("../src/lib/analytics.ts");
+  assert.equal(searchResultCount("12 episodes for “react compiler”"), 12);
+  assert.equal(searchResultCount("1 episode for “waku”"), 1);
+  assert.equal(
+    searchResultCount(
+      "No episodes found for “zzz”. Try fewer words or a different spelling.",
+    ),
+    0,
+  );
+  assert.equal(searchResultCount(""), 0);
+});
+
+test("both search surfaces report search_performed", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const pagefind = await readFile("src/components/PagefindUI.tsx", "utf8");
+  assert.match(pagefind, /surface: "site"/);
+  assert.match(pagefind, /search_failed/);
+  const links = await readFile("src/routes/links.tsx", "utf8");
+  assert.match(links, /surface: "links"/);
+});
