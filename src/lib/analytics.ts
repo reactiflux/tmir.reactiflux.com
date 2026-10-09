@@ -120,6 +120,39 @@ export function clickEvent(
 }
 
 /**
+ * Delegated listeners for the interactions that have to work on both client
+ * surfaces: the hydrated router pages and the static documents (/about,
+ * /episodes/<slug>), which render outside the router with no React on the
+ * client at all. Delegation means one implementation covers both, and the
+ * static pages need no event handlers in their markup.
+ *
+ * Returns a cleanup function.
+ */
+export function installListeners(): () => void {
+  function onClick(event: MouseEvent) {
+    const anchor = (event.target as Element | null)?.closest?.("a");
+    if (!anchor) return;
+    const found = clickEvent(
+      anchor.getAttribute("href"),
+      anchor.getAttribute("data-analytics-platform"),
+      location.host,
+    );
+    if (found) track(found.event, found.props);
+  }
+  function onSubmit(event: SubmitEvent) {
+    const target = event.target as Element | null;
+    if (target?.closest?.('form[data-analytics-form="newsletter"]'))
+      track("newsletter_signup_submitted");
+  }
+  document.addEventListener("click", onClick);
+  document.addEventListener("submit", onSubmit);
+  return () => {
+    document.removeEventListener("click", onClick);
+    document.removeEventListener("submit", onSubmit);
+  };
+}
+
+/**
  * Pagefind's result count, read back from the message it renders — the only
  * readout of a finished search, since Pagefind owns that DOM. The translations
  * in PagefindUI.tsx make it "<n> episodes for …", or "No episodes found for …"

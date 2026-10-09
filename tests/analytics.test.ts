@@ -73,3 +73,8 @@ test("clickEvent reports an outbound host and ignores internal links", () => {
   assert.equal(clickEvent("#comments", null, HOST), null);
   assert.equal(clickEvent(null, null, HOST), null);
 });
+
+test("installListeners is exported for both client surfaces", async () => {
+  const analytics = await import("../src/lib/analytics.ts");
+  assert.equal(typeof analytics.installListeners, "function");
+});
