@@ -61,6 +61,10 @@ export function NewsletterForm({
       className={className}
       action={BUTTONDOWN_URL}
       method="post"
+      // Read by the delegated submit listener in src/lib/analytics.ts, not by
+      // a handler here: on /about this form is static markup that POSTs to
+      // Buttondown, so onSubmit never runs there.
+      data-analytics-form="newsletter"
       onSubmit={(event) => {
         const data = new FormData(event.currentTarget);
         event.preventDefault();

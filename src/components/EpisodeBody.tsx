@@ -122,6 +122,11 @@ const counts=post=>{
 // The two top-level reads are independent; either may fail on its own.
 const[main,quotes]=await Promise.allSettled([
   thread(uri,6),get(\`getQuotes?uri=\${encodeURIComponent(uri)}&limit=10\`)]);
+// This script cannot import src/lib/analytics.ts, so it reports through the
+// queue that installListeners() drains. The quotes read is supplementary and
+// is deliberately not reported.
+if(main.status==="rejected")(window.tmirAnalytics=window.tmirAnalytics||[]).push(
+  ["comments_load_failed",{episode:el.dataset.episode}]);
 const t=main.value?.thread;
 if(t?.$type==="app.bsky.feed.defs#threadViewPost"){
   counts(t.post??{});

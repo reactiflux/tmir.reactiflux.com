@@ -5,15 +5,24 @@ export const PODCAST_FEED = "https://feeds.transistor.fm/this-month-in-react";
 export const REACTIFLUX_DISCORD = "https://discord.gg/reactiflux";
 
 export function PodcastLinks() {
+  // data-analytics-platform is read by the delegated click listener in
+  // src/lib/analytics.ts; it reports subscribe_link_clicked instead of a
+  // bare outbound_link_clicked for these three.
   return (
     <div className="podcast-destinations">
-      <a href="https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526">
+      <a
+        href="https://podcasts.apple.com/us/podcast/this-month-in-react/id1661733526"
+        data-analytics-platform="apple"
+      >
         Apple Podcasts <span aria-hidden="true">↗</span>
       </a>
-      <a href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH">
+      <a
+        href="https://open.spotify.com/show/4g3Le83YfsMeI8Fq3cpPeH"
+        data-analytics-platform="spotify"
+      >
         Spotify <span aria-hidden="true">↗</span>
       </a>
-      <a href={PODCAST_FEED}>
+      <a href={PODCAST_FEED} data-analytics-platform="rss">
         Podcast RSS <span aria-hidden="true">↗</span>
       </a>
     </div>

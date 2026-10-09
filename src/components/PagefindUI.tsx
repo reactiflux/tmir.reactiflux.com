@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { enhanceSearchContext, prepareSearchResult } from "./search-results";
 import { withPageUrls } from "./search-url";
+import { searchResultCount, track } from "../lib/analytics.ts";
 
 interface SearchUI {
   triggerSearch: (term: string) => void;
@@ -64,12 +65,39 @@ export function PagefindUI() {
         saveQuery("");
     }
 
+    // Pagefind owns the results DOM and offers no callback, so the only
+    // readout of a finished search is the message it renders. Observe it and
+    // report once the typing has settled, not once per keystroke.
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    let reported = "";
+    const observer = new MutationObserver(() => {
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        const term = container.querySelector("input")?.value.trim() ?? "";
+        const message =
+          container.querySelector(".pagefind-ui__message")?.textContent ?? "";
+        if (!term || !message || term === reported) return;
+        reported = term;
+        track("search_performed", {
+          surface: "site",
+          query_length: term.length,
+          result_count: searchResultCount(message),
+        });
+      }, 800);
+    });
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
     const script = document.createElement("script");
     script.src = "/pagefind/pagefind-ui.js";
     script.onload = () => {
       if (disposed) return;
       if (!window.PagefindUI) {
         setStatus("error");
+        track("search_failed", { surface: "site", attempt });
         return;
       }
       ui.current = new window.PagefindUI({
@@ -96,7 +124,9 @@ export function PagefindUI() {
       setStatus("ready");
     };
     script.onerror = () => {
-      if (!disposed) setStatus("error");
+      if (disposed) return;
+      setStatus("error");
+      track("search_failed", { surface: "site", attempt });
     };
     container.addEventListener("input", onInput);
     container.addEventListener("click", onClear);
@@ -107,6 +137,8 @@ export function PagefindUI() {
     return () => {
       disposed = true;
       cleanupContext();
+      clearTimeout(settle);
+      observer.disconnect();
       container.removeEventListener("input", onInput);
       container.removeEventListener("click", onClear);
       container.removeEventListener("keydown", onKeyDown);

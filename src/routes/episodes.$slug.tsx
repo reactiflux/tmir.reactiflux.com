@@ -96,6 +96,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 <section
                   id="comments"
                   data-thread={threadUri}
+                  data-episode={episode.slug}
                   data-pagefind-ignore=""
                 >
                   <h2>Comments</h2>
@@ -117,6 +118,7 @@ export const Route = createFileRoute("/episodes/$slug")({
                 <script dangerouslySetInnerHTML={{ __html: PLAYER_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: SEEK_SCRIPT }} />
                 <script defer src="/justify.js" />
+                <script defer src="/analytics.js" />
                 <script dangerouslySetInnerHTML={{ __html: OUTLINE_SCRIPT }} />
                 <script
                   dangerouslySetInnerHTML={{
