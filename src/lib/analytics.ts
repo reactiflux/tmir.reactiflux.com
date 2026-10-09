@@ -146,6 +146,15 @@ export function installListeners(): () => void {
   }
   document.addEventListener("click", onClick);
   document.addEventListener("submit", onSubmit);
+  // The static documents' inline scripts cannot import this module, so they
+  // report through window.tmirAnalytics. They may push before or after this
+  // runs, so drain what is there and turn later pushes into captures.
+  const queue = (window.tmirAnalytics ??= []);
+  for (const entry of queue.splice(0)) track(...entry);
+  queue.push = (...entries: AnalyticsEntry[]) => {
+    for (const entry of entries) track(...entry);
+    return 0;
+  };
   return () => {
     document.removeEventListener("click", onClick);
     document.removeEventListener("submit", onSubmit);

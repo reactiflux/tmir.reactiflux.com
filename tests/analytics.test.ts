@@ -124,3 +124,43 @@ test("both search surfaces report search_performed", async () => {
   const links = await readFile("src/routes/links.tsx", "utf8");
   assert.match(links, /surface: "links"/);
 });
+
+test("the static documents load the generated analytics bundle", async () => {
+  const { readFile } = await import("node:fs/promises");
+  for (const path of [
+    "src/routes/about.tsx",
+    "src/routes/episodes.$slug.tsx",
+  ]) {
+    const source = await readFile(path, "utf8");
+    assert.match(
+      source,
+      /src="\/analytics\.js"/,
+      `${path} loads /analytics.js`,
+    );
+  }
+  const config = await readFile("vite.config.ts", "utf8");
+  assert.match(config, /src\/client\/analytics-page\.ts/);
+  const ignored = await readFile(".gitignore", "utf8");
+  assert.match(ignored, /^public\/analytics\.js$/m);
+});
+
+test("installListeners drains window.tmirAnalytics, before and after", async () => {
+  const { installListeners } = await import("../src/lib/analytics.ts");
+  const listeners: unknown[] = [];
+  const doc = {
+    addEventListener: (...a: unknown[]) => listeners.push(a),
+    removeEventListener: () => {},
+  };
+  const queue: [string][] = [["early_event"]];
+  Object.assign(globalThis, {
+    document: doc,
+    window: { tmirAnalytics: queue },
+    location: {},
+  });
+  const stop = installListeners();
+  assert.equal(queue.length, 0, "the queued entry was drained");
+  queue.push(["late_event"]);
+  assert.equal(queue.length, 0, "a later push is captured, not kept");
+  assert.equal(listeners.length, 2, "click and submit are delegated");
+  stop();
+});

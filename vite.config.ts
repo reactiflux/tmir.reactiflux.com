@@ -34,29 +34,37 @@ const pages = [
 /**
  * Files that depend on the environment, written into public/ so Vite's normal
  * public copy emits them: robots.txt (its Sitemap line carries the site URL),
- * and justify.js, the transcript justifier bundled for pages that don't hydrate.
+ * and the two browser bundles for pages that don't hydrate — justify.js, the
+ * transcript justifier, and analytics.js, the analytics entry for the static
+ * documents.
  */
-let justifyBuilt: Promise<unknown> | undefined;
+const bundleToPublic = (entry: string, name: string) =>
+  build({
+    configFile: false,
+    logLevel: "warn",
+    publicDir: false,
+    build: {
+      lib: {
+        entry,
+        formats: ["iife"],
+        name,
+        fileName: () => `${name}.js`,
+      },
+      outDir: "public",
+      emptyOutDir: false,
+    },
+  });
+
+let bundlesBuilt: Promise<unknown> | undefined;
 const generatedPublicFiles = (env: Record<string, string>) =>
   ({
     name: "generated-public-files",
     async buildStart() {
       // buildStart runs once per environment; bundle once.
-      await (justifyBuilt ??= build({
-        configFile: false,
-        logLevel: "warn",
-        publicDir: false,
-        build: {
-          lib: {
-            entry: "src/client/justify-transcript.ts",
-            formats: ["iife"],
-            name: "justify",
-            fileName: () => "justify.js",
-          },
-          outDir: "public",
-          emptyOutDir: false,
-        },
-      }));
+      await (bundlesBuilt ??= Promise.all([
+        bundleToPublic("src/client/justify-transcript.ts", "justify"),
+        bundleToPublic("src/client/analytics-page.ts", "analytics"),
+      ]));
       const siteUrl = env.VITE_SITE_URL || "https://thismonthinreact.com";
       writeFileSync(
         "public/robots.txt",

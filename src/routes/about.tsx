@@ -87,7 +87,7 @@ export const Route = createFileRoute("/about")({
     handlers: {
       GET: async () => {
         const html = renderToStaticMarkup(
-          <Document>
+          <Document scripts={<script defer src="/analytics.js" />}>
             {/* React 19 hoists these into <head> during server rendering. */}
             <title>{TITLE}</title>
             <meta name="description" content={ABOUT_DESCRIPTION} />
