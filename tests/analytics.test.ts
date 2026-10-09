@@ -1,0 +1,75 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  clickEvent,
+  episodeSlug,
+  isOutboundLink,
+  track,
+} from "../src/lib/analytics.ts";
+
+const HOST = "thismonthinreact.com";
+
+test("track without a PostHog key is a silent no-op", () => {
+  // import.meta.env is undefined under `node --test`, so no key is configured:
+  // nothing is imported, nothing is captured, nothing throws.
+  assert.equal(track("newsletter_signup_submitted"), undefined);
+  assert.equal(track("search_performed", { surface: "site" }), undefined);
+});
+
+test("isOutboundLink treats relative, same-host and non-http hrefs as internal", () => {
+  assert.equal(isOutboundLink("/links", HOST), false);
+  assert.equal(isOutboundLink("#comments", HOST), false);
+  assert.equal(isOutboundLink("", HOST), false);
+  assert.equal(
+    isOutboundLink("https://thismonthinreact.com/about", HOST),
+    false,
+  );
+  assert.equal(isOutboundLink("mailto:hello@reactiflux.com", HOST), false);
+  assert.equal(isOutboundLink("javascript:void 0", HOST), false);
+});
+
+test("isOutboundLink treats any other host as outbound", () => {
+  assert.equal(isOutboundLink("https://bsky.app/profile/x", HOST), true);
+  assert.equal(isOutboundLink("http://example.com", HOST), true);
+  assert.equal(isOutboundLink("//example.com/x", HOST), true);
+  assert.equal(isOutboundLink("https://www.thismonthinreact.com/", HOST), true);
+  assert.equal(
+    isOutboundLink("https://thismonthinreact.com:8443/", HOST),
+    true,
+  );
+});
+
+test("episodeSlug names an episode page and nothing else", () => {
+  assert.equal(episodeSlug("/episodes/2026-08"), "2026-08");
+  assert.equal(episodeSlug("/episodes/2026-08/"), "2026-08");
+  // The flat prerendered file and the two data routes are not episode pages.
+  assert.equal(episodeSlug("/episodes/2026-08.html"), undefined);
+  assert.equal(episodeSlug("/episodes/2026-08/chapters.json"), undefined);
+  assert.equal(episodeSlug("/episodes/2026-08/transcript.srt"), undefined);
+  assert.equal(episodeSlug("/links"), undefined);
+  assert.equal(episodeSlug("/"), undefined);
+});
+
+test("clickEvent prefers a declared platform over the outbound host", () => {
+  assert.deepEqual(
+    clickEvent("https://open.spotify.com/show/x", "spotify", HOST),
+    { event: "subscribe_link_clicked", props: { platform: "spotify" } },
+  );
+});
+
+test("clickEvent reports an outbound host and ignores internal links", () => {
+  assert.deepEqual(clickEvent("https://feeds.transistor.fm/x", null, HOST), {
+    event: "outbound_link_clicked",
+    props: { host: "feeds.transistor.fm" },
+  });
+  assert.deepEqual(
+    clickEvent("https://media.transistor.fm/a.mp3", null, HOST),
+    {
+      event: "outbound_link_clicked",
+      props: { host: "media.transistor.fm" },
+    },
+  );
+  assert.equal(clickEvent("/about", null, HOST), null);
+  assert.equal(clickEvent("#comments", null, HOST), null);
+  assert.equal(clickEvent(null, null, HOST), null);
+});
