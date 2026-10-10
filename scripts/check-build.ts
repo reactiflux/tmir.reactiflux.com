@@ -230,6 +230,15 @@ test("About", () => {
   }
 });
 
+test("Analytics", () => {
+  // The static documents render outside the router, so the generated bundle
+  // is their only analytics; the router pages load it through their own JS.
+  hasFile("analytics.js");
+  const tag = 'src="/analytics.js"';
+  contains("about.html", tag);
+  for (const slug of allSlugs) contains(`episodes/${slug}.html`, tag);
+});
+
 test("Design specimen", () => {
   hasFile("specimen.html");
   const html = file("specimen.html") || "";

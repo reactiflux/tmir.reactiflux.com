@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { LINK_SUBJECTS, type SubjectId } from "../content/link-subjects.ts";
 import { SITE_NAME, SITE_URL, ogMeta } from "../content/site.ts";
+import { SEARCH_SETTLE_MS, track } from "../lib/analytics.ts";
 
 const PAGE = 24;
 const DESCRIPTION =
@@ -114,6 +115,28 @@ function Links() {
     );
     return () => clearTimeout(timer);
   }, [q, search.q, navigate]);
+
+  // One event per settled query. The search box navigates on a 250 ms
+  // debounce as the visitor types, so each pause commits a prefix; waiting
+  // SEARCH_SETTLE_MS more reports only the query they stopped on, as the site
+  // search does. Paging and filter changes keep the same query, so the ref
+  // stops them re-reporting it. Arriving on a shared /links?q= URL counts too:
+  // the visitor sees those results all the same.
+  const reportedQuery = useRef("");
+  useEffect(() => {
+    const query = search.q ?? "";
+    if (!query) reportedQuery.current = "";
+    if (!query || query === reportedQuery.current) return;
+    const timer = setTimeout(() => {
+      reportedQuery.current = query;
+      track("search_performed", {
+        surface: "links",
+        query_length: query.length,
+        result_count: data.total,
+      });
+    }, SEARCH_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [search.q, data.total]);
 
   // Move focus to the results after a deliberate filter change — but not while
   // typing in the search box, which would take focus away from the input.

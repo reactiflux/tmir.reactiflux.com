@@ -2,6 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { enhanceSearchContext, prepareSearchResult } from "./search-results";
 import { withPageUrls } from "./search-url";
+import {
+  SEARCH_SETTLE_MS,
+  searchResultCount,
+  track,
+} from "../lib/analytics.ts";
 
 interface SearchUI {
   triggerSearch: (term: string) => void;
@@ -28,6 +33,8 @@ export function PagefindUI() {
     "loading",
   );
   const [attempt, setAttempt] = useState(0);
+  // Outlives a retry, so a restored query is not reported twice.
+  const reported = useRef("");
 
   useEffect(() => {
     let disposed = false;
@@ -64,14 +71,56 @@ export function PagefindUI() {
         saveQuery("");
     }
 
+    // Pagefind owns the results DOM and offers no callback, so the only
+    // readout of a finished search is the message it renders. Observe it and
+    // report once the typing has settled, not once per keystroke. A query
+    // restored from a shared /search?q= URL counts as a search too.
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const observer = new MutationObserver(() => {
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        const raw = container.querySelector("input")?.value ?? "";
+        const term = raw.trim();
+        const message =
+          container.querySelector(".pagefind-ui__message")?.textContent ?? "";
+        // A cleared box resets, so searching the same term again reports.
+        if (!term) reported.current = "";
+        // The message can still be for an earlier term while Pagefind's own
+        // debounce runs. The translations quote the term as typed, so look
+        // for the box's value in quotes — filled in with the same replace()
+        // Pagefind uses, which treats `$&` and friends in the term specially.
+        if (
+          !term ||
+          term === reported.current ||
+          !message.includes("“[SEARCH_TERM]”".replace(/\[SEARCH_TERM\]/, raw))
+        )
+          return;
+        const count = searchResultCount(message);
+        if (count === null) return;
+        reported.current = term;
+        track("search_performed", {
+          surface: "site",
+          query_length: term.length,
+          result_count: count,
+        });
+      }, SEARCH_SETTLE_MS);
+    });
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    function fail() {
+      setStatus("error");
+      track("search_failed", { surface: "site", attempt });
+    }
+
     const script = document.createElement("script");
     script.src = "/pagefind/pagefind-ui.js";
     script.onload = () => {
       if (disposed) return;
-      if (!window.PagefindUI) {
-        setStatus("error");
-        return;
-      }
+      if (!window.PagefindUI) return fail();
       ui.current = new window.PagefindUI({
         element: "#pagefind-ui",
         showSubResults: true,
@@ -96,7 +145,7 @@ export function PagefindUI() {
       setStatus("ready");
     };
     script.onerror = () => {
-      if (!disposed) setStatus("error");
+      if (!disposed) fail();
     };
     container.addEventListener("input", onInput);
     container.addEventListener("click", onClear);
@@ -107,6 +156,8 @@ export function PagefindUI() {
     return () => {
       disposed = true;
       cleanupContext();
+      clearTimeout(settle);
+      observer.disconnect();
       container.removeEventListener("input", onInput);
       container.removeEventListener("click", onClear);
       container.removeEventListener("keydown", onKeyDown);

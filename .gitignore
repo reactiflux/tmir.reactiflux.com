@@ -12,4 +12,5 @@ dist
 src/routeTree.gen.ts
 public/robots.txt
 public/justify.js
+public/analytics.js
 .claude/worktrees
