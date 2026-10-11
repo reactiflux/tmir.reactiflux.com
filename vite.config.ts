@@ -34,30 +34,40 @@ const pages = [
 /**
  * Files that depend on the environment, written into public/ so Vite's normal
  * public copy emits them: robots.txt (its Sitemap line carries the site URL),
- * and justify.js, the transcript justifier bundled for pages that don't hydrate.
+ * and the two browser bundles for pages that don't hydrate — justify.js, the
+ * transcript justifier, and analytics.js, the analytics entry for the static
+ * documents.
  */
-let justifyBuilt: Promise<unknown> | undefined;
-const generatedPublicFiles = (env: Record<string, string>) =>
+const bundleToPublic = (entry: string, name: string, mode: string) =>
+  build({
+    configFile: false,
+    // Same mode as the outer build, so both read the same .env files.
+    mode,
+    logLevel: "warn",
+    publicDir: false,
+    build: {
+      lib: {
+        entry,
+        formats: ["iife"],
+        name,
+        fileName: () => `${name}.js`,
+      },
+      outDir: "public",
+      emptyOutDir: false,
+    },
+  });
+
+let bundlesBuilt: Promise<unknown> | undefined;
+const generatedPublicFiles = (env: Record<string, string>, mode: string) =>
   ({
     name: "generated-public-files",
     async buildStart() {
       // buildStart runs once per environment; bundle once.
-      await (justifyBuilt ??= build({
-        configFile: false,
-        logLevel: "warn",
-        publicDir: false,
-        build: {
-          lib: {
-            entry: "src/client/justify-transcript.ts",
-            formats: ["iife"],
-            name: "justify",
-            fileName: () => "justify.js",
-          },
-          outDir: "public",
-          emptyOutDir: false,
-        },
-      }));
-      const siteUrl = env.VITE_SITE_URL || "https://thismonthinreact.com";
+      await (bundlesBuilt ??= Promise.all([
+        bundleToPublic("src/client/justify-transcript.ts", "justify", mode),
+        bundleToPublic("src/client/analytics-page.ts", "analytics", mode),
+      ]));
+      const siteUrl = env.VITE_SITE_URL || "https://tmir.reactiflux.com";
       writeFileSync(
         "public/robots.txt",
         `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
@@ -83,7 +93,7 @@ export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   plugins: [
     contentReload,
-    generatedPublicFiles(loadEnv(mode, process.cwd(), "VITE_")),
+    generatedPublicFiles(loadEnv(mode, process.cwd(), "VITE_"), mode),
     // RSC is on for /links; the episode documents deliberately do not use it.
     tanstackStart({
       rsc: { enabled: true },
