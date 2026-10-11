@@ -67,7 +67,7 @@ const generatedPublicFiles = (env: Record<string, string>, mode: string) =>
         bundleToPublic("src/client/justify-transcript.ts", "justify", mode),
         bundleToPublic("src/client/analytics-page.ts", "analytics", mode),
       ]));
-      const siteUrl = env.VITE_SITE_URL || "https://thismonthinreact.com";
+      const siteUrl = env.VITE_SITE_URL || "https://tmir.reactiflux.com";
       writeFileSync(
         "public/robots.txt",
         `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,

@@ -1,7 +1,7 @@
 export const SITE_NAME =
   import.meta.env.VITE_SITE_NAME || "This Month in React";
 export const SITE_URL = (
-  import.meta.env.VITE_SITE_URL || "https://thismonthinreact.com"
+  import.meta.env.VITE_SITE_URL || "https://tmir.reactiflux.com"
 ).replace(/\/$/, "");
 
 export const SITE_DESCRIPTION =

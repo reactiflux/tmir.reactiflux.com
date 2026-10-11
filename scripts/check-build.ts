@@ -430,7 +430,7 @@ test("Open Graph cards", () => {
 
 test("Link previews", () => {
   const origin = (
-    process.env.VITE_SITE_URL || "https://thismonthinreact.com"
+    process.env.VITE_SITE_URL || "https://tmir.reactiflux.com"
   ).replace(/\/$/, "");
   for (const [path, slug] of [
     ["index.html", "default"],
