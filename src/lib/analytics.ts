@@ -151,6 +151,21 @@ export function initAnalytics(): Promise<void> {
 }
 
 /**
+ * The PostHog project is shared with other sites, so every event carries
+ * `site` and custom names are prefixed. PostHog's own `$` events keep their
+ * names, which its web analytics matches on.
+ */
+export function tagged(
+  event: string,
+  props?: Record<string, unknown>,
+): [event: string, props: Record<string, unknown>] {
+  return [
+    event.startsWith("$") ? event : `tmir_${event}`,
+    { ...props, site: "tmir" },
+  ];
+}
+
+/**
  * Captures an event, or does nothing when no key is configured. Chaining onto
  * the init promise means a call made while posthog-js is still loading is not
  * lost, and the order of calls is preserved.
@@ -163,7 +178,7 @@ export function initAnalytics(): Promise<void> {
 export function track(event: string, props?: Record<string, unknown>): void {
   void initAnalytics().then(() => {
     try {
-      ph?.capture(event, props);
+      ph?.capture(...tagged(event, props));
     } catch {
       // Analytics must never break the site.
     }
