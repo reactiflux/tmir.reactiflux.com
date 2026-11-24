@@ -8,6 +8,7 @@ import {
   outboundHost,
   searchResultCount,
   scrubUrls,
+  tagged,
 } from "../src/lib/analytics.ts";
 
 const HOST = "tmir.reactiflux.com";
@@ -20,6 +21,14 @@ test("INIT_OPTIONS keeps persistence cookieless and remote config off", () => {
   // With flags off posthog-js skips remote config entirely, so the project's
   // settings cannot switch on replay, heatmaps or surveys.
   assert.equal(INIT_OPTIONS.advanced_disable_flags, true);
+});
+
+test("tagged adds site to every event and prefixes all but PostHog's own", () => {
+  assert.deepEqual(tagged("search_failed", { attempt: 1 }), [
+    "tmir_search_failed",
+    { attempt: 1, site: "tmir" },
+  ]);
+  assert.deepEqual(tagged("$pageview"), ["$pageview", { site: "tmir" }]);
 });
 
 test("scrubUrls keeps only the site's own params on every URL, referrer included", () => {
