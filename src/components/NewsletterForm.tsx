@@ -1,6 +1,7 @@
 "use client";
 import { startTransition, useActionState } from "react";
 import { BUTTONDOWN_URL, subscribe } from "../content/newsletter.ts";
+import { track } from "../lib/analytics.ts";
 
 /**
  * The home page and /about frame the same form differently — the CSS keys off
@@ -32,11 +33,16 @@ export function NewsletterForm({
     async (
       _previous: { ok: boolean; message: string } | null,
       data: FormData,
-    ) =>
-      subscribe({ data }).catch(() => ({
+    ) => {
+      const outcome = await subscribe({ data }).catch(() => ({
         ok: false,
         message: "Subscription failed. Try again in a moment.",
-      })),
+      }));
+      // Buttondown accepted the address; the reader still has to confirm by
+      // email. Hydrated forms only: /about posts straight to Buttondown.
+      if (outcome.ok) track("newsletter_signup_succeeded");
+      return outcome;
+    },
     null,
   );
 
